@@ -79,25 +79,27 @@
 (capability OrganTransplant agent Surgeon0)
 
 (instance InformedConsent RelationalAttribute)
+(instance Consent RelationalAttribute)
 
 (=>
     (attribute Surgeon0 InformedConsent)
     (and
-        (instance Transplant OrganTransplant)
-        (destination Transplant Human1)
-        (patient Transplant HealthyKidney1)
-        (origin Transplant HealthyHuman)
-        (agent Transplant Surgeon0)))
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0)))
 
 (=>
     (not (attribute Surgeon0 InformedConsent))
     (not 
-        (and
-        (instance Transplant OrganTransplant)
-        (destination Transplant Human1)
-        (patient Transplant HealthyKidney1)
-        (origin Transplant HealthyHuman)
-        (agent Transplant Surgeon0))))
+        (exists (?Transplant)
+            (and
+                (instance ?Transplant OrganTransplant)
+                (destination ?Transplant Human1)
+                (patient ?Transplant HealthyKidney1)
+                (origin ?Transplant HealthyHuman)
+                (agent ?Transplant Surgeon0)))))
                  
 ;; For virtue ethics, similat o the above rule works with the additional stipulation that the surgeon is practically wise 
 
@@ -107,19 +109,35 @@
 (subclass Temperance VirtueAttribute)
 
 (=>
+    (attribute Surgeon0 PracticalWisdom)
     (and 
-        (attribute Surgeon0 InformedConsent)
-        (attribute Surgeon0 PracticalWisdom))
-    (and
-        (instance Transplant OrganTransplant)
-        (destination Transplant Human1)
-        (patient Transplant HealthyKidney1)
-        (origin Transplant HealthyHuman)
-        (agent Transplant Surgeon0)))
-        
+        (=> 
+            (attribute Surgeon0 Consent)
+            (and
+                (instance Transplant1 OrganTransplant)
+                (destination Transplant1 Human1)
+                (patient Transplant1 HealthyKidney1)
+                (origin Transplant1 HealthyHuman)
+                (agent Transplant1 Surgeon0)))
+        (=> 
+            (not (attribute Surgeon0 Consent))
+            (not 
+                (exists (?Transplant)
+                    (and
+                        (instance ?Transplant OrganTransplant)
+                        (destination ?Transplant Human1)
+                        (patient ?Transplant HealthyKidney1)
+                        (origin ?Transplant HealthyHuman)
+                        (agent ?Transplant Surgeon0)))))))
+
+      
+;;(attribute Surgeon0 InformedConsent)  
 ;;(attribute Surgeon0 PracticalWisdom)
-;;(attribute Surgeon0 InformedConsent)
-;;(agent Transplant ?X)
+;;(attribute Surgeon0 Consent)
+
+;;(agent Transplant1 ?X)
+;;(instance ?X OrganTransplant)
+
 
 
 
