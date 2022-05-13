@@ -138,6 +138,85 @@
 ;;(agent Transplant1 ?X)
 ;;(instance ?X OrganTransplant)
 
+;; The Utilitarian "base-level inferences in FO"
+;; The idea is that it's hard to say what the precise numeric utility is but the utility of 3 non-terminally ill people is probably higher than that of 2, etc.
+(subclass UtilityNumberAttribute RelationalAttribute)
+
+(instance UtilityNumber0 UtilityNumberAttribute)
+(instance UtilityNumber1 UtilityNumberAttribute)
+(instance UtilityNumber2 UtilityNumberAttribute)
+(instance UtilityNumber3 UtilityNumberAttribute)
+
+(successorAttribute UtilityNumber0 UtilityNumber1)
+(successorAttribute UtilityNumber1 UtilityNumber2)
+(successorAttribute UtilityNumber2 UtilityNumber3)
+
+;; I want to say that the SituationUtility is +1 in the case that the surgery takes place.
+(instance PreSituationUtility UtilityNumberAtttribute)
+(equal PreSituationUtility UtilityNumber2)
+(instance SituationUtility UtilityNumberAtttribute)
+
+;; If the surgery takes place for some universally quantified transplant variable, then the utility is +1 the utility beforehand
+(=>
+    (and
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0))
+    (successorAttribute PreSituationUtility SituationUtility))
+
+(or 
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (equal PreSituationUtility SituationUtility))
+
+;; Just for fun   
+(=>
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (attribute Human1 Happiness))
+    
+;; The proper statement requires additional structure.
+;; So it's just an if-and-only-if statement: the surgery takes place if and only if it leads to higher utility.
+
+(=>
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (and
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0)))
+
+;; To query and test the above inferences, first, assert the appropriate attribute.
+;; Note that once the attribute is asserted, you'll possibly have to reload the databases to start from scratch again.
+
+;; For the deontic version:
+;;(attribute Surgeon0 InformedConsent)  
+
+;; For the virtue based version:
+;;(attribute Surgeon0 PracticalWisdom)
+;;(attribute Surgeon0 Consent)
+
+;; For the utility version:
+;;(successorAttribute PreSituationUtility SituationUtility)
+
+
+;; Finally, ask if and who the agent of the transplant is or whether and what an organ transplant took place
+;;(agent Transplant1 ?X)
+;;(instance ?X OrganTransplant)
+
+;; Or for fun, ask if Human1 is happy and watch a proof by contradiction happen ;- )
+;;(attribute Human1 Happiness)
+
+
+
+
+
+
+
+
+
+
 
 
 
