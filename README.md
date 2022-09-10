@@ -19,5 +19,5 @@ The file "ethical\_paradigms\_interrelationships.pdf" contains a sketch as to ho
 
 The presentation of this project proposal at the [AITP 2022 conference](http://aitp-conference.org/2022/http://aitp-conference.org/2022/) can be found in the file "Formal\ Meta-Ethics\ in\ SUMO\ AITP22\ Presentation.pdf". 
 
-The file "ethics_May_2022.kif" includes high-level sketches of the main ethical paradigms.  Please read these as work-in-progress prototypes.
 
+The file "ethics_May_2022.kif" includes high-level sketches of the main ethical paradigms.  Please read these as work-in-progress prototypes.
