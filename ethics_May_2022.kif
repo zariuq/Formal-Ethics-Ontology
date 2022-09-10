@@ -1,0 +1,1038 @@
+;; Sketch of definitions of ethics
+
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way")
+
+(instance Ethics FieldOfStudy)
+
+(subclass Ethics Philosophy)
+(subclass Ethics Science)
+
+;; The requirements of profession seem too strict.  
+;; hasExpertise requires a Human rather than a CognitiveAgent.  Too low priority to fix.
+;; In hindsight, this rewriting looks worse than the version with Ethicist being a Profession.  Oops.
+;;(instance Ethicist Profession)
+(subclass Expertise RelationalAttribute)
+(=> 
+    (and 
+        (instance ?EXPERTISE Expertise)
+        (instance ?HUMAN Human)
+        (attribute ?HUMAN ?EXPERTISE))
+    (exists (?FIELD)
+        (and
+            (instance ?FIELD FieldOfStudy)
+            (hasExpertise ?PERSON ?FIELD))))
+
+
+(subclass EthicaExpertise Expert)
+(=>
+    (and
+        (instance ?EXPERTISE EthicalExpertise)
+        (attribute ?PERSON ?EXPERTISE))
+    (hasExpertise ?PERSON Ethics))
+
+(=> 
+    (and
+        (instance ?EXPERTISE EthicaExpertise)
+        (attribute ?PERSON ?EXPERTISE))
+    (inScopeOfInterest ?PERSON MoralAttribute))
+
+(subclass MoralNihilism Ethics)
+(subclass Deontology Ethics)
+(subclass Utilitarianism Ethics)
+(subclass VirtueEthics Ethics)
+
+(documentation MoralNihilism EnglishLanguage "Moral nihilism (also known as ethical nihilism) is the meta-ethical view that nothing is morally right or wrong (Wikipedia)." )
+(instance MoralNihilist EthicalExpertise)
+(instance Deontologist EthicalExpertise)
+(instance Utilitarian EthicalExpertise)
+(instance VirtueEthicist EthicalExpertise)
+
+;; Justification:  "instances of Abstract can be said to exist in the same sense as mathematical objects such as sets and relations"
+(=> 
+    (attribute ?PERSON Mathematician)
+    (inScopeOfInterest ?PERSON Abstract))
+
+;; I think for behavior I want something like AgentProcess that is a superclass of both BodyMotion and Vocalizing (also intentional and psychological processes, perhaps).
+;; Maybe unneeded (as we also have AgentPatientProcess etc.)
+(documentation AgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an agent.")
+(subclass AgentProcess Process)
+(subclass BodyMotion AgentProcess)
+(subclass Vocalizing AgentProcess)
+
+(=>
+    (instance ?PROC AgentProcess)
+    (exists (?AGENT)
+        (agent ?PROC ?AGENT)))
+
+(subclass EthicalGroup Group)
+
+;; An ethical group is one that confers or deprives at least one ObjectiveNorm, okay, DeonticAttribute.
+(=>
+    (instance ?ETHICALGROUP EthicalGroup)
+    (exists (?ETHICALFORMULA ?ETHICALNORMTYPE)
+        (and 
+            (or
+                (confersNorm ?ETHICALGROUP ?ETHICALFORMULA ?ETHICALNORMTYPE)
+                (deprivesNorm ?ETHICALGROUP ?ETHICALFORMULA ?ETHICALNORMTYPE))
+            (instance ?ETHICALNORMTYPE DeonticAttribute))))        
+
+;; Or, equivalently.  Dunno how to specify the NormType
+(=>
+    (instance ?ETHICALGROUP EthicalGroup)
+    (and
+        (instance ?DECLARE Declaring)
+        (agent ?ETHICALGROUP ?DECLARE)))
+    
+;; "Moral nihilism (also known as ethical nihilism) is the meta-ethical view that nothing is morally right or wrong.""
+(subclass MoralNihilism1 Ethics)
+(=>
+    (attribute ?MORALNIHILIST MoralNihilism1)
+    (believes ?MORALNIHILIST
+        (forall (?AGENT ?FORMULA)
+            (and
+                (not 
+                    (holdsObligation ?FORMULA ?AGENT))
+                (not 
+                    (holdsRight ?FORMULA ?AGENT))))))
+                ;;(not 
+                ;;    (confersNorm ?MORALNIHILIST ?FORMULA Prohibition)))))) ;; This clashes with personal boundaries, so it's out.
+
+;; I think it's easiest to just define these. 
+;; Relations to ObjcetiveNorms and SubjectiveAssessmentAttribute can be defined later.
+(subclass MoralAttribute NormativeAttribute)
+
+(instance MorallyGood MoralAttribute)
+(instance MorallyBad MoralAttribute)
+
+;; The moral nihilist believes that there is no formula that has morally good or morally bad attributes.
+;; Probably breaks the use of contraryAttribute (e.g., (contraryAttribute Likely Unlikely))
+;; Oh, no, "can't have more tha one", means that one can have neither!  
+;; Still, this should probably be a hypothesis held by some moralists.
+
+(=>
+    (attribute ?MORALNIHILIST MoralNihilist)
+    (believes ?MORALNIHILIST
+        (forall (?X)
+            (and
+                (not (modalAttribute ?X MorallyGood))
+                (not (modalAttribute ?X MorallyBad))))))
+
+;; Take two.  By classical logic, equivalent to the above.  
+;; I believe this form matches the intuitive intensional semantics better.
+(=>
+    (attribute ?MORALNIHILIST MoralNihilist)
+    (believes ?MORALNIHILIST
+        (not 
+            (exists (?X)
+                (or
+                    (modalAttribute ?X MorallyGood)
+                    (modalAttribute ?X MorallyBad))))))        
+
+;; A Deontologist believes that there exist moral codes/rules
+;; And that if an agent's actions adhere to these rules,
+;; Then the agent's actions are morally good
+(=>
+    (attribute ?DEONTOLOGIST Deontologist)
+    (believes ?DEONTOLOGIST
+        (exists (?RULE)
+            (=>
+                (and
+                    (instance ?PROC AgentProcess)
+                    (abstractCounterpart ?PROP ?RULE)
+                    (conforms ?PROC PROP))
+                (modalAttribute ?PROC MorallyGood)))))
+
+;; Also not sure whether rules should be considered formulas or propositions.  
+;; Let's do Propositions as then abstractCounterpart isn't needed!
+;; One justification is that the abstract idea of "honesty" can be reflect in various rules such as "do not lie" or "always tell the truth".
+;; Furthermore, I'm not sure ethical rules will always be well enough specified to be procedures.
+;; A Deontologist believes that either there is a rule such that processes which conform with the rule are morally good 
+;;  or there is a rule such taht processes which don't conform with the rule are morally bad.
+;; And there may be more than one rule.
+(=>
+    (attribute ?DEONTOLOGIST Deontologist)
+    (believes ?DEONTOLOGIST
+        (or 
+            (exists (?RULE)
+                (=>
+                    (and
+                        (instance ?PROC AgentProcess)
+                        (conformsProcess ?PROC RULE))
+                    (modalAttribute ?PROC MorallyGood)))
+            (exists (?RULE) 
+                (=> 
+                    (and
+                        (instance ?PROC AgentProcess)
+                        (not (conformsProcess ?PROC RULE)))
+                    (modalAttribute ?PROC MorallyBad))))))
+
+;; Okay, I want to specify what it means for an act to conform to a deontic attribute
+;; So if there is an obligation for the formula representing the rule and
+;; there exists a process that realizes the prop that the agent is the agent of, then the agent is conforming to the obligation.
+;; TODO: really need to fix this conforms.  Conforms is for an object and proposition, not a process.  
+;; Well, the idea above is clear enough though.
+;; Are there subprocesses?
+;; Yeah, it's hard to say what it means for one process to confom to an obligation.
+;; That there exists a subprocess that realizes the obligated proposition?
+(=>
+    (and
+        (conformsProcess ?PROC ?RULE)
+        (containsInformation ?FORMULA ?RULE)
+        (instance ?FORMULA Formula)
+        (modalAttribute ?FORMULA Obligation))
+    (exists (?SUBPROC)
+        (and
+            (subProcess ?SUBPROC ?PROC)
+            (realization ?SUBPROC ?RULE))))
+
+;; The prohibitive case seems easier.  
+;; If there does not exist a subprocess of the process that realizes a prohibited proposition,
+;; Then the process conforms with the rule.
+(=>
+    (and
+        (conformsProcess ?PROC ?RULE)
+        (containsInformation ?FORMULA ?RULE)
+        (instance ?FORMULA Formula)
+        (modalAttribute ?FORMULA Prohibition))
+    (not 
+        (exists (?SUBPROC)
+            (and
+                (subProcess ?SUBPROC ?PROC)
+                (realization ?SUBPROC ?RULE)))))
+
+;; Still need "rights".            
+
+(subrelation conformsProcess represents)
+(domain conformsProcess 1 Process)
+(domain conformsProcess 2 Proposition)
+(instance conformsProcess BinaryPredicate)
+
+;; Inspired by: 
+; (=>
+;     (and
+;         (agreementClause ?PROP ?ATTR ?AGREEMENT ?AGENT)
+;         (or
+;             (equal ?ATTR Obligation)
+;             (equal ?ATTR Promise)))
+;     (modalAttribute
+;         (exists (?PROC)
+;             (and
+;                 (realization ?PROC ?PROP)
+;                 (agent ?PROC ?AGENT))) Likely))
+
+;; Also need to deal with Rights and Prohibition, at least.
+    
+;; Qquestion and questioning might work.
+;; Not always, but in many cases the belief that the formula is likely true seems apt.
+(subrelation conjectures inScopeOfInterest)
+(domain 1 conjectures CognitiveAgent)
+(domain 2 conjectures Formula)
+(instance conjectures BinaryPredicate)
+(instance conjectures PropositionalAttitude)
+(=>
+    (conjectures ?AGENT ?FORMULA)
+    (and
+        (not
+            (knows ?AGENT ?FORMULA))
+        (believes ?AGENT
+            (modalAttribute ?FORMULA Likely))))
+        ;(considers ?AGENT ?FORMULA)
+
+(instance conjecture Predicate)
+(domain 1 conjecture Formula)
+(valence conjecture 1)
+(=> 
+    (conjecture ?FORMULA)
+    (exists (?AGENT)
+        (conjectures ?AGENT ?FORMULA)))
+
+;; Give an example of a deontology rule, such as, "Do not kill."
+;; Also, an example of something like Honesty or another easy virtue would be good.
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass ViceAttribute PsychologicalAttribute)
+
+;; A virtue ethicist believes that there exist psychological processes which are virtuous or vicious.
+;; First, a virtue ethicist believes that there exist examples of virtuous and vicious agents.
+(=>
+    (attribute ?VIRTUEETHICICST VirtueEthicist)
+    (believes ?VIRTUEETHICICST 
+        (and 
+            (exists (?AGENT ?VIRTUE)
+                (and
+                    (instance ?AGENT CognitiveAgent)
+                    (instance ?VIRTUE VirtueAttribute)
+                    (attribute ?AGENT ?VIRTUE)))
+            (exists (?AGENT ?VICE)
+                (and
+                    (instance ?AGENT CognitiveAgent)
+                    (instance ?VICE ViceAttribute)
+                    (attribute ?AGENT ?VICE))))))
+
+(=>
+    (instance ?VIRTUEETHICS VirtueEthics)
+    (containsInformation 
+        (=>
+            (and
+                (instance ?AGENT CognitiveAgent)
+                (instance ?PROC AgentProcess)
+                (instance ?VIRTUE VirtueAttribute)
+                (attribute ?AGENT ?VIRTUE)
+                (agent ?PROC ?AGENT))
+            (modalAttribute
+                    (modalAttribute ?PROC MorallyGood) Likely)) ?VIRTUEETHICS))
+
+ (=>
+    (instance ?VIRTUEETHICS VirtueEthics)
+    (containsInformation 
+        (=>
+            (and
+                (instance ?AGENT CognitiveAgent)
+                (instance ?PROC AgentProcess)
+                (instance ?VICE ViceAttribute)
+                (attribute ?AGENT ?VICE)
+                (agent ?PROC ?AGENT))
+            (modalAttribute
+                    (modalAttribute ?PROC MorallyBad) Likely)) ?VIRTUEETHICS))                   
+
+(subcass UtilityGroup Group)
+
+(=>
+    (and
+        (instance ?UG UtilityGroup)
+        (member ?M ?UG))
+    (instance ?M CognitiveAgent)
+
+;; A utility group is one where for each process and patient of the process, 
+;; the agent appraises the pleasantness (as pleasant/unpleasant?) of the process. 
+;; (exhaustiveAttribute AppraisalOfPleasantness AppraisalAsPleasant AppraisalAsUnpleasant)
+(=>
+    (and
+        (instance ?UG UtilityGroup)
+        (member ?A ?UG)
+        (patient ?P ?A)
+        (instance ?P Process))
+    (exists (?AoP)
+        (and
+            (instance ?AoP AppraisalOfPleasantness)
+            (instance ?AP AppraisalProcess)
+            (agent ?AP ?AoP)
+            (attribute ?A ?AoP)
+            (refers ?AP ?P)
+            (refers ?AoP ?P))))
+            ; (agent ?AoP ?A) ;; This is an attribute
+            ; (refers ?AoP ?P))))
+
+;; When a process effects a member of a utility group, the group as an agent appraises the pleasantness of the process.
+;; Seems I can't really say this.
+; (=>
+;     (and
+;         (instance ?UG UtilityGroup)
+;         (member ?A ?UG)
+;         (patient ?P ?A)
+;         (instance ?P Process))
+;     (exists (?AoP)
+;         (and
+;             (instance ?AoP AppraisalOfPleasantness)
+;             (agent ?AoP ?UG)
+;             (refers ?AoP ?P))))
+
+;; A utility group has a function that maps the appraisal processes of the members to the appraisal process of the group.
+;; Changed to RealNumber because the 'group' is only an agent and not 'psychological'.
+(instance UtilitySumFn BinaryFunction)
+(domain UtilitySumFn 1 UtilityGroup) 
+(domain UtilitySumFn 2 Process)
+(range UtilitySumFn RealNumber)
+
+;; The idea is that the Utility measure allows appraisals of pleasantness to be compared.
+;; Definitely a philosophically tenuous conjecture!
+;; Yet often practically useful via questionnaires and ratings, even though not entirely consistent.
+(instance UtilityMeasure UnaryFunction)
+(domain UtilityMeasure 1 AppraisalOfPleasantness)
+(range UtilityMeasure RealNumber) ;; Because greaterThan takes RealNumbers not Quantities
+
+;; For a UtilityGroup with a member affected by a process,
+;; the UtilitySumFn of the group of the process is 
+;; the sum of the list of utility measures of the members' appraisals of pleasantness.
+(=> 
+    (and
+        (instance ?UG UtilityGroup)
+        (instance ?P Process)
+        (member ?A ?UG)
+        (patient ?P ?A))
+    (and
+        (equal ?S 
+            (UtilitySumFn ?UG ?P))
+        (instance ?S RealNumber)
+        (instance ?MLIST List)
+        (forall (?MEM)
+            (=>
+                (and
+                    (member ?MEM ?UG)
+                    (instance ?AoP AppraisalOfPleasantness)
+                    (attribute ?MEM ?AoP)
+                    (refers ?AoP ?P))
+                (inList 
+                    (UtilityMeasure ?AoP)
+                    ?MLIST)))
+        (equal ?S 
+            (ListSumFn ?MLIST))))
+
+;; So for a utility group, if there is a process affecting a member, 
+;; then the appraiasl of pleasantness of the process by the group will equal the result of the utility function
+;; The idea is that the UtilityFn should represent an aggregate of the members' appraisals.
+;; So this can probably be deleted as outdated, too.
+; (=>
+;     (instance ?UG UtilityGroup)
+;     (forall (?P) 
+;         (=>
+;             (and
+;                 (instance ?P Process)
+;                 (member ?A ?UG)
+;                 (patient ?P ?A))
+;             (and 
+;                 (instance ?AoP AppraisalOfPleasantness)
+;                 (agent ?AoP ?UG)
+;                 (refers ?AoP ?P) 
+;                 (equal ?Aop (UtilityFn ?UG ?P))))))
+
+;; Utilitarianism contains the information that if there exist two processes that an agent can enact at the same time, 
+;; Then doing the process that ranks better is morally good.
+;; Okay, I probably need to include that ?P1 and ?P2 are possible actions.
+(=>
+    (instance ?UTILITARIANISM Utilitarianism)
+    (containsInformation 
+        (=>
+            (and
+                (instance ?P1 Process)
+                (instance ?P2 Process)
+                (equal 
+                    (BeginFn
+                        (WhenFn ?P1))
+                    (BeginFn
+                        (WhenFn ?P2)))
+                (instance ?A ?CognitiveAgent)
+                (agent ?P1 ?A)
+                (agent ?P2 ?A)
+                (instance ?UG UtilityGroup)
+                (member ?A ?UG)
+                (greaterThan 
+                    (UtilitySumFn ?UG ?P1)
+                    (UtilitySumFn ?UG ?P2)))
+            (and 
+                (modalAttribute ?P1 MorallyGood)
+                (modalAttribute ?P2 MorallyBad))) ?UTILITARIANISM))
+
+;; Maybesomething simpler like the following:
+(=>
+    (instance ?UTILITARIANISM Utilitarianism)
+    (containsInformation 
+        (=>
+            (and
+                (greaterThan 
+                    (UtilitySumFn ?UG ?P1)
+                    (UtilitySumFn ?UG ?P2))
+                (member ?A ?UG)
+                (modalAttribute
+                    (agent ?P1 ?A) Possibility)
+                (modalAttribute
+                    (agent ?P2 ?A) Possibility)
+                (not 
+                    (modalAttribute
+                    (and
+                        (agent ?P1 ?A)
+                        (agent ?P2 ?A) Possibility))))
+            (and 
+                (modalAttribute ?P1 MorallyGood)
+                (modalAttribute ?P2 MorallyBad))) ?UTILITARIANISM))
+
+            ;; I don't think I can take the and of both processes.
+            ;; not sure how to specify "choice among a set of possible processes at a specific event or interval in spacetime"
+            ;    (capability ?A agent ?P1)
+            ;     (capability ?A agent ?P2)
+            ;     (not (capability ?A agent (?P1 and ?P2))))
+
+;; lolol, apparently capability is just a wrapper for the modal Possibility of a process anyway!
+; (=>
+;    (and
+;       (instance ?ROLE CaseRole)
+;       (?ROLE ?ARG1 ?ARG2)
+;       (instance ?ARG1 ?PROC)
+;       (subclass ?PROC Process))
+;    (capability ?PROC ?ROLE ?ARG2))
+
+; (=>
+;   (capability ?PROCESS ?ROLE ?OBJ)
+;   (modalAttribute
+;     (exists (?P)
+;       (and
+;         (instance ?P ?PROCESS)
+;         (?ROLE ?P ?OBJ))) Possibility))
+
+;; Next up for Preference Utilitarianism
+(subcass PreferenceGroup Group)
+
+(=>
+    (and
+        (instance ?PG PreferenceGroup)
+        (member ?M ?PG))
+    (instance ?M CognitiveAgent)
+
+(=>
+    (instance ?PREFERENCEUTILITARIANISM Utilitarianism)
+    (containsInformation 
+        (=>
+            (and
+                (instance ?PG PreferenceGroup)
+                (member ?A ?PG)
+                (instance ?P1 Process)
+                (instance ?P2 Process)
+                (modalAttribute
+                    (agent ?P1 ?A) Possibility)
+                (modalAttribute
+                    (agent ?P2 ?A) Possibility)
+                (not 
+                    (modalAttribute
+                    (and
+                        (agent ?P1 ?A)
+                        (agent ?P2 ?A) Possibility)))
+                (forall (?MEMBER)
+                    (prefers ?MEMBER
+                        (agent ?P1 ?A)
+                        (agent ?P2 ?A))))
+            (and 
+                (modalAttribute ?P1 MorallyGood)
+                (modalAttribute ?P2 MorallyBad))) ?PREFERENCEUTILITARIANISM))
+
+
+;; Examples assuming the stuff in transplant_fo.kif
+(instance Transplant1 OrganTransplant)
+
+(and
+    (instance HospitalGroup UtilityGroup)
+    (member Human1 HospitalGroup)
+    (member HealthyHuman HospitalGroup)
+    (member Surgeon0 HospitalGroup))
+
+(and
+    (prefers Human1 (agent Transplant1 Surgeon0) (not (agent Transplant1 Surgeon0)))
+    (prefers HealthyHuman (agent Transplant1 Surgeon0) (not (agent Transplant1 Surgeon0)))
+    (prefers Surgeon0 (agent Transplant1 Surgeon0) (not (agent Transplant1 Surgeon0))))
+
+(and
+    (instance AoP1 AppraisalOfPleasantness)
+    (attribute Human1 AoP1)
+    (refers AoP1 Transplant1)
+    (equal (UtilityMeasure AoP1) 10)
+
+    (instance AoP12 AppraisalOfPleasantness)
+    (attribute HealthyHuman AoP2)
+    (refers AoP2 Transplant1)
+    (equal (UtilityMeasure AoP2) -1)
+
+    (instance AoP3 AppraisalOfPleasantness)
+    (attribute Surgeon0 AoP3)
+    (refers AoP3 Transplant1)
+    (equal (UtilityMeasure AoP3) 3))
+
+;; So we can express preferences or numbers (here in the range [-10, 10], tho it's arbitrary and not specified ;D).
+
+
+;; Golden Rule.  Loose sketch.  Probably 
+(<=>
+    (and
+        (instance ?P Process)
+        (agent ?P ?A1)
+        (patient ?P A2))
+    (and
+        (desires ?A1
+            (and
+                (agent ?P ?A3)
+                (patient ?P ?A1)))))
+
+;; Do not kill.
+;; Do we specify the deontic operators in the rules or not?  If so, gotta get the pattern matching right.
+(modalAttribute
+    (and
+        (instance ?K Killing)
+        (agent ?K ?A1)
+        (patient ?K ?A2) Prohibition))
+
+;; There is a prohibition from doing surgery when there is not permission for the surgery.
+(modalAttribute
+    (=> 
+        (not 
+            (confersNorm ?PAT (agent ?S ?DOC) Permission))
+        (and 
+            (instance ?S Surgery)
+            (agent ?S ?DOC)
+            (patient ?S ?PAT)) Prohibition))
+
+;; Do not lie.
+(modalAttribute
+    (and
+        (instance ?LIE TellingALie)
+        (agent ?LIE ?AGENT)) Prohibition)
+
+;; As for the virtues, let's try pietas (dutifulness).
+(instance Dutifulness VirtueAttribute)
+(=> 
+    (and
+        (=>
+            (and
+                (instance ?G GroupOfPeople)
+                (member ?A ?G)
+                (confersNorm ?G ?F Obligation))
+            (desires ?A ?F))
+        (=>
+            (and
+                (instance ?G GroupOfPeople)
+                (member ?A ?G)
+                (confersNorm ?G ?F Prohibition))
+            (desires ?A (not ?F))))
+    (modalAttribute (attribute Dutifulness ?A) Likely))
+
+(subclass HonestCommunication Communication)
+(=>
+    (and
+        (instance ?COMM Communication)
+        (instance ?AGENT CognitiveAgent)
+        (agent ?COMM ?AGENT)
+        (refers ?CARRIER ?MESSAGE)
+        (patient ?COMM ?CARRIER))
+    (holdsDuring
+        (WhenFn ?COMM)
+        (believes ?AGENT
+            (truth ?MESSAGE True))))
+
+;; Veritas, truthfulness, or honesty.
+;; If an agent is honest, then the agent desires its communications to be honest communications.
+(subclass Honesty VirtueAttribute)
+(instance Truthfulness Honesty)
+(Instance Integrity Honesty)
+(=>
+    (attribute ?AGENT Truthfulness)
+    (desires ?AGENT
+        (=>
+            (and
+                (instance ?COMM Communication)
+                (agent ?COMM ?AGENT))
+            (instance ?COMM HonestCommunication))))
+            ;(and
+                ;(instance ?HONCOMM HonestCommunication)
+                ;(equal ?COMM ?HONCOMM)))))
+
+;; Not sure "Self Control" is the best term.
+;; Might be good to use a process similar to Pursuing instead of the Likely modality
+(instance SelfControl VirtueAttribute)
+(=>
+    (attribute ?AGENT SelfControl)
+    (=>
+        (desires ?AGENT
+                (and
+                    (instance ?ACTION Processs)
+                    (agent ?ACTION ?AGENT)))
+        (modalAttribute 
+            (and
+                (instance ?ACTION Processs)
+                (agent ?ACTION ?AGENT)) Likely)))
+
+;; Defining practical wisdom, phronesis, seems trickier.  Yet that's what I used in the surgery case.
+;; The basic schema for defining virtues is to focus on the intent and desire over the rule of action or outcome.
+;; Yet practical wisdom and integrity are about being able to act in line with one's desires.
+
+
+
+;; Very general: An outcome is the physical entity that holds when a process ends.
+;; (partition Physical Object Process).
+(subclass Outcome Physical)
+(<=>
+    (and
+        (instance ?P Process)
+        (holdsDuring
+            (EndFn
+                (WhenFn ?P))
+            (instance ?OUTCOME Physical)))
+    (instance ?OUTCOME Outcome)
+
+;; I want to say that for any agent and process,
+;; If an agent is capable of the process,
+;; There is an instance of deciding for enacting the process or not enacting the process.
+;; First, if a process is possible for an agent and not necessary, 
+;; then it's possible for the agent to not do the process.
+(=>
+    (and
+        (instance ?AGENT Agent)
+        (modalAttribute
+            (and
+                (instance ?PROC Process)
+                (agent ?PROC ?AGENT)) Possibility)
+        (not
+            (modalAttribute
+            (and
+                (instance ?PROC Process)
+                (agent ?PROC ?AGENT)) Necessity)))
+        (modalAttribute
+            (not 
+                (and
+                    (instance ?PROC Process)
+                    (agent ?PROC ?AGENT)) Possibility)))
+
+;; Well, this can be abstracted:
+;; If F is possible and F is not necessary, then (not F) is possible.
+(=>
+    (and
+        (instance ?AGENT Agent)
+        (modalAttribute ?FORMULA Possibility)
+        (not
+            (modalAttribute ?FORMULA Necessity)))
+        (modalAttribute (not ?FORMULA) Possibility)))
+
+;; If an agent has the possibility of agently-instantiating a process or not,
+;; Then it's possible for the agent to be selecting between doing the process or not.
+;; Not sure it's wise to specify the length of the list.
+(=>
+    (and
+        (instance ?AGENT Agent)
+        (modalAttribute
+            (and
+                (instance ?PROC Process)
+                (agent ?PROC ?AGENT)) Possibility)
+        (modalAttribute
+            (not 
+                (and
+                    (instance ?PROC Process)
+                    (agent ?PROC ?AGENT)) Possibility)))
+    (and
+        (modalAttribute
+            (and
+                (instance ?S Selecting)
+                (inList 
+                    (and
+                        (instance ?PROC Process)
+                        (agent ?PROC ?AGENT)) ?OPTIONS)
+                (inList 
+                    (not 
+                        (and
+                            (instance ?PROC Process)
+                            (agent ?PROC ?AGENT))) ?OPTIONS)
+                (equal 2
+                    (ListLengthFn ?OPTIONS))
+                (agent ?S ?AGENT)
+                (result ?S ?CHOICE)
+                (inList ?CHOICE ?OPTIONS)) Possibility)))
+
+;; Now I want to define a ChoicePoint.
+;; A choice point is a physical situation in which there can be an instance of selecting.
+;; (partition Physical Object Process) --> it should just be Process.
+(subclass ChoicePoint Process)
+(relatedInternalConcept ChoicePoint Selecting)
+
+;; If there is a choice point, then there exists two processes and an agent,
+;; such that the agent cannot be an agent of both processes.
+;; Note that doing neither process may be an option.  
+;; Moreover, for any non-necessary and possible process, P and ~P constitute a choice point.
+(=>
+    (instance ?CP ChoicePoint)
+    (exists (?P1 ?P2 ?A)
+        (and
+            (patient ?CP ?P1)
+            (patient ?CP ?P2)
+            (agent ?CP ?A)
+            (mutuallyExclusiveAgentProcess ?A ?P1 ?P2))))
+
+;; A Choice Point is a list of mutually exclusive processes of size greater than 1
+;; And a referred to agent by which the mutual exclusivity is grounded
+;; This should not contradict the above rule.
+(=>
+    (instance ?CP ChoicePoint)
+    (exists (?PROCLIST ?AGENT)
+        (and
+            (instance ?PROCLIST MutuallyExclusiveProcessList)
+            (greaterThan (ListLengthFn ?PROCLIST) 1)
+            (instance ?AGENT  Agent)
+            (refers ?PROCLIST ?AGENT)
+            (agent ?CP ?AGENT)
+            (=> 
+                (inList ?PROC ?PROCLIST)
+                (patient ?CP ?PROC)))))
+
+;; Conversely, if there is a list of mutually exclusive processes
+;; All with reference to one agent and it's of length > 1
+;; Then this is a choice point.
+(=>
+    (and
+        (instance ?PROCLIST MutuallyExclusiveProcessList)
+        (greaterThan (ListLengthFn ?PROCLIST) 1)
+        (refers ?PROCLIST ?AGENT))
+    (and
+        (instance ?CP ChoicePoint)
+        (agent ?CP ?AGENT)
+        (=> 
+            (inList ?PROC ?PROCLIST)
+            (patient ?CP ?PROC))))
+
+;; If there is a choice point and an agent thereof,
+;; Then it's possible for there to be an instance of selecting
+;; where the agent chooses one of the processes of the choice point.
+(=>
+    (and
+        (instance ?CP ChoicePoint)
+        (agent ?CP ?AGENT))
+    (modalAttribute 
+        (and
+            (instance ?S Selecting)
+            (agent ?S ?AGENT)
+            (result ?S ?CHOICE)
+            (patient ?CP ?CHOICE)) Possibility))
+
+;; One idea is that there is a distinction between:
+;; (A) judging a proces on its own
+;; (B) judging a process in comparison to other possible processes 
+;; -- Maybe use something other than Possibility for this.           
+
+(instance mutuallyExclusiveAgentProcess TernaryPredicate)
+(domain mutuallyExclusiveAgentProcess 1 Agent)
+(domain mutuallyExclusiveAgentProcess 2 Process)
+(domain mutuallyExclusiveAgentProcess 3 Process)
+
+(=> 
+    (mutuallyExclusiveAgentProcess ?AGENT ?PROC1 ?PROC2)
+    (and
+        (instance ?AGENT Agent)
+        (=> 
+            (and
+                (agent ?PROC1 ?AGENT)
+                (instance ?PROC1 Process))
+            (not
+                (and
+                    (agent ?PROC2 ?AGENT)
+                    (instance ?PROC2 Process))))
+        (=> 
+            (and
+                (agent ?PROC2 ?AGENT)
+                (instance ?PROC2 Process))
+            (not
+                (and
+                    (agent ?PROC1 ?AGENT)
+                    (instance ?PROC1 Process))))
+        (not (equal ?PROC1 ?PROC2))))
+    
+;; Let's just have fun.
+(subclass UniqueProcessList UniqueList)
+(=>
+    (and
+        (instance ?LIST UniqueProcessList)
+        (inList ?PROC ?LIST))
+    (instance ?PROC Process))
+
+(subclass MutuallyExclusiveProcessList UniqueProcessList)
+(=>
+    (instance ?PL MutuallyExclusiveProcessList)
+    (exists (?AGENT)
+        (=>
+            (and
+                (inList ?P1 ?PL)
+                (inList ?P2 ?PL))
+            (mutuallyExclusiveAgentProcess ?AGENT ?P1 ?P2))))
+
+
+;;(=>
+;;    (and
+;;        (instance ?GROUP GroupOfPeople)
+;;        (member ?MEMBER ?GROUP))
+;;    (instance ?MEMBER Human))
+
+;; Interesting.  
+;;(subclass Group Agent)
+;;(subclass Group Collection)
+
+;; Okay, so what are the ObjectieNorms ... Normativeattributes are basically either ObjectiveNorms or SubjectiveAssessmentAttributes
+;; Alethic: Necessity and Possibility
+;; Deontic: Obligation, Permission, Prohibition (+ Legal/Illegal)
+;; Device: Functioning, Malfunctioning (of artifacts, objects that are products of making)
+
+
+;; For all agent processes, either the behavior is morally good or bad and 
+;; there exists a process whose result is the moral judgment of the behavior.
+;; Moreover, this judgment is "True".
+(names "Moral Decidability Conjecture"
+    (conjecture
+        (forall (?PROC)
+            (=> 
+                (instance ?PROC AgentProcess)
+                (and 
+                    (or 
+                        (modalAttribute ?PROC MorallyGood)
+                        (modalAttribute ?PROC MorallyBad))
+                    (exists (?DEC)
+                        (and
+                            (result ?DEC ?MORALJUDGEMET)
+                            (modalAttribute ?PROC ?MORALJUDGEMET)
+                            (truth (modalAttribute ?PROC ?MORALJUDGEMET) True))))))))
+
+;; For all agents, there is an obligation to take actions that are morally good.
+;; And there is a Prohibition from taking actions that are morally bad.
+(names "Normative Moral Obligation"
+    (conjecture 
+        (forall (?AGENT)
+            (and
+                (modalAttribute 
+                    (forall (?PROC)
+                        (=> 
+                            (and
+                                (instance ?PROC AgentProcess)
+                                (agent ?PROC ?AGENT))
+                            (modalAttribute ?PROC MorallyGood))) Obligation)
+                (modalAttribute 
+                    (and 
+                        (instance ?PROC AgentProcess)
+                        (agent ?PROC ?AGENT)
+                        (modalAttribute ?PROC MorallyBad)) Prohibition)))))
+            
+       
+
+    
+
+;; Wondering how to specify this idea that happiness is a self-evident goal by natural necessity
+(=>
+    (instance ?HUMAN Human)
+    (desires  ?HUMAN 
+        (attribute ?HUMAN Happiness)))
+
+(equal HAPPINESSCONJECTURE     
+    (forall (?HUMAN)
+                (desires ?HUMAN 
+                    (attribute ?HUMAN Happiness))))
+        
+(modalAttribute 
+    (=>
+    (instance ?HUMAN Human)
+    (desires ?HUMAN 
+        (attribute ?HUMAN Happiness))) Necessity)
+        
+(instance Kant Human)
+(attribute Kant Ethicist)
+(believes Kant
+    (modalAttribute 
+    (=>
+    (instance ?HUMAN Human)
+    (desires ?HUMAN 
+        (attribute ?HUMAN Happiness))) Necessity))
+        
+(instance Mill Human)
+(not (equal Mill Kant))
+(attribute Mill Ethicist)
+
+(believes Mill
+    (and 
+        HAPPINESSCONJECTURE
+        (not 
+            (exists (?DEDUCTIVEARGUMENT)
+                (and
+                    (equal ?PREMISES (PremisesFn ?DEDUCTIVEARGUMENT))
+                    (not (entails HAPPINESSCONJECTURE ?PREMISES))
+                    (entails ?PREMISES HAPPINESSCONJECTURE))))))
+
+(subclass UniversalLove Love)
+
+(<=> 
+    (attribute ?BODHISATTVA UniversalLove)
+    (forall (?AGENT)
+        (and
+            (=> 
+                (or
+                    (needs ?AGENT ?OBJECT)
+                    (wants ?AGENT ?OBJECT))
+                (desires ?BODHISATTVA
+                    (and
+                        (instance ?GET Getting)
+                        (destination ?GET ?AGENT)
+                        (patient ?GET ?OBJECT))))
+            (=>
+                (desires ?AGENT ?PROP)
+                (desires ?BODHISATTVA
+                   (instance ?FUL ?PROP))))))
+                        ;;(experiencer ?FUL ?AGENT)))))))
+
+(instance LUNCH69 Penne)
+(wants Kant LUNCH69)
+(knows Zar (wants Kant LUNCH69))
+
+(instance Ben Human)
+(instance Zar Human)
+(father Zar Ben) ;; I don't see that this implies Zar != Ben
+(not (equal Zar Kant))
+(not (equal Zar Mill))
+(not (equal Zar Ben))
+(not (equal Ben Kant))
+(not (equal Ben Mill))
+
+(attribute Zar EpistemicUniversalLove)
+(attribute Ben EpistemicUniversalLove)
+(knows Ben 
+    (knows Zar (wants Kant LUNCH69)))
+    
+(desires Zar 
+    (and (instance GETLUNCH Getting) (destination GETLUNCH Kant) (patient GETLUNCH LUNCH69)))
+    
+;; Debugging.  The "(experiencer FULFIL Zar)" is unnecessary baggage.
+;;(desires Ben 
+;;    (and 
+;;        (instance FULFIL 
+;;            (and (instance GETLUNCH Getting) (destination GETLUNCH Kant) (patient GETLUNCH LUNCH69)) 
+;;        (experiencer FULFIL Zar))))
+
+(desires Ben 
+    (instance FULFIL 
+       (and (instance GETLUNCH Getting) (destination GETLUNCH Kant) (patient GETLUNCH LUNCH69))))
+
+;; Query
+;;tell: (and (instance P Pasta) (wants Mill P) (knows Zar (wants Mill P)))
+;;ask: (desires ?Z (and (instance G Getting) (destination G Mill) (patient G P)))
+   
+(subclass EpistemicUniversalLove Love)
+
+(<=> 
+    (attribute ?BODHISATTVA EpistemicUniversalLove)
+    (forall (?AGENT)
+        (and
+            (=> 
+                (knows ?BODHISATTVA
+                    (or
+                        (needs ?AGENT ?OBJECT)
+                        (wants ?AGENT ?OBJECT)))
+                (desires ?BODHISATTVA
+                    (and
+                        (instance ?GET Getting)
+                        (destination ?GET ?AGENT)
+                        (patient ?GET ?OBJECT))))
+            (=>
+                (knows ?BODHISATTVA
+                    (desires ?AGENT ?PROP))
+                (desires ?BODHISATTVA
+                    (instance ?FUL ?PROP))))))
+                        ;;(experiencer ?FUL ?AGENT)))))))
+
+    
+    
+;; Conjecutre on the consequences of epistemic universal love
+;; Corollaries:
+;; 1) Epistemic Universal Love is fucked
+;; 2) Desires, at least in the scope of UL, need to be worked with via a more paraconsistent logic ;D
+;; 3) An epistemically universal loving agent can only take reasoned action in a context where every agent it knows of has consistent desires (aka why Buddhist Monks are observed to take near zero actions ;D)
+(names "Conjecture: knowledge of contradictory desires imply an epistemically universally loving agent will desire all propositional Formulas." 
+    (conjecture 
+        (=> 
+            (and 
+                (instance Zar Human)
+                (attribute Zar EpistemicUniversalLove)
+                (exists (?H1 ?H2)
+                    (and
+                        (desires ?H1 ?PROP)
+                        (desires ?H2 (not (?PROP)))
+                        (knows (desires ?H1 ?PROP) Zar)
+                        (knows (desires ?H2 (not (?PROP))) Zar))))
+            (forall (?P)
+                (desires ?P Zar)))))
+
