@@ -40,3 +40,5 @@ Finally, I believe each ethical paradigm can embed the others.  In "Ethical_Para
 
 The presentation of this project proposal at the [AITP 2022 conference](http://aitp-conference.org/2022/http://aitp-conference.org/2022/) can be found in the file "Presentation: Formal Ethics in SUMO - AITP22.pdf". 
 
+The extended abstract is in "Formal_Ethics_Ontology_Extended_Abstract.pdf".  This document includes a sketch of how the ethical paradigms might be expressed in a multi-agent reinforcement learning setting.
+
