@@ -1,0 +1,64 @@
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+
+(instance Ethics FieldOfStudy)
+
+(subclass Ethics Philosophy)
+(subclass Ethics Science)
+
+(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
+(subclass MoralAttribute NormativeAttribute)
+
+(instance MorallyGood MoralAttribute)
+(instance MorallyBad MoralAttribute)
+;; MorallyBetter, MorallyWorse, 
+
+(subclass VirtueAttribute MoralAttribute)
+(subclass ViceAttribute MoralAttribute)
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass ViceAttribute PsychologicalAttribute)
+
+;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
+(contraryAttribute MorallyGood MorallyBad)
+(contraryAttribute VirtueAttribute ViceAtribute)
+
+;; Encapsulate the Autonomous Agent aspect of "behavior"-type processes.
+(documentation AutonomousAgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an autonomous agent.")
+(subclass AutonomousAgentProcess Process)
+(subclass BodyMotion AutonomousAgentProcess)
+(subclass Vocalizing AutonomousAgentProcess)
+
+(=>
+    (instance ?PROC AutonomousAgentProcess)
+    (exists (?AGENT)
+        (and 
+            (agent ?PROC ?AGENT)
+            (instance ?AGENT AutonomousAgent))))
+
+
+(documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is the assignment of a moral attribute to a behavior.")
+(subclass MoralJudging Judging)
+
+(=>
+    (instance ?JUDGE MoralJudging)
+    (exists (?BEHAVE ?MORAL)
+        (and 
+            (instance ?BEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE 
+                (modalAttribute ?BEHAVE ?MORAL)))))
+
+;; Ethics refers to the moral judging of processes (behavior) of members of groups (aka society, lol).
+;; Not sure how to get the "normative science" part in.  I think there's a lot of hidden baggage in the term "normative".
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (member ?MEMB ?Group)
+    (instance ?BEHAVE AutonomousAgentProcess)
+    (agent ?MEMB ?BEHAVE)
+    (patient ?JUDGE ?BEHAVE))
+
+
+
+
+
