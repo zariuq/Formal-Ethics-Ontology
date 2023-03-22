@@ -58,7 +58,65 @@
     (agent ?MEMB ?BEHAVE)
     (patient ?JUDGE ?BEHAVE))
 
+(subclass MoralNihilism Ethics)
+(subclass Deontology Ethics)
+(subclass Utilitarianism Ethics)
+(subclass VirtueEthics Ethics)
 
+;; Take one on Moral Nihilism: Nothing has any moral attributes.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Stating)
+    (patient ?STATE 
+        (not 
+            (exists (?BEHAVE ?MORAL) 
+                (and 
+                    (instance ?BEHAVE AutonomousAgentProcess)
+                    (instance ?MORAL MoralAttribute)
+                    (modalAttribute ?BEHAVE ?MORAL))))))
 
+;; Take two: "Nothing is morally wrong." (from SEP Moral Skepticism); 
+;;technically, this would be a noncognitivist nihilism, I suppose (citing Ethics: The Fundamentals)
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Stating)
+    (patient ?STATE 
+        (not 
+            (exists (?BEHAVE) 
+                (and 
+                    (instance ?BEHAVE AutonomousAgentProcess)
+                    (modalAttribute ?BEHAVE MorallyBad))))))
+
+;; Take three without the "Stating" -- My favorite.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?BEHAVE) 
+                (and 
+                    (instance ?BEHAVE AutonomousAgentProcess)
+                    (modalAttribute ?BEHAVE MorallyBad))))))
+
+;; Take four without the "Statement"
+(refers MoralNihilism 
+    (not 
+        (exists (?BEHAVE) 
+            (and 
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (modalAttribute ?BEHAVE MorallyBad)))))                  
+
+;; "Moral nihilism is the view that there are no moral facts." (Ethics: The FUudamental)
+;; There is no moral judging (with behavior and moral judgments) that is a fact.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?JUDGE) 
+                (and 
+                    (instance ?JUDGE MoralJudging)
+                    (patient ?JUDGE ?MORALSTATEMENT)
+                    (instance ?MORALSTATEMENT Fact))))))
 
 
