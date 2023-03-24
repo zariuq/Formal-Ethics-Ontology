@@ -1,5 +1,6 @@
 (documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
 
+;; This might be questionable?
 (instance Ethics FieldOfStudy)
 
 (subclass Ethics Philosophy)
@@ -37,6 +38,8 @@
 
 
 (documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is the assignment of a moral attribute to a behavior.")
+(subclass MoralJudging Judging)
+
 (subclass MoralJudging Judging)
 
 (=>
@@ -119,4 +122,154 @@
                     (patient ?JUDGE ?MORALSTATEMENT)
                     (instance ?MORALSTATEMENT Fact))))))
 
+;; Deontology refers to statements of the nature that there exist rules such that 
+;; if followed, behavior is good or if not followed, behavior is bad.
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (=>
+                    (conforms ?BEHAVE ?RULE)
+                    (and 
+                        (instance ?JUDGE MoralJudging)
+                        (patient ?JUDGE
+                            (modalAttribute ?BEHAVE MorallyGood)))))
+            (exists (?RULE)
+                (=>
+                    (not 
+                        (conforms ?BEHAVE ?RULE))
+                    (and 
+                        (instance ?JUDGE MoralJudging)
+                        (patient ?JUDGE
+                            (modalAttribute ?BEHAVE MorallyBad))))))))       
+                            
+(documentation conformsFormula EnglishLanguage "(conforms ?OBJ ?FORMULA) describes how ?OBJ follows the ideas outlined by the proposition represented by ?FORMULA.")
 
+(domain conformsFormula 1 Object)
+(domain conformsFormula 2 Formula)
+(instance conformsFormula BinaryPredicate)
+(subrelation conformsFormula represents)
+
+;; Take one
+;; Q: should I use realization or conforms?
+(=> 
+    (conformsFormula ?OBJ ?FORMULA)
+    (and 
+        (containsInformation ?FORMULA ?PROP)
+        (conforms ?OBJ ?PROP)))
+
+;; Take two -- should I say that this proposition the formula is expressing exists?
+(=> 
+    (conformsFormula ?OBJ ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (conforms ?OBJ ?PROP))))
+
+;; Take two: specify that rules are formulas (of suo-kif :-p)       
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (=>
+                    (conformsFormula ?BEHAVE ?RULE)
+                    (and 
+                        (instance ?JUDGE MoralJudging)
+                        (patient ?JUDGE
+                            (modalAttribute ?BEHAVE MorallyGood)))))
+            (exists (?RULE)
+                (=>
+                    (not 
+                        (conformsFormula ?BEHAVE ?RULE))
+                    (and 
+                        (instance ?JUDGE MoralJudging)
+                        (patient ?JUDGE
+                            (modalAttribute ?BEHAVE MorallyBad))))))))
+
+;; Take three: specify that the rules correspond to Deontic Attributes
+;; If a rule adheres to obligation, good; if a rule doesn't, bad.
+;; If a rule violates a prohibition, good; otherwise ... unspecified?
+;; If an action prevents an action that is permitted, bad.
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Obligation)
+                    (=>
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyGood))))
+                    (=>
+                        (not 
+                            (conformsFormula ?BEHAVE ?RULE))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+             (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Prohibition)
+                    (=> 
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+            (exists (?RULE) 
+                (and 
+                    (modalAttribute ?RULE Permission)
+                    (=> 
+                        (and 
+                            (conformsFormula ?BEHAVE1 ?RULE)
+                            (prevents ?BEHAVE2 ?BEHAVE1)
+                            (instance ?BEHAVE2 AutonomousAgentProcess))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE 
+                                (modalAttribute ?BEHAVE2 MorallyBad)))))))))  
+
+
+;; Take four: remove the MoralJudging part as maybe the statement should be that it just "is" MorallyBad :D.
+;; Although this sort of bypasses the definition of ethics as concerned with moral judgments. 
+;; However, it may still fit the definition of a moral judgment!
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Obligation)
+                    (=>
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (modalAttribute ?BEHAVE MorallyGood))
+                    (=>
+                        (not 
+                            (conformsFormula ?BEHAVE ?RULE))
+                        (modalAttribute ?BEHAVE MorallyBad))))
+             (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Prohibition)
+                    (=> 
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (modalAttribute ?BEHAVE MorallyBad))))
+            (exists (?RULE) 
+                (and 
+                    (modalAttribute ?RULE Permission)
+                    (=> 
+                        (and 
+                            (conformsFormula ?BEHAVE1 ?RULE)
+                            (prevents ?BEHAVE2 ?BEHAVE1)
+                            (instance ?BEHAVE2 AutonomousAgentProcess))
+                        (modalAttribute ?BEHAVE2 MorallyBad)))))))              
+               
+                             
