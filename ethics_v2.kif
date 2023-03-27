@@ -23,6 +23,25 @@
 (contraryAttribute MorallyGood MorallyBad)
 (contraryAttribute VirtueAttribute ViceAtribute)
 
+;; I see how this definition motivates the need for target-specificity or domain-specificity
+(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+(subclass VirtuousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VIRTUE VirtueAttribute)
+        (attribute ?AGENT ?VIRTUE))
+    (instance ?AGENT VirtuousAgent))
+
+(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+(subclass ViciousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VICE ViceAttribute)
+        (attribute ?AGENT ?VICE))
+    (instance ?AGENT VirtuousAgent))
+
 ;; Encapsulate the Autonomous Agent aspect of "behavior"-type processes.
 (documentation AutonomousAgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an autonomous agent.")
 (subclass AutonomousAgentProcess Process)
@@ -272,4 +291,17 @@
                             (instance ?BEHAVE2 AutonomousAgentProcess))
                         (modalAttribute ?BEHAVE2 MorallyBad)))))))              
                
-                             
+;; "An action is right iff it is what a virtuous agent would characteristically (i.e. acting in character) do in the circumstances." (On Virtue Ethics -- Right Action)
+;; Take one without the "would characteristically do" part.
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (<=>
+            (modalAttribute ?BEHAVE MorallyGood)
+            (and 
+                (agent ?BEHAVE ?AGENT)
+                (instance ?AGENT VirtuousAgent)))))
+
+
+
