@@ -1,0 +1,25 @@
+;; Possible bugs in SUMO
+
+;; 1) Fields of Study should be subclasses not instances
+
+(subclass Science FieldOfStudy)
+(instance Philosophy FieldOfStudy)
+
+(subclass SocialScience Science)
+(instance Physics Science)
+(instance NaturalSciences Science)
+
+;; This semes weird.  There are many sub-fields of Philosophy or Physics just as with Science or Social Sciences.
+;; "Kantian Philosophy" might be an example of a specific instance of Philosophy (a subclass of FieldOfStudy)
+
+;; 2) Should we be using the instance of a set synonymously with the set's member or element?  
+
+(=>
+    (instance ?OBJ
+        (PropertyFn ?PERSON))
+    (possesses ?PERSON ?OBJ))
+
+(=>
+    (possesses ?PERSON ?OBJ)
+    (instance ?OBJ
+        (PropertyFn ?PERSON)))

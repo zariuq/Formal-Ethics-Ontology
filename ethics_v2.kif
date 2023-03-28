@@ -3,7 +3,8 @@
 ;; This might be questionable?
 (instance Ethics FieldOfStudy)
 
-(subclass Ethics Philosophy)
+;; Philosophy is technically an "instance" of FieldOfStudy... seems wrong.
+;; (subclass Ethics Philosophy)
 (subclass Ethics Science)
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
@@ -303,5 +304,38 @@
                 (agent ?BEHAVE ?AGENT)
                 (instance ?AGENT VirtuousAgent)))))
 
+;; A set of the possible options in a decision... seems not needed :D
+(subclass DecisionSet NonNullSet)
 
+
+(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")
+(domain DecisionOptionFn 1 Deciding)
+(instance DecisionOptionFn TotalValuedRelation)
+(instance DecisionOptionFn UnaryFunction)
+(range DecisionOptionFn Set)
+
+(=>
+    (member ?P (DecisionOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+(=> 
+    (patient ?DECIDE ?P)
+    (member ?P (DecisionOptionFn ?DECIDE)))
+
+;; I wish to use 'result' to denote the processes that is decided upon and 'patient' to denote those being chosen among.
+;; So the result should be one of the processes being considered.
+(=> 
+    (and
+        (instance ?DECIDE Deciding)
+        (result ?DECIDE ?P))
+    (patient ?DECIDE ?P))
+
+;; (and 
+;;     (refers VirtueEthics ?STATE) 
+;;     (instance ?STATE Statement)
+;;     (equal ?STATE
+;;         (<=>
+;;             (modalAttribute ?BEHAVE MorallyGood)
+;;             (=>
+;;                 (exists (?AGENT))
 
