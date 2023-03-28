@@ -836,7 +836,6 @@
                 (inList ?P2 ?PL))
             (mutuallyExclusiveAgentProcess ?AGENT ?P1 ?P2))))
 
-
 ;;(=>
 ;;    (and
 ;;        (instance ?GROUP GroupOfPeople)

@@ -356,6 +356,52 @@
                         (result ?DECIDE ?BEHAVE)))))))
         
 ;; Take three: the above doesn't quite capture the conditional nature.
+;; ... if the judging agent believes that in an identical decision landscape, 
+;; the same choice would likely be made. 
+;; "equals" might be too strong and force the agents to be the same.  "Similar" please?  
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)
+                        (and 
+                            (agent ?DECIDEV ?AGENTV)
+                            (instance ?AGENTV VirtuousAgent)
+                            (instance ?DECIDEV Deciding)
+                            (equals (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
+                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
 
+;; Take four: given the weakness of 'equals', it seems similar to:
+;; If the judging agent believes that if there is an instance of deciding by a virtuous agent
+;; and the behavior is one of the options being decided upon,
+;; then the behavior is likely to be chosen.
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (agent ?DECIDE ?AGENTA)
+                        (instance ?AGENTA VirtuousAgent)
+                        (patient ?DECIDE ?BEHAVE))
+                    (modalAttribute (result ?DECIDE BEHAVE) Likely))))))
 
 
