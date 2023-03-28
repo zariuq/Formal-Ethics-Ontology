@@ -292,22 +292,13 @@
                             (instance ?BEHAVE2 AutonomousAgentProcess))
                         (modalAttribute ?BEHAVE2 MorallyBad)))))))              
                
-;; "An action is right iff it is what a virtuous agent would characteristically (i.e. acting in character) do in the circumstances." (On Virtue Ethics -- Right Action)
-;; Take one without the "would characteristically do" part.
-(and 
-    (refers VirtueEthics ?STATE)
-    (instance ?STATE Statement)
-    (equal ?STATE
-        (<=>
-            (modalAttribute ?BEHAVE MorallyGood)
-            (and 
-                (agent ?BEHAVE ?AGENT)
-                (instance ?AGENT VirtuousAgent)))))
+
+;; Begin Virtue Ethics section
 
 ;; A set of the possible options in a decision... seems not needed :D
 (subclass DecisionSet NonNullSet)
 
-
+;; To be honest, while I think it's good to have this definition, I'm not sure it'll actually be needed :D.
 (documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")
 (domain DecisionOptionFn 1 Deciding)
 (instance DecisionOptionFn TotalValuedRelation)
@@ -330,12 +321,41 @@
         (result ?DECIDE ?P))
     (patient ?DECIDE ?P))
 
-;; (and 
-;;     (refers VirtueEthics ?STATE) 
-;;     (instance ?STATE Statement)
-;;     (equal ?STATE
-;;         (<=>
-;;             (modalAttribute ?BEHAVE MorallyGood)
-;;             (=>
-;;                 (exists (?AGENT))
+;; "An action is right iff it is what a virtuous agent would characteristically (i.e. acting in character) do in the circumstances." (On Virtue Ethics -- Right Action)
+;; Take one without the "would characteristically do" part.
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (<=>
+            (modalAttribute ?BEHAVE MorallyGood)
+            (and 
+                (agent ?BEHAVE ?AGENT)
+                (instance ?AGENT VirtuousAgent)))))
+
+;; Take two: perhaps one can phrame the "would do" in terms of the instance of moral judging.
+;; An agent A will judge a behavior to be morally good if and only if
+;; The agent A believes there exists a decision of a virtuous agent B resulting in the behavior.
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (believes ?AGENTJ 
+                (exists (?DECIDE)
+                    (and 
+                        (agent ?BEHAVE ?AGENTB)
+                        (agent ?DECIDE ?AGENTB)
+                        (instance ?AGENTB VirtuousAgent)
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)))))))
+        
+;; Take three: the above doesn't quite capture the conditional nature.
+
+
 
