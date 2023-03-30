@@ -404,4 +404,39 @@
                         (patient ?DECIDE ?BEHAVE))
                     (modalAttribute (result ?DECIDE BEHAVE) Likely))))))
 
+;; The set of attributes applying to a Process.
+(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps a Process to the set of attributes that apply to it.")
+(domain DecisionOptionFn 1 Process)
+(instance DecisionOptionFn TotalValuedRelation)
+(instance DecisionOptionFn UnaryFunction)
+(range DecisionOptionFn Set)
+
+(=>
+    (attribute ?P ?ATT)
+    (member ?ATT (ProcessAttributeFn ?P)))
+
+(=> 
+    (member ?ATT (ProcessAttributeFn ?P))
+    (attribute ?P ?ATT))
+
+;; I think using this I can define similarity.
+;; Ideally, I will also include CaseRoles and spatiotemporal relations.
+(documentation similarProcess EnglishLanguage "A binary predicate that indicates whether two process share most of their attributes.")
+(domain similarProcesses 1 Process)
+(domain similarProcesses 2 Process)
+(instance similarProcesses BinaryPredicate)
+
+(=> 
+    (similarProcesses ?P1 ?P2)
+    (and 
+        (equal ?SP1 (ProcessAttributeFn ?P1))
+        (equal ?SP2 (ProcessAttributeFn ?P2))
+        (or
+            (and (instance ?SP1 NullSet) (instance ?SP2 Nullset))
+            (and 
+                (and (instance ?SP1 NonNullSet) (instance ?SP2 NonNullset))
+                (equal ?INTP12 (IntersectionFn ?SP1 ?SP2))
+                (equal ?UNP12 (UnionFN ?SP1 ?SP2))
+                (greaterThan (MultiplicationFn 2 (CardinalityFn ?INTP12)) (CardinalityFn ?UNP1))))))
+
 
