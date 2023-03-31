@@ -512,3 +512,31 @@
                             (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
                     (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
 
+
+;; The idea here is that if E1 and E2 are similar to agent A, 
+;; Then A is likely to make similar judgments with regard to E1 and E2.
+;; This should ontologically work for the Virtue ethics case above... without providing a specific measure.
+(documentation Similarity EnglishLanguage "Similarity attempts to capture the ontologic notion of similarity from a subjective point of view.")
+(instance Similarity TernaryPredicate) ;; or subclass?  Meh for now.  Just wanna sketch things out and move on.  
+(domain Similarity 1 CognitiveAgent)
+(domain Similarity 2 Entity)
+(domain Similarity 3 Entity)
+
+(=> 
+    (Similarity ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2))
+        (modalAttribute (result ?J2 ?O1) Likely)))
+
+(<=> 
+    (Similarity ?A ?E1 ?E2)
+    (Similarity ?A ?E2 ?E1))
+
+;; (and (result ?J2 ?O2) (Similarity ?A ?O1 ?O2))
