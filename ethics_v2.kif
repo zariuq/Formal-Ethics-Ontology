@@ -405,11 +405,11 @@
                     (modalAttribute (result ?DECIDE BEHAVE) Likely))))))
 
 ;; The set of attributes applying to a Process.
-(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps a Process to the set of attributes that apply to it.")
-(domain DecisionOptionFn 1 Process)
-(instance DecisionOptionFn TotalValuedRelation)
-(instance DecisionOptionFn UnaryFunction)
-(range DecisionOptionFn Set)
+(documentation ProcessAttributeFn EnglishLanguage "A UnaryFunction that maps a Process to the set of attributes that apply to it.")
+(domain ProcessAttributeFn 1 Process)
+(instance ProcessAttributeFn TotalValuedRelation)
+(instance ProcessAttributeFn UnaryFunction)
+(range ProcessAttributeFn Set)
 
 (=>
     (attribute ?P ?ATT)
@@ -419,24 +419,96 @@
     (member ?ATT (ProcessAttributeFn ?P))
     (attribute ?P ?ATT))
 
+;; Ok, I decided to implement an auxiliary function that returns all elements in Set1 that satisfy some binary predicate (aka similary measure) with regard to an element in the other set.
+;; Basically, all elements in one set that are similar to an element in the other set.
+(documentation ElementsShareBPFn EnglishLanguage "A TernaryFunction that maps a binary predicate (?BP) and two sets to the set of elements in the first set such that the binary predicate holds with an element in the second set.")
+(domain ElementsShareBPFn 1 BinaryPredicate)
+(domain ElementsShareBPFn 2 Set)
+(domain ElementsShareBPFn 3 set)
+(instance ElementsShareBPFn TernaryFunction)
+(instance ElementsShareBPFn TotalValuedRelation)
+(range ElementsShareBPFn Set)
+
+(<=> 
+    (member ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
+    (and
+        (member ?E1 ?S1)
+        (exists (?E2) 
+            (member ?E2 ?S2)
+            (?BP ?E1 ?E2))))
+
+;; This is nice yet with "sets of possible actions", we need to determine the "similarity" of the members and not their identity.
+(documentation similarSets EnglishLanguage "A binary predicate that indicates whether two sets share most of their elements.")
+(domain similarSets 1 Set)
+(domain similarSets 2 Set)
+(instance similarSets BinaryPredicate)
+
+(<=> 
+    (similarSets ?S1 ?S2)
+    (or
+            (and (instance ?S1 NullSet) (instance ?S2 Nullset))
+            (and 
+                (and (instance ?SP1 NonNullSet) (instance ?S2 NonNullset))
+                (equal ?INT12 (IntersectionFn ?S1 ?S2))
+                (equal ?UN12 (UnionFN ?S1 ?S2))
+                (greaterThan (MultiplicationFn 2 (CardinalityFn ?INT12)) (CardinalityFn ?UP1)))))
+
+;; So two sets here are similar if most of S1 are similar with some element of S2
+;; And most of S2 are similar with some element of S1.
+(documentation similarSetsWithBP EnglishLanguage "A ternary predicate that indicates whether most of each set satisfies a binary predicate with regard regard to an element in another set.")
+(domain similarSetsWithBP 1 BinaryPredicate)
+(domain similarSetsWithBP 2 Set)
+(domain similarSetsWithBP 3 Set)
+(instance similarSets TernaryPredicate)
+
+(<=>
+    (similarSetsWithBP ?BP ?S1 ?S2)
+    (and 
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S1 ?S2))) (CardinalityFn ?S1))
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S2 ?S1))) (CardinalityFn ?S2))))
+
 ;; I think using this I can define similarity.
 ;; Ideally, I will also include CaseRoles and spatiotemporal relations.
-(documentation similarProcess EnglishLanguage "A binary predicate that indicates whether two process share most of their attributes.")
+(documentation similarProcesses EnglishLanguage "A binary predicate that indicates whether two process share most of their attributes.")
 (domain similarProcesses 1 Process)
 (domain similarProcesses 2 Process)
 (instance similarProcesses BinaryPredicate)
 
-(=> 
+(<=> 
     (similarProcesses ?P1 ?P2)
     (and 
         (equal ?SP1 (ProcessAttributeFn ?P1))
         (equal ?SP2 (ProcessAttributeFn ?P2))
-        (or
-            (and (instance ?SP1 NullSet) (instance ?SP2 Nullset))
-            (and 
-                (and (instance ?SP1 NonNullSet) (instance ?SP2 NonNullset))
-                (equal ?INTP12 (IntersectionFn ?SP1 ?SP2))
-                (equal ?UNP12 (UnionFN ?SP1 ?SP2))
-                (greaterThan (MultiplicationFn 2 (CardinalityFn ?INTP12)) (CardinalityFn ?UNP1))))))
+        (similarSets ?SP1 ?SP2)))
 
+;; Now I think "(similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))"
+;; Let's us say that the set of options available for the agent are similar to the set of options available for the virtuous agent.
+;; For each possible action for the agent being judged,
+;; Is there some possible action for the virtuous agent that is similar?
+;; And vice-versa.
+
+;; Take five: take three with equality replaced by similarity.
+;; ... if the judging agent believes that in a similar decision landscape, 
+;; the same choice would likely be made. 
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)
+                        (and 
+                            (agent ?DECIDEV ?AGENTV)
+                            (instance ?AGENTV VirtuousAgent)
+                            (instance ?DECIDEV Deciding)
+                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
+                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
 
