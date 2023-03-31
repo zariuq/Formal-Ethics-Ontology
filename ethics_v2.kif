@@ -540,3 +540,31 @@
     (Similarity ?A ?E2 ?E1))
 
 ;; (and (result ?J2 ?O2) (Similarity ?A ?O1 ?O2))
+
+;; Decided I should do the Vice version, extrapolating from the Virtuous behavior definition of right action.
+;; The moral status of behavior that is neither virtuous nor vicious seems unclear.
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)
+                        (and 
+                            (agent ?DECIDEV ?AGENTV)
+                            (instance ?AGENTV ViciousAgent)
+                            (instance ?DECIDEV Deciding)
+                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
+                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
+
+;; Next up: Utilitarianism
+
+
