@@ -567,4 +567,139 @@
 
 ;; Next up: Utilitarianism
 
+;; Hey, GPT-4 suggested this :D
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+;; A utility function that maps an action to the net pleasure (pleasure - pain) it creates. (GPT-4 + Zar)
+;; Does this actually 'exist'?  Well, that's up for debate.  It can be used in a high-level definition, however, like a black box function :- p.
+;; In draft 1, I tried to sketch out how Utilitarianism as sketched out by John Stuart Mill works with aggregation functions,
+;; So that the utility evaluations of each member of a group get aggregated into a single utility value for the group.
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(domain UtilityFn 1 AutonomousAgentProcess)
+(instance UtilityFn TotalValuedRelation)
+(instance UtilityFn UnaryFunction)
+(range UtilityFn RealNumber)
+
+;; Draft 1 (GPT-4 + Zar)
+;; A morally good action is one which has a positive utility, i.e., increases pleasure more than it causes pain.
+;; This is a bit naive yet highly simplistic.
+;; If you have some magical utility function that applies to all behavior, then, yeah, you can just use it and determine if
+;; the behavior is good or bad.  Best and worst require comparisons.
+;; One could claim that this is the quintessence of Utilitarianism.  
+;; The specific forms of consequentialism and utilitarianism are ways to further specify the nature of this magical utility function.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (and
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (greaterThan (UtilityFn ?BEHAVE) 0)))))
+
+;; A morally bad action according to Utilitarianism 
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad)))
+            (and
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (lessThan (UtilityFn ?BEHAVE) 0)))))
+
+;; Draft 2 (GPT-4 + Zar)
+;; This has the downside that only intentional behavior (resulting from decisions) can be judged as morally good or bad.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (forall (?OPTION)
+                    (=> 
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION))))))))
+
+;; This is very brutal: if you have a better option and don't take it, your behavior is bad >:D.
+(and
+    (refers tilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad)))
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (exists (?OPTION)
+                    (and
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE))))))))
+
+;; Draft 3 (Zar, lol)
+;; The "if and only if" above seems too strong.
+;; If the option is the best available, then it is morally good by utilitarian standards.
+;; We leave unspecified how to morally judge actions that don't result from an instance of Deciding (such as subconscious behavior).
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (forall (?OPTION)
+                    (=> 
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION)))))
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood))))))
+
+;; Likewise, if there's an instance of deciding resulting in a behavior and there exists a better option, 
+;; then the behavior is morally bad by utilitarian standards.
+ (and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (instance ?BEHAVE AutonomousAgentProcess)           
+                (exists (?OPTION)
+                    (and
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE)))))
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad))))))
+
+;; Comments on GPT-4.  Unlike 3.5, it feels more like editing a rough draft than confused, botched crap that's not particularly usable (beyond random brainstorming).
+
+;; Next up: perhaps define some UtilityFn in terms CausingPain and CausingHappiness?
+;; Consequentialism? 
+;; Or, perhaps, moving on to the next phase of the project before circling back to these definitions?
+;; Ah, I could try to actually define some instances of these theories!
+;; And get to the case examples.
+;; Value systems?  
 
