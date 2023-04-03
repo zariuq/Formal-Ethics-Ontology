@@ -23,3 +23,44 @@
     (possesses ?PERSON ?OBJ)
     (instance ?OBJ
         (PropertyFn ?PERSON)))
+
+;; CausingUnhappiness is inserted as part of Causinghappiness, lol.
+;; The context in Mid-level-ontology.kif makes it clear.
+
+(subclass CausingHappiness Process)
+(documentation CausingHappiness EnglishLanguage "Any &%Process whose result is that the
+patient of the process is happy.")
+
+(=>
+  (and
+    (instance ?C CausingHappiness)
+    (patient ?C ?P))
+  (and
+    (holdsDuring
+      (BeginFn (WhenFn ?C))
+    (not
+      (attribute ?P Happiness)))
+    (holdsDuring
+      (EndFn (WhenFn ?C))
+    (attribute ?P Happiness))))
+
+(subclass CausingPain CausingUnhappiness)
+(documentation CausingPain EnglishLanguage "Any &%Process whose result is that the
+patient of the process is in &%Pain.")
+
+(subclass CausingUnhappiness Process)
+(documentation CausingUnhappiness EnglishLanguage "Any &%Process whose result is that the
+patient of the process is unhappy.")
+
+(=>
+  (and
+    (instance ?C CausingUnHappiness)
+    (patient ?C ?P))
+  (and
+    (holdsDuring
+      (BeginFn (WhenFn ?C))
+    (not
+      (attribute ?P Unhappiness)))
+    (holdsDuring
+      (EndFn (WhenFn ?C))
+    (attribute ?P Unhappiness))))
