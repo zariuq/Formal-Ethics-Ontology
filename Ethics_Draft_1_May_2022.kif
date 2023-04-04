@@ -653,7 +653,7 @@
             (EndFn
                 (WhenFn ?P))
             (instance ?OUTCOME Physical)))
-    (instance ?OUTCOME Outcome)
+    (instance ?OUTCOME Outcome))
 
 ;; I want to say that for any agent and process,
 ;; If an agent is capable of the process,

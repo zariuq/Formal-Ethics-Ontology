@@ -703,3 +703,58 @@
 ;; And get to the case examples.
 ;; Value systems?  
 
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
+
+;; Very general: An outcome is the physical entity that holds when a process ends.
+;; (partition Physical Object Process).
+(subclass Outcome Physical)
+
+;; O is an outcome if and only if there exists some process P such that O is the result of P.
+(<=>
+    (instance ?OUTCOME Outcome)
+    (exists (?P)
+        (and 
+            (instance ?P Process)
+            (result ?P ?OUTCOME))))
+
+;; If O is an outcome of a process ?P, then the end of ?$ is before the beginning of O.
+;; In theory there could be some overlap, such as the pain caused by punching someone in the face...?
+(=>
+    (and 
+        (instance ?OUTCOME Outcome)
+        (result ?P ?OUTCOME))
+    (before
+        (EndFn (WhenFn ?P))
+        (BeginFn (WhenFn ?OUTCOME))))
+
+;; Decided to call the judgment the patient of the MoralJudging.  It's a subrelation of patient, so I don't think it requires any immediate updates to the above draft. 
+;; Maybe I can say something like,
+;; If there is an instance of moral judging,
+;; Then there exists an argument with an outcome as a premise and the moral judgment as the conclusion.
+;; The use of an Argument (deductive or inductive) seems to be overly stong as a requirement.
+;; That is, the judgment process may depend on the ?OUTCOME in some fuzzy manner.
+;; But for now, I'll go with this.
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (equals ?CONCLUSION
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (exists (?ARGUMENT ?OUTCOME)
+                (and 
+                    (instance ?ARGUMENT Argument)
+                    (instance ?OUTCOME Outcome)
+                    (result ?BEHAVE ?OUTCOME)
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (premise ?ARGUMENT ?OUTCOME))))))
+
+ ;; Note on GPT-4 -- in this case, it was not so easy to receive much help.
+ ;; Probably because the challenge is how to actually philosophically frame the problem.
+ ;; Utilitarianism based on a black-box UtilityFn is relatively simple (and commonplace).                   
+
+
