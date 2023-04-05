@@ -1,6 +1,14 @@
 ;; In this file, I'll keep the latest draft of the primary definitions.
 
 (and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (member ?MEMB ?Group)
+    (instance ?BEHAVE AutonomousAgentProcess)
+    (agent ?MEMB ?BEHAVE)
+    (patient ?JUDGE ?BEHAVE))
+
+(and 
     (refers MoralNihilism ?STATE)
     (instance ?STATE Statement)
     (equal ?STATE 

@@ -60,8 +60,6 @@
 (documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is the assignment of a moral attribute to a behavior.")
 (subclass MoralJudging Judging)
 
-(subclass MoralJudging Judging)
-
 (=>
     (instance ?JUDGE MoralJudging)
     (exists (?BEHAVE ?MORAL)
@@ -315,6 +313,7 @@
 
 ;; I wish to use 'result' to denote the processes that is decided upon and 'patient' to denote those being chosen among.
 ;; So the result should be one of the processes being considered.
+;; Not needed because 'result' is a subrelation of 'patient.
 (=> 
     (and
         (instance ?DECIDE Deciding)
@@ -636,7 +635,7 @@
 
 ;; This is very brutal: if you have a better option and don't take it, your behavior is bad >:D.
 (and
-    (refers tilitarianism ?STATE)
+    (refers Utilitarianism ?STATE)
     (instance ?STATE Statement)
     (equals ?STATE
         (<=>

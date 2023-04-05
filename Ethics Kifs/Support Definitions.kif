@@ -1,0 +1,122 @@
+;; Auxiliary Definitions
+
+;; I see how this definition motivates the need for target-specificity or domain-specificity
+(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+(subclass VirtuousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VIRTUE VirtueAttribute)
+        (attribute ?AGENT ?VIRTUE))
+    (instance ?AGENT VirtuousAgent))
+
+(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+(subclass ViciousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VICE ViceAttribute)
+        (attribute ?AGENT ?VICE))
+    (instance ?AGENT VirtuousAgent))
+
+(=>
+    (instance ?PROC AutonomousAgentProcess)
+    (exists (?AGENT)
+        (and 
+            (agent ?PROC ?AGENT)
+            (instance ?AGENT AutonomousAgent))))
+
+(=>
+    (instance ?JUDGE MoralJudging)
+    (exists (?BEHAVE ?MORAL)
+        (and 
+            (instance ?BEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE 
+                (modalAttribute ?BEHAVE ?MORAL)))))
+
+;; Take two -- should I say that this proposition the formula is expressing exists?
+;; Q: should I use realization or conforms?
+(=> 
+    (conformsFormula ?OBJ ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (conforms ?OBJ ?PROP))))
+
+;; lol, I see there's room for abstraction
+(<=>
+    (member ?P (DecisionOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+(<=> 
+    (member ?ATT (ProcessAttributeFn ?P))
+    (attribute ?P ?ATT))
+
+(<=> 
+    (member ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
+    (and
+        (member ?E1 ?S1)
+        (exists (?E2) 
+            (member ?E2 ?S2)
+            (?BP ?E1 ?E2))))
+
+(<=> 
+    (similarSets ?S1 ?S2)
+    (or
+            (and (instance ?S1 NullSet) (instance ?S2 Nullset))
+            (and 
+                (and (instance ?SP1 NonNullSet) (instance ?S2 NonNullset))
+                (equal ?INT12 (IntersectionFn ?S1 ?S2))
+                (equal ?UN12 (UnionFN ?S1 ?S2))
+                (greaterThan (MultiplicationFn 2 (CardinalityFn ?INT12)) (CardinalityFn ?UP1)))))
+
+(<=>
+    (similarSetsWithBP ?BP ?S1 ?S2)
+    (and 
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S1 ?S2))) (CardinalityFn ?S1))
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S2 ?S1))) (CardinalityFn ?S2))))
+
+(<=> 
+    (similarProcesses ?P1 ?P2)
+    (and 
+        (equal ?SP1 (ProcessAttributeFn ?P1))
+        (equal ?SP2 (ProcessAttributeFn ?P2))
+        (similarSets ?SP1 ?SP2)))
+
+(=> 
+    (Similarity ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2))
+        (modalAttribute (result ?J2 ?O1) Likely)))
+
+(<=> 
+    (Similarity ?A ?E1 ?E2)
+    (Similarity ?A ?E2 ?E1))
+
+;; O is an outcome if and only if there exists some process P such that O is the result of P.
+(<=>
+    (instance ?OUTCOME Outcome)
+    (exists (?P)
+        (and 
+            (instance ?P Process)
+            (result ?P ?OUTCOME))))
+
+;; If O is an outcome of a process ?P, then the end of ?$ is before the beginning of O.
+;; In theory there could be some overlap, such as the pain caused by punching someone in the face...?
+(=>
+    (and 
+        (instance ?OUTCOME Outcome)
+        (result ?P ?OUTCOME))
+    (before
+        (EndFn (WhenFn ?P))
+        (BeginFn (WhenFn ?OUTCOME))))
+
+

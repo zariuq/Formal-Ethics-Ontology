@@ -42,3 +42,7 @@ The presentation of this project proposal at the [AITP 2022 conference](http://a
 
 The extended abstract is in "Formal_Ethics_Ontology_Extended_Abstract.pdf".  This document includes a sketch of how the ethical paradigms might be expressed in a multi-agent reinforcement learning setting.
 
+The second drafts are a living document: ethics_drafts_v2.kif.  
+
+And the folder Ethics Kifs contains distinct files for the current best versions of the ethical paradigms, supporting definitions, and SUMO class declarations.
+
