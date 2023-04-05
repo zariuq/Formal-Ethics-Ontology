@@ -1,0 +1,181 @@
+;; In this file, I'll keep the latest draft of the primary definitions.
+
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?JUDGE) 
+                (and 
+                    (instance ?JUDGE MoralJudging)
+                    (patient ?JUDGE ?MORALSTATEMENT)
+                    (instance ?MORALSTATEMENT Fact))))))
+
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Obligation)
+                    (=>
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyGood))))
+                    (=>
+                        (not 
+                            (conformsFormula ?BEHAVE ?RULE))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+             (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Prohibition)
+                    (=> 
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+            (exists (?RULE) 
+                (and 
+                    (modalAttribute ?RULE Permission)
+                    (=> 
+                        (and 
+                            (conformsFormula ?BEHAVE1 ?RULE)
+                            (prevents ?BEHAVE2 ?BEHAVE1)
+                            (instance ?BEHAVE2 AutonomousAgentProcess))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE 
+                                (modalAttribute ?BEHAVE2 MorallyBad)))))))))  
+
+
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)
+                        (and 
+                            (agent ?DECIDEV ?AGENTV)
+                            (instance ?AGENTV VirtuousAgent)
+                            (instance ?DECIDEV Deciding)
+                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
+                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
+
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE Deciding)
+                        (result ?DECIDE ?BEHAVE)
+                        (and 
+                            (agent ?DECIDEV ?AGENTV)
+                            (instance ?AGENTV ViciousAgent)
+                            (instance ?DECIDEV Deciding)
+                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
+                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (and
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (greaterThan (UtilityFn ?BEHAVE) 0)))))
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad)))
+            (and
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (lessThan (UtilityFn ?BEHAVE) 0)))))
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (instance ?BEHAVE AutonomousAgentProcess)
+                (forall (?OPTION)
+                    (=> 
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION)))))
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyGood))))))
+
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?DECIDE Deciding)
+                (result ?DECIDE ?BEHAVE)
+                (instance ?BEHAVE AutonomousAgentProcess)           
+                (exists (?OPTION)
+                    (and
+                        (member ?OPTION (DecisionOptionFn ?DECIDE))
+                        (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE)))))
+            (and
+                (instance ?JUDGE MoralJudging)
+                (patient ?JUDGE
+                    (modalAttribute ?BEHAVE MorallyBad))))))
+
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (equals ?CONCLUSION
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (exists (?ARGUMENT ?OUTCOME)
+                (and 
+                    (instance ?ARGUMENT Argument)
+                    (instance ?OUTCOME Outcome)
+                    (result ?BEHAVE ?OUTCOME)
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (premise ?ARGUMENT ?OUTCOME))))))
