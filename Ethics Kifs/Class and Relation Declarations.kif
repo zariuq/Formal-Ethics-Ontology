@@ -1,0 +1,131 @@
+;; I'll place class declarations here
+
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+
+;; This might be questionable?
+(instance Ethics FieldOfStudy)
+
+;; Philosophy is technically an "instance" of FieldOfStudy... seems wrong.
+;; (subclass Ethics Philosophy)
+(subclass Ethics Science)
+
+(subclass MoralNihilism Ethics)
+(subclass Deontology Ethics)
+(subclass Utilitarianism Ethics)
+(subclass VirtueEthics Ethics)
+
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
+
+(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
+(subclass MoralAttribute NormativeAttribute)
+
+(instance MorallyGood MoralAttribute)
+(instance MorallyBad MoralAttribute)
+;; MorallyBetter, MorallyWorse, 
+
+(subclass VirtueAttribute MoralAttribute)
+(subclass ViceAttribute MoralAttribute)
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass ViceAttribute PsychologicalAttribute)
+
+;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
+(contraryAttribute MorallyGood MorallyBad)
+(contraryAttribute VirtueAttribute ViceAtribute)
+
+(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+(subclass VirtuousAgent AutonomousAgent)
+
+(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+(subclass ViciousAgent AutonomousAgent)
+
+;; Encapsulate the Autonomous Agent aspect of "behavior"-type processes.
+(documentation AutonomousAgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an autonomous agent.")
+(subclass AutonomousAgentProcess Process)
+(subclass BodyMotion AutonomousAgentProcess)
+(subclass Vocalizing AutonomousAgentProcess)
+
+(documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is the assignment of a moral attribute to a behavior.")
+(subclass MoralJudging Judging)
+
+(subclass Outcome Physical)
+
+
+
+
+;; And relation or function declarations here
+
+(documentation conformsFormula EnglishLanguage "(conforms ?OBJ ?FORMULA) describes how ?OBJ follows the ideas outlined by the proposition represented by ?FORMULA.")
+
+(domain conformsFormula 1 Object)
+(domain conformsFormula 2 Formula)
+(instance conformsFormula BinaryPredicate)
+(subrelation conformsFormula represents)
+
+(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")
+(domain DecisionOptionFn 1 Deciding)
+(instance DecisionOptionFn TotalValuedRelation)
+(instance DecisionOptionFn UnaryFunction)
+(range DecisionOptionFn Set)
+
+;; The set of attributes applying to a Process.
+(documentation ProcessAttributeFn EnglishLanguage "A UnaryFunction that maps a Process to the set of attributes that apply to it.")
+(domain ProcessAttributeFn 1 Process)
+(instance ProcessAttributeFn TotalValuedRelation)
+(instance ProcessAttributeFn UnaryFunction)
+(range ProcessAttributeFn Set)
+
+;; Ok, I decided to implement an auxiliary function that returns all elements in Set1 that satisfy some binary predicate (aka similary measure) with regard to an element in the other set.
+;; Basically, all elements in one set that are similar to an element in the other set.
+(documentation ElementsShareBPFn EnglishLanguage "A TernaryFunction that maps a binary predicate (?BP) and two sets to the set of elements in the first set such that the binary predicate holds with an element in the second set.")
+(domain ElementsShareBPFn 1 BinaryPredicate)
+(domain ElementsShareBPFn 2 Set)
+(domain ElementsShareBPFn 3 set)
+(instance ElementsShareBPFn TernaryFunction)
+(instance ElementsShareBPFn TotalValuedRelation)
+(range ElementsShareBPFn Set)
+
+;; This is nice yet with "sets of possible actions", we need to determine the "similarity" of the members and not their identity.
+(documentation similarSets EnglishLanguage "A binary predicate that indicates whether two sets share most of their elements.")
+(domain similarSets 1 Set)
+(domain similarSets 2 Set)
+(instance similarSets BinaryPredicate)
+
+;; So two sets here are similar if most of S1 are similar with some element of S2
+;; And most of S2 are similar with some element of S1.
+(documentation similarSetsWithBP EnglishLanguage "A ternary predicate that indicates whether most of each set satisfies a binary predicate with regard regard to an element in another set.")
+(domain similarSetsWithBP 1 BinaryPredicate)
+(domain similarSetsWithBP 2 Set)
+(domain similarSetsWithBP 3 Set)
+(instance similarSets TernaryPredicate)
+
+;; I think using this I can define similarity.
+;; Ideally, I will also include CaseRoles and spatiotemporal relations.
+(documentation similarProcesses EnglishLanguage "A binary predicate that indicates whether two process share most of their attributes.")
+(domain similarProcesses 1 Process)
+(domain similarProcesses 2 Process)
+(instance similarProcesses BinaryPredicate)
+
+;; The idea here is that if E1 and E2 are similar to agent A, 
+;; Then A is likely to make similar judgments with regard to E1 and E2.
+;; This should ontologically work for the Virtue ethics case above... without providing a specific measure.
+(documentation Similarity EnglishLanguage "Similarity attempts to capture the ontologic notion of similarity from a subjective point of view.")
+(instance Similarity TernaryPredicate) ;; or subclass?  Meh for now.  Just wanna sketch things out and move on.  
+(domain Similarity 1 CognitiveAgent)
+(domain Similarity 2 Entity)
+(domain Similarity 3 Entity)
+
+;; A utility function that maps an action to the net pleasure (pleasure - pain) it creates. (GPT-4 + Zar)
+;; Does this actually 'exist'?  Well, that's up for debate.  It can be used in a high-level definition, however, like a black box function :- p.
+;; In draft 1, I tried to sketch out how Utilitarianism as sketched out by John Stuart Mill works with aggregation functions,
+;; So that the utility evaluations of each member of a group get aggregated into a single utility value for the group.
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(domain UtilityFn 1 AutonomousAgentProcess)
+(instance UtilityFn TotalValuedRelation)
+(instance UtilityFn UnaryFunction)
+(range UtilityFn RealNumber)
+
