@@ -727,13 +727,7 @@
         (EndFn (WhenFn ?P))
         (BeginFn (WhenFn ?OUTCOME))))
 
-;; Decided to call the judgment the patient of the MoralJudging.  It's a subrelation of patient, so I don't think it requires any immediate updates to the above draft. 
-;; Maybe I can say something like,
-;; If there is an instance of moral judging,
-;; Then there exists an argument with an outcome as a premise and the moral judgment as the conclusion.
-;; The use of an Argument (deductive or inductive) seems to be overly stong as a requirement.
-;; That is, the judgment process may depend on the ?OUTCOME in some fuzzy manner.
-;; But for now, I'll go with this.
+;; Draft 1
 (and
     (refers Consequentialism ?STATE)
     (instance ?STATE Statement)
@@ -751,6 +745,52 @@
                     (result ?BEHAVE ?OUTCOME)
                     (conclusion ?ARGUMENT ?CONCLUSION)
                     (premise ?ARGUMENT ?OUTCOME))))))
+
+;; Decided to call the judgment the patient of the MoralJudging.  It's a subrelation of patient, so I don't think it requires any immediate updates to the above draft. 
+;; Maybe I can say something like,
+;; If there is an instance of moral judging,
+;; Then there exists an argument, an outcome, and a premise such that the premise refers to the outcome and the conclusion is the moral assertion. 
+;; The use of an Argument (deductive or inductive) seems to be overly stong as a requirement.
+;; Moreover, for all premises of the argument that refer to something physical,
+;; the physical entity must be an outcome of the behavior.  
+;; Moreover, no premise refers to the attributes of the agent.
+;; That is, the judgment process may depend on the ?OUTCOME in some fuzzy manner.
+;; But for now, I'll go with this.  Draft 2:
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (equals ?CONCLUSION
+                    (modalAttribute ?BEHAVE MorallyGood)))
+            (exists (?ARGUMENT ?OUTCOME ?PREMISE)
+                (and 
+                    (instance ?ARGUMENT Argument)
+                    (instance ?OUTCOME Outcome)
+                    (result ?BEHAVE ?OUTCOME)
+                    (premise ?ARGUMENT ?PREMISE)
+                    (refers ?PREMISE ?OUTCOME)
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (agent ?BEHAVE ?AGENT)
+                    (forall (?PROP)
+                        (and 
+                            (=> 
+                                (and
+                                    (premise ?ARGUMENT ?PROP)
+                                    (refers ?PROP ?PHYS)
+                                    (instance ?PHYS Physical))
+                                (and 
+                                    (instance ?PHYS Outcome)
+                                    (result ?BEHAVE ?PHYS)))
+                            (=> 
+                                (premise ?ARGUMENT ?PROP)
+                                (forall (?ATT) 
+                                    (=> 
+                                        (attribute ?AGENT ?ATT))
+                                        (not (refers ?PROP ?ATT)))))))))))
 
  ;; Note on GPT-4 -- in this case, it was not so easy to receive much help.
  ;; Probably because the challenge is how to actually philosophically frame the problem.
