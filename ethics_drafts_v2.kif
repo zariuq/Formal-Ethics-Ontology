@@ -796,4 +796,138 @@
  ;; Probably because the challenge is how to actually philosophically frame the problem.
  ;; Utilitarianism based on a black-box UtilityFn is relatively simple (and commonplace).                   
 
+;; Self-comment: I like using this huge file to "work in" while moving drafts to other files that are less messy.
+
+;; Trolley Problem time.
+;; First, fuck it, I will use Train.
+
+(instance ?TROLLEY Train)
+(instance ?TRACK1 Railway)
+(instance ?TRACK2 Railway)
+(instance ?TRACK3 Railway)
+(instance ?FORK RailJunction)
+(instance ?LEVER Lever)
+
+;; The humans involved
+(instance ?MORALAGENT Human)
+(instance ?PERSON1 Human)
+(instance ?PERSON2 Human)
+(instance ?PERSON3 Human)
+(instance ?PERSON4 Human)
+(instance ?PERSON5 Human)
+(instance ?PERSON6 Human)
+
+;; The tedious inequalities (ty GPT-4 🙏):
+
+(not (equal ?TRACK1 ?TRACK2))
+(not (equal ?TRACK1 ?TRACK3))
+(not (equal ?TRACK2 ?TRACK3))
+
+(not (equal ?PERSON1 ?PERSON2))
+(not (equal ?PERSON1 ?PERSON3))
+(not (equal ?PERSON1 ?PERSON4))
+(not (equal ?PERSON1 ?PERSON5))
+(not (equal ?PERSON1 ?PERSON6))
+(not (equal ?PERSON1 ?MORALAGENT))
+
+(not (equal ?PERSON2 ?PERSON3))
+(not (equal ?PERSON2 ?PERSON4))
+(not (equal ?PERSON2 ?PERSON5))
+(not (equal ?PERSON2 ?PERSON6))
+(not (equal ?PERSON2 ?MORALAGENT))
+
+(not (equal ?PERSON3 ?PERSON4))
+(not (equal ?PERSON3 ?PERSON5))
+(not (equal ?PERSON3 ?PERSON6))
+(not (equal ?PERSON3 ?MORALAGENT))
+
+(not (equal ?PERSON4 ?PERSON5))
+(not (equal ?PERSON4 ?PERSON6))
+(not (equal ?PERSON4 ?MORALAGENT))
+
+(not (equal ?PERSON5 ?PERSON6))
+(not (equal ?PERSON5 ?MORALAGENT))
+
+(not (equal ?PERSON6 ?MORALAGENT))
+
+;; Or we can use UniqueList, right?
+;; Something which GPT-4 is also not bad at, with a bit of guidance and correcction.
+;; One note is that for practical reasoning via Vampire, the tedious expansion above might be better ^^;
+
+(instance ?HUMANS UniqueList)
+(inList ?PERSON1 ?HUMANS)
+(inList ?PERSON2 ?HUMANS)
+(inList ?PERSON3 ?HUMANS)
+(inList ?PERSON4 ?HUMANS)
+(inList ?PERSON5 ?HUMANS)
+(inList ?PERSON6 ?HUMANS)
+(inList ?MORALAGENT ?HUMANS)
+
+(equal (ListOrderFn ?HUMANS 1) ?PERSON1)
+(equal (ListOrderFn ?HUMANS 2) ?PERSON2)
+(equal (ListOrderFn ?HUMANS 3) ?PERSON3)
+(equal (ListOrderFn ?HUMANS 4) ?PERSON4)
+(equal (ListOrderFn ?HUMANS 5) ?PERSON5)
+(equal (ListOrderFn ?HUMANS 6) ?PERSON6)
+(equal (ListOrderFn ?HUMANS 7) ?MORALAGENT)
+
+;; Locations of the humans tied to the track.
+(orientation ?LEVER ?FORK Near)
+(orientation ?PERSON1 ?TRACK3 On)
+(orientation ?PERSON2 ?TRACK2 On)
+(orientation ?PERSON3 ?TRACK2 On)
+(orientation ?PERSON4 ?TRACK2 On)
+(orientation ?PERSON5 ?TRACK2 On)
+(orientation ?PERSON6 ?TRACK2 On)
+
+;; TODO: expand this to all the people, lol.
+(and 
+    (instance ?TYING Tying)
+    (patient ?TYING ?TRACK2)
+    (patient ?TYING ?PERSON2)
+    (before (WhenFn ?TYING) (WhenFn ?CHOICE)))
+
+;; During the choice, person 2 cannot be the agent of the process of untying itself from the track :D.
+(and 
+    (holdsDuring (WhenFn ?CHOICE)
+        (and 
+            (not (capable (?UNTYING) agent ?PERSON2))
+            (instance ?UNTYING Untying)
+            (patient ?UNTYING ?TRACK2)
+            (patient ?UNTYING ?PERSON2))))
+
+;; The track configuration.
+(meetsSpatially ?TROLLEY ?TRACK)
+(orientation ?TROLLEY ?TRACK On)
+(connects ?FORK ?TRACK1 ?TRACK3)
+(not (connected ?TRACK1 ?TRACK2))
+(not (connected ?TRACK1 ?TRACK3))
+(not (connected ?TRACK2 ?TRACK3))
+
+(instance LeverUnpulled Attribute)
+(instance LeverPulled Attribute)
+(attribute ?LEVER LeverUnpulled)
+
+(=> 
+    (attribute ?LEVER LeverUnpulled)
+    (connects ?FORK ?TRACK1 ?TRACK2))
+
+(=> 
+    (attribute ?LEVER LeverPulled)
+    (connects ?FORK ?TRACK1 ?TRACK3))
+
+(instance ?MOVING Transportation)
+(instrument ?MOVING ?TROLLEY)
+
+;; And then I wish to describe that the trolley will drive onto either track 2 or track 3 :- D.
+
+;; ;; ;; Ok, I decided this is frustrating. 
+;; I want to just define the abstract k-way choice problem first 🤣🤣🤣🤣
+;; Or, well, what is a moral dilemma?
+
+;; This is sort of the dual of a Deciding.  
+;; An instance of deciding implies a set of options.
+;; A set of options implies the potential for there to be an instance of deciding.
+(documentation MoralDilemma EnglishLanguage "A subclass of a set of processes where one agent has to choose between two or more (mutually exclusive) options.")
+(subclass MoralDilemma SetOfProcesses)
 
