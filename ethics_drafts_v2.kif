@@ -925,9 +925,79 @@
 ;; I want to just define the abstract k-way choice problem first 🤣🤣🤣🤣
 ;; Or, well, what is a moral dilemma?
 
+(documentation SetOfProcesses EnglishLanguage "A set of processes.")
+(subclass SetOfProcesses Set)
+
+(=> 
+    (instance ?S SetOfProcesses)
+    (forall (?P)
+        (=>
+            (member ?P ?S))
+            (instance ?P Process)))
+
 ;; This is sort of the dual of a Deciding.  
 ;; An instance of deciding implies a set of options.
 ;; A set of options implies the potential for there to be an instance of deciding.
-(documentation MoralDilemma EnglishLanguage "A subclass of a set of processes where one agent has to choose between two or more (mutually exclusive) options.")
-(subclass MoralDilemma SetOfProcesses)
+;; The difference between the Decision Options Set is that the processes aren't necessarily intentional with a specific purpose.
+(documentation ChoicePoint EnglishLanguage "A subclass of a set of processes where one agent has to choose between two or more (mutually exclusive) options.")
+(subclass ChoicePoint SetOfProcesses)
+(subclass ChoicePoint NonNullSet)
+
+;; If there's an instance of Deciding and an agent thereof with a non-empty set of options,
+;; Then the set of options is a choice point.  (Because the agent)
+(=> 
+    (and
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (instance (DecisionOptionFn ?DECIDE) NonNullSet))
+    (instance (DecisionOptionFn ?DECIDE) ChoicePoint))
+
+;; Maybe we could just say that Deciding implies there is an agent and at least one option.
+(=> 
+    (instance ?DECIDE Deciding)
+    (exists (?AGENT ?PROCESS)
+        (and 
+            (agent ?DECIDE ?AGENT)
+            (patient ?DECIDE ?PROCESS))))
+
+;; In which case we could say that it's non-null.
+(range DecisionOptionFn SetofProcesses)
+
+;; If C is a choice point, then there is an agent such that it's possible for that agent to be an agent of each process in the set.
+;; Draft 1
+(=> 
+    (instance ?C ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (=> 
+                (member ?P ?S)
+                (modalAttribute 
+                    (agent ?P ?AGENT) Possibility)))))
+
+;; Because being the agent of a process implies nothing about whether it's enacted, we can drop possibility.
+;; Draft 2
+(=> 
+    (instance ?C ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (=> 
+                (member ?P ?S)
+                (agent ?P ?AGENT)))))
+
+;; If there's a non-empty set of processes with an agent of all the processes therein,
+;; Then it's a choice point.
+(=> 
+    (and 
+        (instance ?S SetOfProcesses)
+        (instance ?S NonNullSet)
+        (exists (?AGENT)
+            (forall (?P)
+                (=> 
+                    (member ?P ?S)
+                    (agent ?P ?AGENT)))))
+        (instance ?S ChoicePoint))
+
+
+(documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
+(subclass MoralDilemma ChoicePoint)
 
