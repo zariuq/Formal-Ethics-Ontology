@@ -203,7 +203,7 @@
                                 (premise ?ARGUMENT ?PROP)
                                 (forall (?ATT) 
                                     (=> 
-                                        (attribute ?AGENT ?ATT))
-                                        (not (refers ?PROP ?ATT)))))))))))
+                                        (attribute ?AGENT ?ATT)
+                                        (not (refers ?PROP ?ATT))))))))))))
 
 

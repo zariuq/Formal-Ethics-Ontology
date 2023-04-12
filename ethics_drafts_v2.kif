@@ -433,8 +433,9 @@
     (and
         (member ?E1 ?S1)
         (exists (?E2) 
-            (member ?E2 ?S2)
-            (?BP ?E1 ?E2))))
+            (and 
+                (member ?E2 ?S2)
+                (?BP ?E1 ?E2)))))
 
 ;; This is nice yet with "sets of possible actions", we need to determine the "similarity" of the members and not their identity.
 (documentation similarSets EnglishLanguage "A binary predicate that indicates whether two sets share most of their elements.")
@@ -1000,4 +1001,6 @@
 
 (documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
 (subclass MoralDilemma ChoicePoint)
+
+
 

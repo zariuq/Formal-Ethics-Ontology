@@ -58,8 +58,9 @@
     (and
         (member ?E1 ?S1)
         (exists (?E2) 
-            (member ?E2 ?S2)
-            (?BP ?E1 ?E2))))
+            (and 
+                (member ?E2 ?S2)
+                (?BP ?E1 ?E2)))))
 
 (<=> 
     (similarSets ?S1 ?S2)
