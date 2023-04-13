@@ -26,13 +26,17 @@
             (agent ?PROC ?AGENT)
             (instance ?AGENT AutonomousAgent))))
 
+;; Decided that the behavior can be a patient of the MoralJudging
+;; And the moral judgment can be the result.
+;; There is a precedent in Adam's SUMO.
 (=>
     (instance ?JUDGE MoralJudging)
     (exists (?BEHAVE ?MORAL)
         (and 
             (instance ?BEHAVE AutonomousAgentProcess)
             (instance ?MORAL MoralAttribute)
-            (patient ?JUDGE 
+            (patient ?JUDGE ?BEHAVE)
+            (result ?JUDGE 
                 (modalAttribute ?BEHAVE ?MORAL)))))
 
 ;; Take two -- should I say that this proposition the formula is expressing exists?

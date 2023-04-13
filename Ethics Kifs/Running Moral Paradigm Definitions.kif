@@ -3,10 +3,14 @@
 (and 
     (refers Ethics ?JUDGE)
     (instance ?JUDGE MoralJudging)
-    (member ?MEMB ?Group)
+    (instance ?MORAL MoralAttribute)
+    (instance ?GROUP Group)
     (instance ?BEHAVE AutonomousAgentProcess)
-    (agent ?MEMB ?BEHAVE)
-    (patient ?JUDGE ?BEHAVE))
+    (member ?MEMB ?GROUP)
+    (agent ?BEHAVE ?MEMB)
+    (patient ?JUDGE ?BEHAVE)
+    (result ?JUDGE 
+        (modalAttribute ?BEHAVE ?MORAL)))
 
 (and 
     (refers MoralNihilism ?STATE)
@@ -16,7 +20,7 @@
             (exists (?JUDGE) 
                 (and 
                     (instance ?JUDGE MoralJudging)
-                    (patient ?JUDGE ?MORALSTATEMENT)
+                    (result ?JUDGE ?MORALSTATEMENT)
                     (instance ?MORALSTATEMENT Fact))))))
 
 (and 
@@ -31,14 +35,14 @@
                         (conformsFormula ?BEHAVE ?RULE)
                         (and 
                             (instance ?JUDGE MoralJudging)
-                            (patient ?JUDGE
+                            (result ?JUDGE
                                 (modalAttribute ?BEHAVE MorallyGood))))
                     (=>
                         (not 
                             (conformsFormula ?BEHAVE ?RULE))
                         (and 
                             (instance ?JUDGE MoralJudging)
-                            (patient ?JUDGE
+                            (result ?JUDGE
                                 (modalAttribute ?BEHAVE MorallyBad))))))
              (exists (?RULE)
                 (and 
@@ -47,7 +51,7 @@
                         (conformsFormula ?BEHAVE ?RULE)
                         (and 
                             (instance ?JUDGE MoralJudging)
-                            (patient ?JUDGE
+                            (result ?JUDGE
                                 (modalAttribute ?BEHAVE MorallyBad))))))
             (exists (?RULE) 
                 (and 
@@ -59,7 +63,7 @@
                             (instance ?BEHAVE2 AutonomousAgentProcess))
                         (and 
                             (instance ?JUDGE MoralJudging)
-                            (patient ?JUDGE 
+                            (result ?JUDGE 
                                 (modalAttribute ?BEHAVE2 MorallyBad)))))))))  
 
 
@@ -93,7 +97,7 @@
             (and
                 (instance ?JUDGE MoralJudging)
                 (agent ?JUDGE ?AGENTJ)
-                (patient ?JUDGE
+                (result ?JUDGE
                     (modalAttribute ?BEHAVE MorallyBad)))
             (believes ?AGENTJ
                 (=>
@@ -114,7 +118,7 @@
         (<=>
             (and
                 (instance ?JUDGE MoralJudging)
-                (patient ?JUDGE
+                (result ?JUDGE
                     (modalAttribute ?BEHAVE MorallyGood)))
             (and
                 (instance ?BEHAVE AutonomousAgentProcess)
@@ -127,7 +131,7 @@
         (<=>
             (and
                 (instance ?JUDGE MoralJudging)
-                (patient ?JUDGE
+                (result ?JUDGE
                     (modalAttribute ?BEHAVE MorallyBad)))
             (and
                 (instance ?BEHAVE AutonomousAgentProcess)
@@ -148,7 +152,7 @@
                         (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION)))))
             (and
                 (instance ?JUDGE MoralJudging)
-                (patient ?JUDGE
+                (result ?JUDGE
                     (modalAttribute ?BEHAVE MorallyGood))))))
 
 
@@ -167,7 +171,7 @@
                         (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE)))))
             (and
                 (instance ?JUDGE MoralJudging)
-                (patient ?JUDGE
+                (result ?JUDGE
                     (modalAttribute ?BEHAVE MorallyBad))))))
 
 (and

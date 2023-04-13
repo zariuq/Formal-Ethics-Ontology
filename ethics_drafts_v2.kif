@@ -60,13 +60,17 @@
 (documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is the assignment of a moral attribute to a behavior.")
 (subclass MoralJudging Judging)
 
+;; Decided that the behavior can be a patient of the MoralJudging
+;; And the moral judgment can be the result.
+;; There is a precedent in Adam's SUMO.
 (=>
     (instance ?JUDGE MoralJudging)
     (exists (?BEHAVE ?MORAL)
         (and 
             (instance ?BEHAVE AutonomousAgentProcess)
             (instance ?MORAL MoralAttribute)
-            (patient ?JUDGE 
+            (patient ?JUDGE ?BEHAVE)
+            (result ?JUDGE 
                 (modalAttribute ?BEHAVE ?MORAL)))))
 
 ;; Ethics refers to the moral judging of processes (behavior) of members of groups (aka society, lol).
@@ -74,10 +78,14 @@
 (and 
     (refers Ethics ?JUDGE)
     (instance ?JUDGE MoralJudging)
-    (member ?MEMB ?Group)
+    (instance ?MORAL MoralAttribute)
+    (instance ?GROUP Group)
     (instance ?BEHAVE AutonomousAgentProcess)
-    (agent ?MEMB ?BEHAVE)
-    (patient ?JUDGE ?BEHAVE))
+    (member ?MEMB ?GROUP)
+    (agent ?BEHAVE ?MEMB)
+    (patient ?JUDGE ?BEHAVE)
+    (result ?JUDGE 
+        (modalAttribute ?BEHAVE ?MORAL)))
 
 (subclass MoralNihilism Ethics)
 (subclass Deontology Ethics)
@@ -137,7 +145,7 @@
             (exists (?JUDGE) 
                 (and 
                     (instance ?JUDGE MoralJudging)
-                    (patient ?JUDGE ?MORALSTATEMENT)
+                    (result ?JUDGE ?MORALSTATEMENT)
                     (instance ?MORALSTATEMENT Fact))))))
 
 ;; Deontology refers to statements of the nature that there exist rules such that 
@@ -1031,5 +1039,24 @@
 (documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
 (subclass MoralDilemma ChoicePoint)
 
+;; A Moral Dilemma is a choice for which every opnios is likely to be judged morally bad by all moral judgments thereof.
+;; Maybe this is quite strong :- p
+;; (Taken from Wikipedia: https://en.wikipedia.org/wiki/Ethical_dilemma)
+(=> 
+    (instance ?MD MoralDilemma)
+    (forall (?BEHAVE)
+        (=> 
+            (member ?BEHAVE ?MD)
+            (modalAttribute 
+                (forall (?JUDGE)
+                    (=>
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE ?BEHAVE))
+                        (result ?JUDGE 
+                            (modalAttribute ?BEHAVE MorallyBad))))) Likely)))
 
 
+;; "The crucial features of a moral dilemma are these: the agent is required to do each of two (or more) actions; the agent can do each of the actions; but the agent cannot do both (or all) of the actions." 
+;; (SEP: https://plato.stanford.edu/entries/moral-dilemmas/)
+;; This is a deontology apporach, sort of.

@@ -68,3 +68,24 @@ patient of the process is unhappy.")
 
 ;; This should be lower-case.
 (format ItalianLanguage Believes "%1 %n{non} crede%p{s} %2")	relations-it.txt 36-36
+
+;; Small suggestion: use result for the proposition that is being judged to be true.
+;; Precedent: in Dining.kif 883-896, (patient ?PROC ?OBJ) is used for the object of a contest
+;; and (result ?PROC (SubjectiveAttribute...)) is used for the attribute judged to hold.
+(=>
+    (and
+        (instance ?JUDGE Judging)
+        (agent ?JUDGE ?AGENT)
+        (result ?JUDGE ?PROPOSITION))
+    (and
+        (holdsDuring
+            (BeginFn
+                (WhenFn ?JUDGE))
+            (not
+                (believes ?AGENT ?PROPOSITION)))
+        (holdsDuring
+            (EndFn
+                (WhenFn ?JUDGE))
+            (believes ?AGENT ?PROPOSITION))))
+
+
