@@ -64,3 +64,7 @@ patient of the process is unhappy.")
     (holdsDuring
       (EndFn (WhenFn ?C))
     (attribute ?P Unhappiness))))
+
+
+;; This should be lower-case.
+(format ItalianLanguage Believes "%1 %n{non} crede%p{s} %2")	relations-it.txt 36-36

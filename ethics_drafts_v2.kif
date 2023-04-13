@@ -998,6 +998,35 @@
                     (agent ?P ?AGENT)))))
         (instance ?S ChoicePoint))
 
+;; It came to my attention that in Deciding, 
+;; I might actually wish to refer to subclasses of Processes rather than instances of Processes
+;; I'm deciding on the subclass of processes of "saving from drowning" where there is a particural instance of drowning.
+;; Until a decision is made and acted upon, there's no instance of saving.  
+;; I just believe it's possible for there to be an instance of this saving from drowning class of processes.
+;; However, I think to be pragmatic, I will just work with instances and abuse (agent ?P ?A) in some way.
+;; AI or myself can update things if needed when we are actually testing this stuff out in practice :'D.
+(documentation DecidingSubclass EnglishLanguage "The subclass of Selecting where the agent opts for one course of action out of a set of multiple possibilities that are open to him/ her, which are represented as subclasses of Process.")
+(subclass DecidingSubclass Selecting)
+
+;; If a subclass of Process is being decided upon by an agent
+;; The agent is capable of enacting an instance of the SubProcess
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?SUBPROCESS))
+    (capability ?SUBPROCESS agent ?AGENT))
+
+;; Draft 2, being nitpicky
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?SUBPROCESS))
+    (believes ?AGENT 
+        (capability ?SUBPROCESS agent ?AGENT)))
+
+
 
 (documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
 (subclass MoralDilemma ChoicePoint)
