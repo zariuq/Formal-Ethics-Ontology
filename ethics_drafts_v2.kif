@@ -1089,3 +1089,15 @@
 ;; Also, (agent ?BEHAVECLASS ?AGENT) is type-invalid
 ;; I'm realizing I really need to deal with a lot of stuff on the level of subclass of Process
 ;; Dealing with individual in
+
+;; Ok, I wanna take a stab at the Truthful LLM problem.
+
+(documentation LLM EnglishLanguage "Large Language Model -- in this case specifically transformer-based models used as sagely chatbots.")
+(subclass LLM ComputerProgram)
+
+;; An LLM is capable of Answering
+(=>
+    (instance ?GPT LLM)
+    (capability Answering agent ?GPT))
+
+    
