@@ -1057,6 +1057,35 @@
                             (modalAttribute ?BEHAVE MorallyBad))))) Likely)))
 
 
-;; "The crucial features of a moral dilemma are these: the agent is required to do each of two (or more) actions; the agent can do each of the actions; but the agent cannot do both (or all) of the actions." 
+;; "The crucial features of a moral dilemma are these: 
+;; the agent is required to do each of two (or more) actions; 
+;; the agent can do each of the actions; 
+;; but the agent cannot do both (or all) of the actions." 
 ;; (SEP: https://plato.stanford.edu/entries/moral-dilemmas/)
 ;; This is a deontology apporach, sort of.
+
+(=> 
+    (instance ?MD MoralDilemma)
+    (and
+        (exists (?AGENT)
+            (and 
+                (forall (?BEHAVECLASS)
+                    (=> 
+                        (member ?BEHAVECLASS ?MD)
+                        (agent ?BEHAVECLASS ?AGENT)))
+                (forall (?BEHAVECLASS)
+                    (=> 
+                        (member ?BEHAVECLASS ?MD)
+                        (and
+                            (modalAttribute 
+                                (exists (?BEHAVE) 
+                                    (and 
+                                        (agent ?BEHAVE ?AGENT)
+                                        (instance ?BEHAVE ?BEHAVECLASS))) Obligation)
+                            (capability ?BEHAVECLASS agent ?AGENT))))))))
+
+;; Gee, and now I need to figure out again how to say that the agent cannot do them all.
+;; Which is a bitch.
+;; Also, (agent ?BEHAVECLASS ?AGENT) is type-invalid
+;; I'm realizing I really need to deal with a lot of stuff on the level of subclass of Process
+;; Dealing with individual in
