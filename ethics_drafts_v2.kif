@@ -1095,9 +1095,64 @@
 (documentation LLM EnglishLanguage "Large Language Model -- in this case specifically transformer-based models used as sagely chatbots.")
 (subclass LLM ComputerProgram)
 
+(documentation LLMAgent EnglishLanguage "The computer actually running the large language model, which is an abstract entity.")
+(subclass LLMAgent Computer)
+
+(=> 
+    (instance ?GPT LLMAgent)
+    (exists (?PROGRAM)
+        (and 
+            (instance ?PROGRAM LLM)
+            (computerRunning ?PROGRAM ?GPT))))
+
 ;; An LLM is capable of Answering
 (=>
-    (instance ?GPT LLM)
+    (instance ?GPT LLMAgent)
     (capability Answering agent ?GPT))
 
-    
+;; For intents and purposes, we'll consider LLMAgents to be AutonomousAgents.
+;; "Something or someone that can act on its own and produce changes in the world."
+;; And, frankly, once we set it up and running, that's essentially what it's doing with users.  
+(=> (intsance ?GPT LLMAgent)
+    (instance ?GPT AutonomousAgent))
+
+;; Let's see what I had in the last draft: 
+(subclass Honesty VirtueAttribute)
+(instance Truthfulness Honesty)
+(Instance Integrity Honesty)
+
+;; There exists a human, I've met one, that desires it to be the case that,
+;; If GPT answers the query, then the answer is true.
+;; Note: this includes saying, "I don't know", lol.  Maybe.
+(exists (?HUMAN)
+    (desires ?HUMAN
+        (=>
+            (and 
+                (instance ?GPT LLM)
+                (instance ?ANSWERING Answering)
+                (agent ?ANSWERING ?GPT)
+                (result ?ANSWERING ?SENTENCE))
+            (truth ?SENTENCE True))))
+
+;; An instance of Communication is intentionally honest 
+;; When the agent believes that the bessage is true.
+(subclass IntentionallyHonestCommunication Communication)
+(=>
+    (and
+        (instance ?COMM IntentionallyHonestCommunication)
+        (instance ?AGENT CognitiveAgent)
+        (agent ?COMM ?AGENT)
+        (patient ?COMM ?MESSAGE)
+        (instance ?MESSAGE Sentence))
+    (holdsDuring
+        (WhenFn ?COMM)
+        (believes ?AGENT
+            (truth ?MESSAGE True))))
+
+;; Set up this as a virtue... and we're pretty much done?
+;; Oh, except that LLMs are not autonomous agents, lol.
+
+;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
+(instance Value Abstract)
+(documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
+
