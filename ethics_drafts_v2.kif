@@ -1128,7 +1128,7 @@
     (desires ?HUMAN
         (=>
             (and 
-                (instance ?GPT LLM)
+                (instance ?GPT LLMAgent)
                 (instance ?ANSWERING Answering)
                 (agent ?ANSWERING ?GPT)
                 (result ?ANSWERING ?SENTENCE))
@@ -1150,9 +1150,69 @@
             (truth ?MESSAGE True))))
 
 ;; Set up this as a virtue... and we're pretty much done?
-;; Oh, except that LLMs are not autonomous agents, lol.
+
+;; There is an obligation for the LLM Agent's behavior to be morally good ;D
+(modalAttribute 
+    (=>
+        (and 
+            (instance ?GPT LLMAgent)
+            (instance ?BEHAVIOR AutonomousAgentProcess)
+            (agent ?GPT ?BEHAVIOR))
+        (modalattribute ?BEHAVIOR MorallyGood)) Obligation)
+
+;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
+(confersNorm ?AISafetyGuru 
+    (=>
+        (and 
+            (instance ?GPT LLMAgent)
+            (instance ?BEHAVIOR AutonomousAgentProcess)
+            (agent ?GPT ?BEHAVIOR))
+        (modalattribute ?BEHAVIOR MorallyGood)) Obligation)
 
 ;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
 (instance Value Abstract)
 (documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
+
+;; Well, can we say this over-expression?
+;; If there is a moral judging, then there is a value that causes this judgment.
+(=> 
+    (instance ?JUDGE MoralJudging)
+    (exists (?VALUE)
+        (and
+            (instance ?VALUE Value)
+            (causes ?VALUE ?JUDGE))))
+
+;; Influence: "the capacity to have an effect on the character, development, or behaviour of someone or something, or the effect itself."
+;; Oxford Languages, via Google search.
+(documentation influences EnglishLanguage "The influence relation between instances of Entities and Processes (influences ?ENTITY ?PROCESS) denotes that ?ENTITY has some effect on ?PROCESS")
+; ; (domain influences 1 Entity)
+(domain influences 2 Process)
+; (instance influences AsymmetricRelation)
+(instance influences BinaryPredicate)
+(relatedInternalConcept influences causes)
+
+;; If A causes B, then A influences B.
+(=>
+    (causes ?P1 ?P2)
+    (influences ?P1 ?P2))
+
+;; If A influences B and A is a process, then they are related events.
+(=>
+    (and
+        (influences ?P1 ?P2)
+        (instance ?P1 Process))
+    (relatedEvent ?P1 ?P2))
+
+;; If A influences B and A is physical, then A occurs earlier than B.
+;; I note that retrocausality in quantum-mechanics violates this "rule" even for causes.
+(=>
+    (and
+        (influences ?P1 ?P2)
+        (instance ?P1 Physical))
+    (earlier 
+        (WhenFn ?P1)
+        (WhenFn ?P2)))
+
+;; It's hard to talk about "to have an effect", lol.
+
 
