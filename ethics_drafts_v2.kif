@@ -1214,5 +1214,42 @@
         (WhenFn ?P2)))
 
 ;; It's hard to talk about "to have an effect", lol.
+;; Ah, I'll generalize "InternalChange" a la the "property" BinaryPredicate.
+;; Possibly an overgeneralization, lol.
+;; As with the "similarity", it seems easiest to just do it in terms of attributes.  Setting BPs and TPs aside.
+(documentation Change EnglishLanguage "Processes that involve altering a property of an Entity.")
+(subclass Change Process)
+(subclass InternalChange Change)
+
+;; If there is a change in an entity E, 
+;; Then there exists a property whose status toggles:
+;; If E possessed A, then it no longer does.
+;; If E did not possess A, then it does.
+(=>
+    (and
+        (instance ?CHANGE Change)
+        (patient ?CHANGE ?ENTITY))
+    (exists (?PROPERTY)
+        (or
+            (and
+                (holdsDuring
+                    (BeginFn
+                        (WhenFn ?CHANGE))
+                    (property ?ENTITY ?PROPERTY))
+                (holdsDuring
+                    (EndFn
+                        (WhenFn ?CHANGE))
+                    (not
+                        (property ?ENTITY ?PROPERTY))))
+            (and
+                (holdsDuring
+                    (BeginFn
+                        (WhenFn ?CHANGE))
+                    (not
+                        (property ?ENTITY ?PROPERTY)))
+                (holdsDuring
+                    (EndFn
+                        (WhenFn ?CHANGE))
+                    (property ?ENTITY ?PROPERTY))))))
 
 

@@ -54,7 +54,7 @@ patient of the process is unhappy.")
 
 (=>
   (and
-    (instance ?C CausingUnHappiness)
+    (instance ?C CausingHappiness)
     (patient ?C ?P))
   (and
     (holdsDuring
@@ -138,4 +138,30 @@ patient of the process is unhappy.")
     (believes ?AGENT 
         (capability ?SUBPROCESS agent ?AGENT)))
 
+;; ?H and H2 are in different scopes.  If ?H exists then ?H2 will exist.
+(=>
+    (manner ?P Solely)
+    (and
+        (exists (?H)
+            (and
+                (involvedInEvent ?P ?H)
+                (instance ?H AutonomousAgent)))
+        (not
+            (exists (?H2)
+                (and
+                    (involvedInEvent ?P ?H2)
+                    (instance ?H2 AutonomousAgent))))))
 
+;; Possible 'fix' for now:
+(=>
+    (manner ?P Solely)
+    (exists (?H)
+        (and
+            (involvedInEvent ?P ?H)
+            (instance ?H AutonomousAgent)
+            (not
+                (exists (?H2)
+                    (and
+                        (involvedInEvent ?P ?H2)
+                        (instance ?H2 AutonomousAgent)
+                        (not (equal ?H ?H2))))))))
