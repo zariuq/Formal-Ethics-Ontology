@@ -1169,51 +1169,8 @@
             (agent ?GPT ?BEHAVIOR))
         (modalattribute ?BEHAVIOR MorallyGood)) Obligation)
 
-;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
-(instance Value Abstract)
-(documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
-
-;; Well, can we say this over-expression?
-;; If there is a moral judging, then there is a value that causes this judgment.
-(=> 
-    (instance ?JUDGE MoralJudging)
-    (exists (?VALUE)
-        (and
-            (instance ?VALUE Value)
-            (causes ?VALUE ?JUDGE))))
-
-;; Influence: "the capacity to have an effect on the character, development, or behaviour of someone or something, or the effect itself."
-;; Oxford Languages, via Google search.
-(documentation influences EnglishLanguage "The influence relation between instances of Entities and Processes (influences ?ENTITY ?PROCESS) denotes that ?ENTITY has some effect on ?PROCESS")
-; ; (domain influences 1 Entity)
-(domain influences 2 Process)
-; (instance influences AsymmetricRelation)
-(instance influences BinaryPredicate)
-(relatedInternalConcept influences causes)
-
-;; If A causes B, then A influences B.
-(=>
-    (causes ?P1 ?P2)
-    (influences ?P1 ?P2))
-
-;; If A influences B and A is a process, then they are related events.
-(=>
-    (and
-        (influences ?P1 ?P2)
-        (instance ?P1 Process))
-    (relatedEvent ?P1 ?P2))
-
-;; If A influences B and A is physical, then A occurs earlier than B.
-;; I note that retrocausality in quantum-mechanics violates this "rule" even for causes.
-(=>
-    (and
-        (influences ?P1 ?P2)
-        (instance ?P1 Physical))
-    (earlier 
-        (WhenFn ?P1)
-        (WhenFn ?P2)))
-
 ;; It's hard to talk about "to have an effect", lol.
+;; Effect: "a change which is a result or consequence of an action or other cause." (Oxford  Languages via Google search)
 ;; Ah, I'll generalize "InternalChange" a la the "property" BinaryPredicate.
 ;; Possibly an overgeneralization, lol.
 ;; As with the "similarity", it seems easiest to just do it in terms of attributes.  Setting BPs and TPs aside.
@@ -1253,3 +1210,127 @@
                     (property ?ENTITY ?PROPERTY))))))
 
 
+;; Influence: "the capacity to have an effect on the character, development, or behaviour of someone or something, or the effect itself."
+;; And the verb is actually effecting the character, development, or behavior of someone, something, or some process.  Or the change itself, lol.
+;; Oxford Languages, via Google search.
+(documentation influences EnglishLanguage "The influence relation between instances of Entities (influences ?ENTITY1 ?ENTITY2 denotes that ?ENTITY has some effect on ?ENTITY2")
+(domain influences 1 Entity)
+(domain influences 2 Entity)
+; (instance influences AsymmetricRelation)
+(instance influences BinaryPredicate)
+(relatedInternalConcept influences causes)
+
+;; If A causes B, then A influences B.
+(=>
+    (causes ?P1 ?P2)
+    (influences ?P1 ?P2))
+
+;; If A influences B and they are processes, then they are related events.
+(=>
+    (and
+        (influences ?P1 ?P2)
+        (instance ?P1 Process)
+        (instance ?P2 Process))
+    (relatedEvent ?P1 ?P2))
+
+;; If A influences B and they are physical, then A occurs earlier than B.
+;; I note that retrocausality in quantum-mechanics violates this "rule" even for causes. 😋
+(=>
+    (and
+        (influences ?P1 ?P2)
+        (instance ?P1 Physical)
+        (instance ?P2 Physical))
+    (earlier 
+        (WhenFn ?P1)
+        (WhenFn ?P2)))
+
+;; If P1 influences E2 and P1 is a process,
+;; Then there exists a change of E2 that is caused by P1
+(=> 
+    (and 
+        (influences ?P1 ?E2)
+        (instance ?P1 Process))
+    (exists (?CHANGE)
+        (and
+            (instance ?CHANGE Change)
+            (patient ?CHANGE ?E2)
+            (causes ?P1 ?CHANGE))))
+
+;; Ah, ok, one easy other case is the case where an object influences something: (influences ?OBJ ?E2)
+;; Namely, an object influences an entity when there is a process causing a change in the entity 
+;; of which the object plays a role.  Should this apply to only some roles...?  Perhaps... 😋
+(=>
+    (and
+        (influences ?O1 ?E2)
+        (instance ?O1 Object))
+    (exists (?CHANGE ?PROCESS ?ROLE)
+        (and
+            (instance ?CHANGE Change)
+            (patient ?CHANGE ?E2)
+            (causes ?PROCESS ?CHANGE)
+            (playsRoleInEvent ?O1 ?ROLE ?PROCESS))))
+
+;; Draft 2: I think involvedInEvent technically implies the existence of some ?ROLE, thus it's 'cleaner' to use.
+(=>
+    (and
+        (influences ?O1 ?E2)
+        (instance ?O1 Object))
+    (exists (?CHANGE ?PROCESS)
+        (and
+            (instance ?CHANGE Change)
+            (patient ?CHANGE ?E2)
+            (causes ?PROCESS ?CHANGE)
+            (involvedInEvent ?PROCESS ?O1))))
+
+;; Generically: If E1 influences E2, then E1 is involved in the event of the change.
+(=> 
+    (influences ?E1 ?E2)
+    (exists (?CHANGE)
+        (and
+            (instance ?CHANGE Change)
+            (patient ?CHANGE ?E2)
+            (involvedInEvent ?CHANGE ?E1))))
+
+;; The above may be too strong if the appropriate case-role doesn't exist?
+;; Thus maybe we could say that if E1 influences E2, then there exists a process causing a change in E2,
+;; and E1 is involved in this process somehow.
+(=>
+    (influences ?E1 ?E2)
+    (exists (?CHANGE ?PROCESS)
+        (and
+            (instance ?CHANGE Change)
+            (patient ?CHANGE ?E2)
+            (causes ?PROCESS ?CHANGE)
+            (involvedInEvent ?PROCESS ?E1))))
+
+;; Well, this may be enough of a draft of influences to move on for now 🙏🤓
+
+;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
+(instance Value Abstract)
+(documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
+
+;; Well, can we say this over-expression?
+;; If there is a moral judging, then there is a value that causes this judgment.
+(=> 
+    (instance ?JUDGE MoralJudging)
+    (exists (?VALUE)
+        (and
+            (instance ?VALUE Value)
+            (causes ?VALUE ?JUDGE))))
+
+;; Draft 2 using the generalization of causes: influences.
+;; Values are abstract entities that influence moral judging ;- D
+(=> 
+    (instance ?JUDGE MoralJudging)
+    (exists (?VALUE)
+        (and
+            (instance ?VALUE Value)
+            (influences ?VALUE ?JUDGE))))    
+
+;; If there is a value, then there exists an agent and desire such that the value represents that which is desired >:D :D :D.
+(=> 
+    (instance ?VALUE Value)
+    (exists (?AGENT ?DESIDERATUM)
+        (and
+            (desires ?AGENT ?DESIDERATUM)
+            (represents ?VALUE ?DESIDERATUM))))
