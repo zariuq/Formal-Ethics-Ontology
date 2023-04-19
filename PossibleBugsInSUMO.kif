@@ -113,6 +113,32 @@ patient of the process is unhappy.")
             (agent ?PROCESS ?AGENT)
             (result ?PROCESS ?RATING))))
 
+;; This shouldn't be deciding.
+;; This should be done with Judging (or Selecting)
+
+;; (documentation RatingAttribute EnglishLanguage "RatingAttribute attempts to quantify the subjective assessment of an Object 
+;; using some scoring system. A RatingAttribute is created by an AutonomousAgent with some criteria in mind.")
+;; Also, the Rating is an attribute meant to apply to an object.
+(=>
+    (ratingsAgent ?RATING ?AGENT)
+    (exists (?PROCESS ?OBJ)
+        (and
+            (instance ?PROCESS Judging)
+            (agent ?PROCESS ?AGENT)
+            (result ?PROCESS 
+                (attribute ?OBJ ?RATING)))))
+
+;; This should probably also be updated, lol.
+(=>
+    (instance ?RATING RatingAttribute)
+    (exists (?AGENT ?OBJ)
+        (and 
+            (ratingsAgent ?RATING ?AGENT)
+            (attribute ?OBJ ?RATING))))
+
+;; Voting should perhaps be a subclass of Selecting, not Deciding
+;; As one is often not actually selecting courses of action.
+
 ;; Another issue is that Deciding courses of action should probably be over the subclasses of processes
 ;; And thus the patient of Deciding should probably not be an actual instance of a process.
 ;; We might want something like the following:

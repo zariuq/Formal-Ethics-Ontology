@@ -1,0 +1,114 @@
+;; Draft 3 -- because dealing with moral judgments in terms of classes instead of instances 
+;; seems substantial enough to warrant possibly revamping a lot!
+;; I will not repeat unchanged elements from the Ethics Kifs folder.
+
+(documentation DecidingSubclass EnglishLanguage "The subclass of Selecting where the agent opts for one course of action out of a set of multiple possibilities that are open to him/ her, which are represented as subclasses of Process, some instance of which can be enacted.")
+(subclass DecidingSubclass Selecting)
+(termFormat EnglishLanguage DecidingSubclass "deciding")
+
+;; If a subclass of Process is being decided upon by an agent
+;; The agent is capable of enacting an instance of the SubProcess
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?PROCESS))
+    (capability ?PROCESS agent ?AGENT))
+
+;; Draft 2, being nitpicky, maybe the agent only believes it's capable
+;; And will decide on the action based on the belief without actually being able to 🤪
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?PROCESS))
+    (believes ?AGENT 
+        (capability PROCESS agent ?AGENT)))
+
+;; If an agent decides on a class of behaviors, then there exists an instance of this class of behaviors
+;; that is an intentional process and of which the agent is an agent.
+;; A bit of a stretch as agents don't strictly _need_ to act on their conclusions.
+;; Just trying to sketch a "class" version of the "instance" Deciding in SUMO.
+(=>
+    (and
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (result ?DECIDE ?PROCESS))
+    (exists (?IPROCESS)
+        (and
+            (instance ?IPROCESS ?PROCESS)
+            (instance ?IPROCESS IntentionalProcess)
+            (agent ?IPROCESS ?AGENT))))
+
+;; I think this one is pretty much fine, lol.
+;; Actually, it's a bit weird: it makes it seem as if one is choosing between subclasses of LegalDecision,
+;; namely, LegalAcquittal, LegalAward, LegalConviction, LegalDismissal, and Sentencing.
+;; One could stipulate that sometimes one is choosing among particular instances of a single class of procesess,
+;; for exmaple, what sort of conviction to sentence someone to.  
+;; A counter-argument would be that one is actually choosing among hitherto unspecified subclasses of LegalConviction.
+;; Here, when there's a Legal Decision, there is an act of deciding on a type of legal decision that takes place earlier
+;; than the decision.  And the decision is an instance of the type of legal decision decided upon.
+;; Which, tbh, seems better than just dealing in instances.
+;; (I should really look into what the intended semantics of instances are.  )
+(=>
+    (instance ?DECISION LegalDecision)
+    (exists (?DECIDE)
+        (and
+            (instance ?DECIDE DecidingSubclass)
+            (earlier
+                (WhenFn ?DECIDE)
+                (WhenFn ?DECISION))
+            (result ?DECIDE ?LEGALDECISIONPROCESS)
+            (instance ?DECISION ?LEGALDECISIONPROCESS))))
+
+;; This shouldn't be deciding.
+(=>
+    (ratingsAgent ?RATING ?AGENT)
+    (exists (?PROCESS)
+        (and
+            (instance ?PROCESS Deciding)
+            (agent ?PROCESS ?AGENT)
+            (result ?PROCESS ?RATING))))
+
+;; (documentation RatingAttribute EnglishLanguage "RatingAttribute attempts to quantify the subjective assessment of an Object 
+;; using some scoring system. A RatingAttribute is created by an AutonomousAgent with some criteria in mind.")
+;; Also, the Rating is an attribute meant to apply to an object.
+(=>
+    (ratingsAgent ?RATING ?AGENT)
+    (exists (?PROCESS ?OBJ)
+        (and
+            (instance ?PROCESS Judging)
+            (agent ?PROCESS ?AGENT)
+            (result ?PROCESS 
+                (attribute ?OBJ ?RATING)))))
+
+;; This should probably also be updated, lol.
+(=>
+    (instance ?RATING RatingAttribute)
+    (exists (?AGENT ?OBJ)
+        (and 
+            (ratingsAgent ?RATING ?AGENT)
+            (attribute ?OBJ ?RATING))))
+
+;; So there are only two uses of Deciding in SUMO's KB anyway.
+;; The rule in GameCall seems fine as it's vague.  Should probably be Judging.  I don't know enough about it.
+;; Voting should perhaps be a subclass of Selecting, not Deciding
+;; As one is often not actually selecting courses of action.
+
+;; Resolution could just as well be a subclass of Deciding!
+(documentation ResolutionSubclass EnglishLanguage "Any instance of DecidingSubclass which is conducted at a FormalMeeting and where the agent is an Organization.")
+(subclass ResolutionSubclass Decidingsubclass)
+
+(=>
+    (instance ?RESOLUTION ResolutionSubclass)
+    (exists (?AGENT ?MEETING)
+        (and
+            (instance ?AGENT Organization)
+            (agent ?RESOLUTION ?AGENT)
+            (subProcess ?RESOLUTION ?MEETING)
+            (instance ?MEETING FormalMeeting))))
+
+;; I think that covers all the Decision: Instance -> Class update!  Yay 🥳
+
+
+

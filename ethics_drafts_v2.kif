@@ -979,7 +979,7 @@
     (exists (?AGENT)
         (forall (?P)
             (=> 
-                (member ?P ?S)
+                (member ?P ?C)
                 (modalAttribute 
                     (agent ?P ?AGENT) Possibility)))))
 
@@ -990,8 +990,21 @@
     (exists (?AGENT)
         (forall (?P)
             (=> 
-                (member ?P ?S)
+                (member ?P ?C)
                 (agent ?P ?AGENT)))))
+
+;; Maybe we can say that the "state of affairs" of P being in the ChoicePoint,
+;; Causes the "state of affairs" of it being possible for Agent to be the agent of P.
+;; Ok, this seems a bit wonky.
+;; Draft 3
+(=> 
+    (instance ?C ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (causesProposition
+                (member ?P ?C)
+                (modalAttribute 
+                    (agent ?P ?AGENT) Possibility)))))
 
 ;; If there's a non-empty set of processes with an agent of all the processes therein,
 ;; Then it's a choice point.
@@ -1334,3 +1347,4 @@
         (and
             (desires ?AGENT ?DESIDERATUM)
             (represents ?VALUE ?DESIDERATUM))))
+
