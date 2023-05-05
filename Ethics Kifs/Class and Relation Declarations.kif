@@ -1,17 +1,26 @@
 ;; I'll place class declarations here
 
-(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
-
-;; This might be questionable?
-(instance Ethics FieldOfStudy)
-
-;; Philosophy is technically an "instance" of FieldOfStudy... seems wrong.
-;; (subclass Ethics Philosophy)
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
+which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+(subclass Ethics Philosophy)
 (subclass Ethics Science)
 
+(documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
+Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
 (subclass MoralNihilism Ethics)
+
+(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
+based on the action adheres to a set of rules and principles.")
 (subclass Deontology Ethics)
+
+(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
+based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
 (subclass Utilitarianism Ethics)
+
+(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
+do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subclass VirtueEthics Ethics)
 
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")

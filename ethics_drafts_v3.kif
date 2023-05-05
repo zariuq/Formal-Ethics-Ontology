@@ -2,7 +2,9 @@
 ;; seems substantial enough to warrant possibly revamping a lot!
 ;; I will not repeat unchanged elements from the Ethics Kifs folder.
 
-(documentation DecidingSubclass EnglishLanguage "The subclass of Selecting where the agent opts for one course of action out of a set of multiple possibilities that are open to him/ her, which are represented as subclasses of Process, some instance of which can be enacted.")
+(documentation DecidingSubclass EnglishLanguage "The subclass of Selecting where the agent opts for one course of action 
+out of a set of multiple possibilities that are open to him/ her, which are represented as subclasses of Process, 
+some instance of which can be enacted.")
 (subclass DecidingSubclass Selecting)
 (termFormat EnglishLanguage DecidingSubclass "deciding")
 
@@ -33,10 +35,10 @@
     (and
         (instance ?DECIDE DecidingSubclass)
         (agent ?DECIDE ?AGENT)
-        (result ?DECIDE ?PROCESS))
+        (result ?DECIDE ?CPROCESS))
     (exists (?IPROCESS)
         (and
-            (instance ?IPROCESS ?PROCESS)
+            (instance ?IPROCESS ?CPROCESS)
             (instance ?IPROCESS IntentionalProcess)
             (agent ?IPROCESS ?AGENT))))
 
@@ -70,33 +72,16 @@
             (agent ?PROCESS ?AGENT)
             (result ?PROCESS ?RATING))))
 
-;; (documentation RatingAttribute EnglishLanguage "RatingAttribute attempts to quantify the subjective assessment of an Object 
-;; using some scoring system. A RatingAttribute is created by an AutonomousAgent with some criteria in mind.")
-;; Also, the Rating is an attribute meant to apply to an object.
-(=>
-    (ratingsAgent ?RATING ?AGENT)
-    (exists (?PROCESS ?OBJ)
-        (and
-            (instance ?PROCESS Judging)
-            (agent ?PROCESS ?AGENT)
-            (result ?PROCESS 
-                (attribute ?OBJ ?RATING)))))
-
-;; This should probably also be updated, lol.
-(=>
-    (instance ?RATING RatingAttribute)
-    (exists (?AGENT ?OBJ)
-        (and 
-            (ratingsAgent ?RATING ?AGENT)
-            (attribute ?OBJ ?RATING))))
-
 ;; So there are only two uses of Deciding in SUMO's KB anyway.
 ;; The rule in GameCall seems fine as it's vague.  Should probably be Judging.  I don't know enough about it.
 ;; Voting should perhaps be a subclass of Selecting, not Deciding
 ;; As one is often not actually selecting courses of action.
+;; However, it would seem that all the uses of Voting and VotingFn do not refer to the result at all!
+;; Thus all of the subclasses of Deciding can also be subclasses of DecidingSubclass!
 
 ;; Resolution could just as well be a subclass of Deciding!
-(documentation ResolutionSubclass EnglishLanguage "Any instance of DecidingSubclass which is conducted at a FormalMeeting and where the agent is an Organization.")
+(documentation ResolutionSubclass EnglishLanguage "Any instance of DecidingSubclass which is conducted at a FormalMeeting 
+and where the agent is an Organization.")
 (subclass ResolutionSubclass Decidingsubclass)
 
 (=>
@@ -110,5 +95,34 @@
 
 ;; I think that covers all the Decision: Instance -> Class update!  Yay 🥳
 
+;; Fields of Study are now classes!
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
+which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+(subclass Ethics Philosophy)
+(subclass Ethics Science)
+
+(documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
+Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
+(subclass MoralNihilism Ethics)
+
+(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
+based on the action adheres to a set of rules and principles.")
+(subclass Deontology Ethics)
+
+(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
+based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
+(subclass Utilitarianism Ethics)
+
+(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
+do in the circumstances' (On Virtue Ethics -- Right Action).")
+(subclass VirtueEthics Ethics)
+
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
 
 
