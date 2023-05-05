@@ -1,17 +1,75 @@
 ;; Possible bugs in SUMO
 
 
-;;I noticed an additional bug requiring summing the monetary value of each element of the set. I'll save that fix for later ^^;
+;; I noticed an additional bug requiring summing the monetary value of each element of the set. I'll save that fix for later ^^;
 
 (domain monetaryValue 1 Physical)
 (=>
-(equal
-(WealthFn ?PERSON) ?AMOUNT)
-(monetaryValue
-(PropertyFn ?PERSON) ?AMOUNT))
+    (equal
+        (WealthFn ?PERSON) ?AMOUNT)
+    (monetaryValue
+        (PropertyFn ?PERSON) ?AMOUNT))
 
 (=>
-(monetaryValue
-(PropertyFn ?PERSON) ?AMOUNT)
-(equal
-(WealthFn ?PERSON) ?AMOUNT))
+    (monetaryValue
+        (PropertyFn ?PERSON) ?AMOUNT)
+    (equal
+        (WealthFn ?PERSON) ?AMOUNT))
+
+;; The usual map applied to sets.  Apply a function f to each element of a set S.
+;; Maybe I could AssignmentFn for this.  "Necessary but not sufficient."
+(documentation MapSetFn EnglishLanguage "A function that applies a function to each element of a set.")
+(instance MapSetFn BinaryFunction)
+(domain MapSetFn 1 Function)
+(domain MapSetFn 2 Set)
+(range MapSetFn Set)
+
+(=> 
+    (equal
+        (MapSetFn ?FUNCTION ?SET) ?MAPPEDSET)
+    (and 
+        (equal (CardinalityFn ?SET) (CardinalityFn ?MAPPEDSET))
+        (forall (?ELEMENT)
+            (=> 
+                (element ?ELEMENT ?SET)
+                (exists (?MAPPEDELEMENT)
+                    (equal 
+                        (?FUNCTION ?ELEMENT) ?MAPPEDELEMENT))))))
+
+;; Convert a set to a list.
+(documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
+(instance SetToListFn UnaryFunction)
+(domain SetToListFn 1 Set)
+(range SetToListFn List)
+
+;; If StL(S) = L, then all memebers of S are in L and their sizes are equal.
+;; This says nothing about the order.
+(=>
+    (equal
+        (SetToListFn ?SET) ?LIST)
+    (and
+        (equal (ListLengthFn ?LIST) (CardinalityFn ?SET))
+        (forall (?ELEMENT)
+            (=> 
+                (element ?ELEMENT ?SET)
+                (inList ?ELEMENT ?LIST)))))
+
+;; Sum the elements of a set by converting it to a list and summing the list.
+(documentation SetSumFn EnglishLanguage "A function that sums the elements of a set.")
+(instance SetSumFn UnaryFunction)
+(domain SetSumFn 1 Set)
+(range SetSumFn RealNumber)
+
+(<=> 
+    (equal 
+        ?SUM (SetSumFn ?SET))
+    (equal 
+        ?SUM (ListSumFn (SetToListFn ?SET))))
+
+;; Now we can properly define the wealth as the sum of the monetary value of someone's property.
+(<=>
+    (equal
+        ?AMOUNT (WealthFn ?PERSON) ?AMOUNT)
+    (equal 
+        ?AMOUNT (SetSumFn (MapSetFn monetaryValue (PropertyFn ?PERSON)))))
+
