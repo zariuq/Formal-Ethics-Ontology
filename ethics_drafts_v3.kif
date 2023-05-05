@@ -25,7 +25,7 @@ some instance of which can be enacted.")
         (agent ?DECIDE ?AGENT)
         (patient ?DECIDE ?PROCESS))
     (believes ?AGENT 
-        (capability PROCESS agent ?AGENT)))
+        (capability ?PROCESS agent ?AGENT)))
 
 ;; If an agent decides on a class of behaviors, then there exists an instance of this class of behaviors
 ;; that is an intentional process and of which the agent is an agent.
@@ -94,6 +94,7 @@ and where the agent is an Organization.")
             (instance ?MEETING FormalMeeting))))
 
 ;; I think that covers all the Decision: Instance -> Class update!  Yay 🥳
+;; The first question is: what needs to be changed to suite the DecisionSubclass?
 
 ;; Fields of Study are now classes!
 (documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
@@ -124,5 +125,120 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 (documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
 (subclass Consequentialism Utilitarianism)
+
+;; Repeated only because I added to them ;- )
+
+;; MorallyGood, VirtueAttribute, VirtuousAgent and the vicious versions can remain the same ✅
+;; AutonomousAgentProcess is good.
+
+; (=>
+;     (instance ?JUDGE MoralJudging)
+;     (exists (?BEHAVE ?MORAL)
+;         (and 
+;             (instance ?BEHAVE AutonomousAgentProcess)
+;             (instance ?MORAL MoralAttribute)
+;             (patient ?JUDGE ?BEHAVE)
+;             (result ?JUDGE 
+;                 (modalAttribute ?BEHAVE ?MORAL)))))
+;; The above (draft 2) is wrong because because ?BEHAVE is a Process, not a Formula.  
+
+;; If there is an instance ?J of Moral Judging, then there exists a class of autonomous agent behavior ?CB and a moral judgment ?M, 
+;; such that the it is judged to me ?M for there to exist an instance ?IB of ?CB.
+;; -- This actually makes more sense!
+(=>
+    (instance ?JUDGE MoralJudging)
+    (exists (?CBEHAVE ?MORAL)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?CBEHAVE)
+            (result ?JUDGE 
+                (modalAttribute 
+                    (exists (?IBEHAVE) 
+                        (instance ?IBEHAVE ?CBEHAVE)) ?MORAL)))))
+
+;; If there is an instance ?J of moral judging, then there exists an autonomous agent behavior ?B and a moral judgment ?M,
+;; such that it is judged to be ?M that there is an instance of ?B.
+;; -- A bit weird.  There's some precedence in SUMO.
+;; I suppose we wish to get at the case where one is simply judging a particular behavior as GOOD or BAD without any clear sense of generalization. 
+(=>
+    (instance ?JUDGE MoralJudging)
+    (exists (?BEHAVE ?MORAL)
+        (and 
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?BEHAVE)
+            (result ?JUDGE 
+                (modalAttribute
+                    (instance ?BEHAVE AutonomousAgentProcess) ?MORAL)))))
+
+;; Maybe I wish to say that if there is a case of moral judging ?J, then it is either of the above cases:
+;; Judging any instance of a class of behaviors ?M or judging a particular instance to be ?M.
+(=>
+    (instance ?JUDGE MoralJudging)
+    (or
+        (exists (?CBEHAVE ?MORAL)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?CBEHAVE)
+            (result ?JUDGE 
+                (modalAttribute 
+                    (exists (?IBEHAVE) 
+                        (instance ?IBEHAVE ?CBEHAVE)) ?MORAL))))
+        (exists (?BEHAVE ?MORAL)
+        (and 
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?BEHAVE)
+            (result ?JUDGE 
+                (modalAttribute
+                    (instance ?BEHAVE AutonomousAgentProcess) ?MORAL))))))
+
+;; Ethics refers to the moral judging of processes (behavior) of members of groups (aka society, lol).
+;; Not sure how to get the "normative science" part in.  I think there's a lot of hidden baggage in the term "normative".
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (instance ?MORAL MoralAttribute)
+    (instance ?GROUP Group)
+    (instance ?BEHAVE AutonomousAgentProcess)
+    (member ?MEMB ?GROUP)
+    (agent ?BEHAVE ?MEMB)
+    (patient ?JUDGE ?BEHAVE)
+    (result ?JUDGE 
+        (modalAttribute ?BEHAVE ?MORAL)))
+;; The above (draft 2) can be refined because the instance ?MORAL implies the behavior and the moral judgment.
+
+;; This is tricky because I'm including both classes and instances.  Maybe I should drop instances for now.
+;; Anyway, I wish to include the idea that the moral judgment is of a member of a group
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (instance ?GROUP Group)
+    (member ?MEMB ?GROUP)
+    (patient ?JUDGE ?BEHAVE)
+    (=>
+        (instance ?BEHAVE AutonomousAgentProcess)
+        (agent ?BEHAVE ?MEMB))
+    (=> 
+        (subclass ?BEHAVE AutonomousAgentProcess)
+        (capability ?BEHAVE agent ?MEMB)))
+
+;; Let's add that the agent of the moral judgment is either an inclusive subgroup or a member of the group (with a bit of redundancy!)
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (instance ?GROUP Group)
+    (member ?MEMB ?GROUP)
+    (patient ?JUDGE ?BEHAVE)
+    (=>
+        (instance ?BEHAVE AutonomousAgentProcess)
+        (agent ?BEHAVE ?MEMB))
+    (=> 
+        (subclass ?BEHAVE AutonomousAgentProcess)
+        (capability ?BEHAVE agent ?MEMB))
+    (agent ?JUDGE ?AGENT)
+    (or
+        (member ?AGENT ?GROUP)
+        (part ?AGENT ?GROUP)))
 
 

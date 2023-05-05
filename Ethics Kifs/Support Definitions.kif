@@ -1,8 +1,8 @@
 ;; Auxiliary Definitions
 
 ;; I see how this definition motivates the need for target-specificity or domain-specificity
-(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
-(subclass VirtuousAgent AutonomousAgent)
+; (documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+; (subclass VirtuousAgent AutonomousAgent)
 (=>
     (and
         (instance ?AGENT AutonomousAgent)
@@ -10,8 +10,8 @@
         (attribute ?AGENT ?VIRTUE))
     (instance ?AGENT VirtuousAgent))
 
-(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
-(subclass ViciousAgent AutonomousAgent)
+; (documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+; (subclass ViciousAgent AutonomousAgent)
 (=>
     (and
         (instance ?AGENT AutonomousAgent)
@@ -26,18 +26,27 @@
             (agent ?PROC ?AGENT)
             (instance ?AGENT AutonomousAgent))))
 
-;; Decided that the behavior can be a patient of the MoralJudging
-;; And the moral judgment can be the result.
-;; There is a precedent in Adam's SUMO.
+;; If there is a case of moral judging ?J, then it is either a case of judging a particular instance ?B to be ?M
+;; Or the case of judging it to be ?M for any instance of the class of behaviors ?CB to exist.
 (=>
     (instance ?JUDGE MoralJudging)
-    (exists (?BEHAVE ?MORAL)
+    (or
+        (exists (?CBEHAVE ?MORAL)
         (and 
-            (instance ?BEHAVE AutonomousAgentProcess)
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?CBEHAVE)
+            (result ?JUDGE 
+                (modalAttribute 
+                    (exists (?IBEHAVE) 
+                        (instance ?IBEHAVE ?CBEHAVE)) ?MORAL))))
+        (exists (?BEHAVE ?MORAL)
+        (and 
             (instance ?MORAL MoralAttribute)
             (patient ?JUDGE ?BEHAVE)
             (result ?JUDGE 
-                (modalAttribute ?BEHAVE ?MORAL)))))
+                (modalAttribute
+                    (instance ?BEHAVE AutonomousAgentProcess) ?MORAL))))))
 
 ;; Take two -- should I say that this proposition the formula is expressing exists?
 ;; Q: should I use realization or conforms?

@@ -1,16 +1,24 @@
 ;; In this file, I'll keep the latest draft of the primary definitions.
 
+;; This is tricky because I'm including both classes and instances.  Maybe I should drop instances for now.
+;; Anyway, I wish to include the idea that the moral judgment is of a member of a group
+;; Let's add that the agent of the moral judgment is either an inclusive subgroup or a member of the group (with a bit of redundancy!)
 (and 
     (refers Ethics ?JUDGE)
     (instance ?JUDGE MoralJudging)
-    (instance ?MORAL MoralAttribute)
     (instance ?GROUP Group)
-    (instance ?BEHAVE AutonomousAgentProcess)
     (member ?MEMB ?GROUP)
-    (agent ?BEHAVE ?MEMB)
     (patient ?JUDGE ?BEHAVE)
-    (result ?JUDGE 
-        (modalAttribute ?BEHAVE ?MORAL)))
+    (=>
+        (instance ?BEHAVE AutonomousAgentProcess)
+        (agent ?BEHAVE ?MEMB))
+    (=> 
+        (subclass ?BEHAVE AutonomousAgentProcess)
+        (capability ?BEHAVE agent ?MEMB))
+    (agent ?JUDGE ?AGENT)
+    (or
+        (member ?AGENT ?GROUP)
+        (part ?AGENT ?GROUP)))
 
 (and 
     (refers MoralNihilism ?STATE)
