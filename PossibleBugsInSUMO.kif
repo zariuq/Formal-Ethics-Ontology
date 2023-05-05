@@ -69,7 +69,19 @@
 ;; Now we can properly define the wealth as the sum of the monetary value of someone's property.
 (<=>
     (equal
-        ?AMOUNT (WealthFn ?PERSON) ?AMOUNT)
+        ?AMOUNT (WealthFn ?PERSON))
     (equal 
         ?AMOUNT (SetSumFn (MapSetFn monetaryValue (PropertyFn ?PERSON)))))
 
+;; Adam notes: we can keep the below if we make PropertyFn map to a Collection
+(range PropertyFn Collection)
+
+(domain monetaryValue 1 Physical)
+(<=>
+    (equal
+        (WealthFn ?PERSON) ?AMOUNT)
+    (monetaryValue
+        (PropertyFn ?PERSON) ?AMOUNT))
+
+;; Moreover, the below is a bug while the range is a Set!
+(part ?HOTELROOM (PropertyFn ?X))
