@@ -68,12 +68,24 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; And relation or function declarations here
 
-(documentation conformsFormula EnglishLanguage "(conforms ?OBJ ?FORMULA) describes how ?OBJ follows the ideas outlined by the proposition represented by ?FORMULA.")
+(documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
+(subclass hasInstance Predicate)
+(domainSubclass hasInstance 1 Class)
 
-(domain conformsFormula 1 Object)
+(documentation conformsFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+
+(domain conformsFormula 1 Process)
 (domain conformsFormula 2 Formula)
 (instance conformsFormula BinaryPredicate)
 (subrelation conformsFormula represents)
+
+(documentation conformsFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+
+(domainSubclass conformsFormulaSubclass 1 Process)
+(domain conformsFormulaSubclass 2 Formula)
+(instance conformsFormulaSubclass BinaryPredicate)
+(subrelation conformsFormulaSubclass represents)
+
 
 (documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")
 (domain DecisionOptionFn 1 Deciding)

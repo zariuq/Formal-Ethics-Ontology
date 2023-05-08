@@ -331,5 +331,86 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                     (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))                    
 
 
+;; (conformsFormula ?BEHAVE ?RULE)
+;; (conforms ?OBJ ?PROP)
+;; (partition Physical Object Process)
+;; (domain conforms 1 Object)
+;; --> I cannot use conforms for this purpose.
+
+; (=> 
+;     (conformsFormula ?OBJ ?FORMULA)
+;     (exists (?PROP)
+;         (and 
+;             (containsInformation ?FORMULA ?PROP)
+;             (conforms ?OBJ ?PROP))))
+
+;; A process conforms to a formula if and only if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) the process is the realization of the proposition.
+(<=> 
+    (conformsFormula ?PROCESS ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (realization ?PROCESS ?PROP))))
+
+;; A subclass of Process conforms to a formula if there exists a proposition such that:
+;;  a) the formula contains the information of the proposition.
+;; b) all instances of the subclass are realizatinos of the proposition.
+(<=> 
+    (conformsFormulaSubclass ?CPROCESS ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (forall (?IPROCESS)
+                (and 
+                    (instance ?IPROCESS ?CPROCESS)
+                    (realization ?IPROCESS ?PROP))))))
+
+;; Probably the 'or' and the 'rule' should be swapped!
+;; Maybe i want some auxiliary "Judges Behavior Morally GOod" shorthand... some predicate?
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (or
+            (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Obligation)
+                    (=>
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyGood))))
+                    (=>
+                        (not 
+                            (conformsFormula ?BEHAVE ?RULE))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+             (exists (?RULE)
+                (and 
+                    (modalAttribute ?RULE Prohibition)
+                    (=> 
+                        (conformsFormula ?BEHAVE ?RULE)
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute ?BEHAVE MorallyBad))))))
+            (exists (?RULE) 
+                (and 
+                    (modalAttribute ?RULE Permission)
+                    (=> 
+                        (and 
+                            (conformsFormula ?BEHAVE1 ?RULE)
+                            (prevents ?BEHAVE2 ?BEHAVE1)
+                            (instance ?BEHAVE2 AutonomousAgentProcess))
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE 
+                                (modalAttribute ?BEHAVE2 MorallyBad))))))))) 
+
 
 

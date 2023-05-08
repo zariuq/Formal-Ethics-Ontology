@@ -48,15 +48,26 @@
                 (modalAttribute
                     (instance ?BEHAVE AutonomousAgentProcess) ?MORAL))))))
 
-;; Take two -- should I say that this proposition the formula is expressing exists?
-;; Q: should I use realization or conforms?
+;; Seems handy to define this to not need to keep repeating that there exists an instance of bla-bla.
 (=> 
-    (conformsFormula ?OBJ ?FORMULA)
+    (instance hasInstance ?REL)
+    (valence ?REL 1))
+
+;; Isn't this just type inhabitation or sometihng?
+(<=>
+    (hasInstance ?CLASS)
+    (exists (?INSTANCE)
+        (instance ?INSTANCE ?CLASS)))
+
+;; A process conforms to a formula if and only if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) the process is the realization of the proposition.
+(<=> 
+    (conformsFormula ?PROCESS ?FORMULA)
     (exists (?PROP)
         (and 
             (containsInformation ?FORMULA ?PROP)
-            (conforms ?OBJ ?PROP))))
-
+            (realization ?PROCESS ?PROP))))
 ;; lol, I see there's room for abstraction
 (<=>
     (member ?P (DecisionOptionFn ?DECIDE))
