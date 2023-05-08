@@ -135,7 +135,7 @@
                 (instance ?BEHAVE AutonomousAgentProcess)
                 (modalAttribute ?BEHAVE MorallyBad)))))                  
 
-;; "Moral nihilism is the view that there are no moral facts." (Ethics: The FUudamental)
+;; "Moral nihilism is the view that there are no moral facts." (Ethics: The Fundamentals)
 ;; There is no moral judging (with behavior and moral judgments) that is a fact.
 (and 
     (refers MoralNihilism ?STATE)

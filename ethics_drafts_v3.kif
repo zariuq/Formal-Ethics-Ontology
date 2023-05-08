@@ -143,7 +143,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; The above (draft 2) is wrong because because ?BEHAVE is a Process, not a Formula.  
 
 ;; If there is an instance ?J of Moral Judging, then there exists a class of autonomous agent behavior ?CB and a moral judgment ?M, 
-;; such that the it is judged to me ?M for there to exist an instance ?IB of ?CB.
+;; such that it is judged to me ?M for there to exist an instance ?IB of ?CB.
 ;; -- This actually makes more sense!
 (=>
     (instance ?JUDGE MoralJudging)
@@ -156,6 +156,41 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                 (modalAttribute 
                     (exists (?IBEHAVE) 
                         (instance ?IBEHAVE ?CBEHAVE)) ?MORAL)))))
+
+;; Isn't this just type inhabitation or sometihng?
+(documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
+(subclass hasInstance Predicate)
+(domainSubclass hasInstance 1 Class)
+
+(=> 
+    (instance hasInstance ?REL)
+    (valence ?REL 1))
+
+(<=>
+    (hasInstance ?CLASS)
+    (exists (?INSTANCE)
+        (instance ?INSTANCE ?CLASS)))
+
+;; Using hasInstance: It's bad for there to be an instance of this class of autonomous behavior >:D.
+(=>
+    (instance ?JUDGE MoralJudging)
+    (exists (?CBEHAVE ?MORAL)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?CBEHAVE)
+            (result ?JUDGE 
+                (modalAttribute 
+                    (hasInstance ?CBEHAVE) ?MORAL)))))
+
+;;  We might wish to say that if there is a result of a moral judgment, then it is of the form that something judged morally.
+(=> 
+    (and
+        (instance ?JUDGE MoralJudging)
+        (result ?JUDGE ?RESULT))
+    (exists (?JUDGED ?MORAL) 
+        (equals ?RESULT
+            (modalAttribute ?JUDGED ?MORAL))))
 
 ;; If there is an instance ?J of moral judging, then there exists an autonomous agent behavior ?B and a moral judgment ?M,
 ;; such that it is judged to be ?M that there is an instance of ?B.
@@ -240,5 +275,61 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (or
         (member ?AGENT ?GROUP)
         (part ?AGENT ?GROUP)))
+
+;; I wish to add a minimalistic one that doesn't bother with the societal context
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging))
+
+;; "Moral nihilism is the view that there are no moral facts." (Ethics: The Fundamentals)
+;; There is no moral judging (with behavior and moral judgments) that is a fact.
+;; Curiously, I think this doesn't need to be changed at all!
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?JUDGE) 
+                (and 
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE ?MORALSTATEMENT)
+                    (instance ?MORALSTATEMENT Fact))))))
+
+
+;; "Nothing is morally wrong." (from SEP Moral Skepticism); 
+;; technically, this would be a noncognitivist nihilism, I suppose (citing Ethics: The Fundamentals)
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?BEHAVE) 
+                (and 
+                    (instance ?BEHAVE AutonomousAgentProcess)
+                    (modalAttribute ?BEHAVE MorallyBad))))))
+
+;; There does not exist a class of behaviors for which there being an instance is morally bad.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?CBEHAVE) 
+                (and 
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))
+
+;; Or we have the following phrasing: forall classes of behaviors, it's not the case that it's bad for there to be an instance thereof.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (forall (?CBEHAVE)
+            (=> 
+                (subclass ?CBEHAVE AutonomousAgentProcess)
+                (not 
+                    (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))                    
+
+
 
 

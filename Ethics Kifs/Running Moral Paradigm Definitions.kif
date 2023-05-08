@@ -20,6 +20,13 @@
         (member ?AGENT ?GROUP)
         (part ?AGENT ?GROUP)))
 
+;; Minimalistically, setting the social context aside:
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging))
+
+;; "Moral nihilism is the view that there are no moral facts." (Ethics: The Fundamentals)
+;; There is no moral judging (with behavior and moral judgments) that is a fact.
 (and 
     (refers MoralNihilism ?STATE)
     (instance ?STATE Statement)
