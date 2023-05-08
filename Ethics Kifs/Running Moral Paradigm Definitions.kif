@@ -38,6 +38,19 @@
                     (result ?JUDGE ?MORALSTATEMENT)
                     (instance ?MORALSTATEMENT Fact))))))
 
+;; "Nothing is morally wrong." (from SEP Moral Skepticism); 
+;; technically, this would be a noncognitivist nihilism, I suppose (citing Ethics: The Fundamentals)
+;; There does not exist a class of behaviors for which there being an instance is morally bad.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?CBEHAVE) 
+                (and 
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))
+
 (and 
     (refers Deontology ?STATE)
     (instance ?STATE Statement)

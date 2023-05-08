@@ -72,19 +72,19 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subclass hasInstance Predicate)
 (domainSubclass hasInstance 1 Class)
 
-(documentation conformsFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 
-(domain conformsFormula 1 Process)
-(domain conformsFormula 2 Formula)
-(instance conformsFormula BinaryPredicate)
-(subrelation conformsFormula represents)
+(domain realizesFormula 1 Process)
+(domain realizesFormula 2 Formula)
+(instance realizesFormula BinaryPredicate)
+(subrelation realizesFormula represents)
 
-(documentation conformsFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(documentation realizesFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 
-(domainSubclass conformsFormulaSubclass 1 Process)
-(domain conformsFormulaSubclass 2 Formula)
-(instance conformsFormulaSubclass BinaryPredicate)
-(subrelation conformsFormulaSubclass represents)
+(domainSubclass realizesFormulaSubclass 1 Process)
+(domain realizesFormulaSubclass 2 Formula)
+(instance realizesFormulaSubclass BinaryPredicate)
+(subrelation realizesFormulaSubclass represents)
 
 
 (documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")

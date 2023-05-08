@@ -63,11 +63,26 @@
 ;; a) the formula contains the information of the proposition.
 ;; b) the process is the realization of the proposition.
 (<=> 
-    (conformsFormula ?PROCESS ?FORMULA)
+    (realizesFormula ?PROCESS ?FORMULA)
     (exists (?PROP)
         (and 
             (containsInformation ?FORMULA ?PROP)
             (realization ?PROCESS ?PROP))))
+
+;; A subclass of Process conforms to a formula if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) all instances of the subclass are realizatinos of the proposition.
+(<=> 
+    (realizesFormulaSubclass ?CPROCESS ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (forall (?IPROCESS)
+                (and 
+                    (instance ?IPROCESS ?CPROCESS)
+                    (realization ?IPROCESS ?PROP))))))
+
+
 ;; lol, I see there's room for abstraction
 (<=>
     (member ?P (DecisionOptionFn ?DECIDE))

@@ -344,11 +344,12 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;             (containsInformation ?FORMULA ?PROP)
 ;             (conforms ?OBJ ?PROP))))
 
+;; Maybe rename this to realizes formula for natural language ease?
 ;; A process conforms to a formula if and only if there exists a proposition such that:
 ;; a) the formula contains the information of the proposition.
 ;; b) the process is the realization of the proposition.
 (<=> 
-    (conformsFormula ?PROCESS ?FORMULA)
+    (realizesFormula ?PROCESS ?FORMULA)
     (exists (?PROP)
         (and 
             (containsInformation ?FORMULA ?PROP)
@@ -358,7 +359,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;;  a) the formula contains the information of the proposition.
 ;; b) all instances of the subclass are realizatinos of the proposition.
 (<=> 
-    (conformsFormulaSubclass ?CPROCESS ?FORMULA)
+    (realizesFormulaSubclass ?CPROCESS ?FORMULA)
     (exists (?PROP)
         (and 
             (containsInformation ?FORMULA ?PROP)
@@ -368,49 +369,119 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                     (realization ?IPROCESS ?PROP))))))
 
 ;; Probably the 'or' and the 'rule' should be swapped!
-;; Maybe i want some auxiliary "Judges Behavior Morally GOod" shorthand... some predicate?
+;; Maybe I want some auxiliary "Judges Behavior Morally Good" shorthand... some predicate?
 (and 
     (refers Deontology ?STATE)
     (instance ?STATE Statement)
     (equal ?STATE
-        (or
-            (exists (?RULE)
+        (exists (?RULE)
+            (or
                 (and 
                     (modalAttribute ?RULE Obligation)
                     (=>
-                        (conformsFormula ?BEHAVE ?RULE)
+                        (realizesFormula ?BEHAVE ?RULE)
                         (and 
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE
                                 (modalAttribute ?BEHAVE MorallyGood))))
                     (=>
                         (not 
-                            (conformsFormula ?BEHAVE ?RULE))
+                            (realizesFormula ?BEHAVE ?RULE))
                         (and 
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE
-                                (modalAttribute ?BEHAVE MorallyBad))))))
-             (exists (?RULE)
+                                (modalAttribute ?BEHAVE MorallyBad)))))
                 (and 
                     (modalAttribute ?RULE Prohibition)
                     (=> 
-                        (conformsFormula ?BEHAVE ?RULE)
+                        (realizesFormula ?BEHAVE ?RULE)
                         (and 
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE
-                                (modalAttribute ?BEHAVE MorallyBad))))))
-            (exists (?RULE) 
+                                (modalAttribute ?BEHAVE MorallyBad)))))
                 (and 
                     (modalAttribute ?RULE Permission)
                     (=> 
                         (and 
-                            (conformsFormula ?BEHAVE1 ?RULE)
+                            (realizesFormula ?BEHAVE1 ?RULE)
                             (prevents ?BEHAVE2 ?BEHAVE1)
                             (instance ?BEHAVE2 AutonomousAgentProcess))
                         (and 
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE 
-                                (modalAttribute ?BEHAVE2 MorallyBad))))))))) 
+                                (modalAttribute ?BEHAVE2 MorallyBad)))))))))
 
-
+;; The next step is to make the class version.
+;; One trick here is that the "class" aspect is less relevant here.
+;; All I'm saying is that "if a behavior realizes the rule", "then it's good/bad".
+;; But one thing that needs to be fixed is: a process is not a formula and thus modalAttribute cannot be applied to it.
+;; I might also wish to make a version with confersNorm unifying the norm-confering agent with the morally judging agent!
+;; I'm also changing the structure so that we separately state that the rule is either an obligation, prohibition, or permission.
+;; And then we state what each case entails.
+;; I think this works and we don't need to deal with the "class" aspect explicitly, for it's implicit in the existential quantification.
+;; We probably wish to grapple with the notion of judging a whole class of behaviors to be good/bad tho.
+;; Take one here is: if a rule is an obligation, then there exists a moral judgment
+;; that it is good for there to exist an instance of a behavior realizing the rule.
+;; and it is morally bad for there to NOT exist a behavior realizing the obligatory rule.
+;; Before, dealing only with instances, I just said that it's bad if it doesn't satisfy the obligation (which would require a notion of temporality and mutual exclusivity).
+;; With the existential claim, we seem quite a bit safer.
+;; As before, the prohibition is simply the opposite of the obligation.
+;; For permission, I'll say that there is a judgment such that for all classes of behaviors that realize the permission,
+;; It is bad for there to exist an instance of behavior that prevents any of these classes from being instantiated.
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (exists (?RULE)
+            (and
+                (or
+                    (modalAttribute ?RULE Obligation)
+                    (modalAttribute ?RULE Prohibition)
+                    (modalAttribute ?RULE Permission))
+                (=>
+                    (modalAttribute ?RULE Obligation)
+                    (exists (?JUDGE)
+                        (and
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (and 
+                                    (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyGood)
+                                    (modalAttribute 
+                                        (not 
+                                            (exists (?BEHAVE)
+                                                (and 
+                                                    (realizesFormula ?BEHAVE ?RULE)
+                                                    (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))))      
+                (=>
+                    (modalAttribute ?RULE Prohibition)
+                    (exists (?JUDGE)
+                        (and
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))
+                (=> 
+                    (modalAttribute ?RULE Permission)
+                    (exists (?JUDGE)
+                        (and
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (forall (CBEHAVE)
+                                    (=> 
+                                        (and
+                                            (subclass ?CBEHAVE AutonomousAgentProcess)
+                                            (realizesFormulaSubclass ?CBEHAVE ?RULE))                              
+                                        (modalAttribute 
+                                            (exists (?BEHAVE)
+                                                (and
+                                                    (instance ?BEHAVE AutonomousAgentProcess)
+                                                    (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
+                
 
