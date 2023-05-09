@@ -356,7 +356,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
             (realization ?PROCESS ?PROP))))
 
 ;; A subclass of Process conforms to a formula if there exists a proposition such that:
-;;  a) the formula contains the information of the proposition.
+;; a) the formula contains the information of the proposition.
 ;; b) all instances of the subclass are realizatinos of the proposition.
 (<=> 
     (realizesFormulaSubclass ?CPROCESS ?FORMULA)
@@ -364,7 +364,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
         (and 
             (containsInformation ?FORMULA ?PROP)
             (forall (?IPROCESS)
-                (and 
+                (=> 
                     (instance ?IPROCESS ?CPROCESS)
                     (realization ?IPROCESS ?PROP))))))
 
@@ -549,3 +549,31 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                                                 (and
                                                     (instance ?BEHAVE AutonomousAgentProcess)
                                                     (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
+
+;; Let's try to do a Classy version
+; (and 
+;     (refers Deontology ?STATE)
+;     (instance ?STATE Statement)
+;     (equal ?STATE
+;         (exists (?RULE)
+;             (and
+;                 (instance ?DEONTIC DeonticAttribute)
+;                 (modalAttribute ?RULE ?DEONTIC)
+;                 (=>
+;                     (and 
+;                         (modalAttribute ?RULE Obligation)
+;                         (exists (?CBEHAVE)
+;                             (and 
+;                                 (realizesFormulaSubclass ?CBEHAVE ?RULE))
+;                                 (subclass ?CBEHAVE AutonomousAgentProcess)))
+;                     ...
+;                     ...
+;                     ...
+;; Actually, it's harder to make sense of how to do this.  
+;; What I'm doing with the existence of an instance IS the class-sensitive approach. 
+;; So I think I'll just move on for now :- )
+
+
+
+
+

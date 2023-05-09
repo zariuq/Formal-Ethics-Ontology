@@ -78,7 +78,7 @@
         (and 
             (containsInformation ?FORMULA ?PROP)
             (forall (?IPROCESS)
-                (and 
+                (=> 
                     (instance ?IPROCESS ?CPROCESS)
                     (realization ?IPROCESS ?PROP))))))
 
