@@ -484,4 +484,68 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                                                     (instance ?BEHAVE AutonomousAgentProcess)
                                                     (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
                 
-
+;;; I'll add the confersNorm part below.
+;; Also, apparently Law is a subattribute of obligation, Legal of permission, and Illegal of prohibition.  
+;; LegislativeBill (a proposed law) is the only outlier that should be fixed, probably
+;; So there's an agent that declares this rule and this agent is the one that judges adherence to be good/bad.
+;; Some deontological theories may not wish to make this distinction.  
+;; I note that (domain confersNorm 1 Entity), so possibly one could say that the rule is conferred by mathematical necessity.
+;; In which caset he agents doing the judging are distinct.
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (exists (?RULE)
+            (and
+                (instance ?DEONTIC DeonticAttribute)
+                (modalAttribute ?RULE ?DEONTIC)
+                (exists (?AGENT) 
+                    (confersNorm ?AGENT ?RULE ?DEONTIC))
+                (=>
+                    (modalAttribute ?RULE Obligation)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (and 
+                                    (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyGood)
+                                    (modalAttribute 
+                                        (not 
+                                            (exists (?BEHAVE)
+                                                (and 
+                                                    (realizesFormula ?BEHAVE ?RULE)
+                                                    (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))))      
+                (=>
+                    (modalAttribute ?RULE Prohibition)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))
+                (=> 
+                    (modalAttribute ?RULE Permission)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (forall (CBEHAVE)
+                                    (=> 
+                                        (and
+                                            (subclass ?CBEHAVE AutonomousAgentProcess)
+                                            (realizesFormulaSubclass ?CBEHAVE ?RULE))                              
+                                        (modalAttribute 
+                                            (exists (?BEHAVE)
+                                                (and
+                                                    (instance ?BEHAVE AutonomousAgentProcess)
+                                                    (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))

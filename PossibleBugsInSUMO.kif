@@ -85,3 +85,14 @@
 
 ;; Moreover, the below is a bug while the range is a Set!
 (part ?HOTELROOM (PropertyFn ?X))
+
+;;; Subattributes of DeonticAttribute
+
+(documentation DeonticAttribute EnglishLanguage "A Class containing all of the Attributes relating to the notions of permission, obligation, and prohibition.")
+(documentation LegislativeBill EnglishLanguage "The Attribute of being a proposed law, i.e. being under consideration by a legislative body of Government.")
+
+;; Also, apparently Law is a subattribute of obligation, Legal of permission, and Illegal of prohibition.  
+;; LegislativeBill (a proposed law) is the only outlier that should be fixed, probably
+;; This would make formalizations using DeonticAttribute assuming they are one of the main three much easier in theory.
+;; In practice, I wonder: could this lead to easy "counter-examples"?
+
