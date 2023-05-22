@@ -14,8 +14,8 @@ some instance of which can be enacted.")
     (and 
         (instance ?DECIDE DecidingSubclass)
         (agent ?DECIDE ?AGENT)
-        (patient ?DECIDE ?PROCESS))
-    (capability ?PROCESS agent ?AGENT))
+        (patient ?DECIDE ?CPROCESS))
+    (capability ?CPROCESS agent ?AGENT))
 
 ;; Draft 2, being nitpicky, maybe the agent only believes it's capable
 ;; And will decide on the action based on the belief without actually being able to 🤪
@@ -23,9 +23,9 @@ some instance of which can be enacted.")
     (and 
         (instance ?DECIDE DecidingSubclass)
         (agent ?DECIDE ?AGENT)
-        (patient ?DECIDE ?PROCESS))
+        (patient ?DECIDE ?CPROCESS))
     (believes ?AGENT 
-        (capability ?PROCESS agent ?AGENT)))
+        (capability ?CPROCESS agent ?AGENT)))
 
 ;; If an agent decides on a class of behaviors, then there exists an instance of this class of behaviors
 ;; that is an intentional process and of which the agent is an agent.
@@ -41,6 +41,21 @@ some instance of which can be enacted.")
             (instance ?IPROCESS ?CPROCESS)
             (instance ?IPROCESS IntentionalProcess)
             (agent ?IPROCESS ?AGENT))))
+
+;; While the above essentially imply that the patient of a Deciding(Subclass) is a subclass of Process
+;; I'd like to make it clear.
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (patient ?DECIDE ?CPROCESS))
+    (subclass ?CPROCESS Process))
+
+;; The same for Deciding
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (patient ?DECIDE ?IPROCESS))
+    (instance ?IPROCESS Process))
 
 ;; I think this one is pretty much fine, lol.
 ;; Actually, it's a bit weird: it makes it seem as if one is choosing between subclasses of LegalDecision,
@@ -586,6 +601,136 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Moreover, the current map to Subjective Assessment Attributes doesn't work because 
 ;; Attributes only apply to objects.
 ;; Maybe I'll get back to this later.
+
+;; The idea here is that if E1 and E2 are similar to agent A, 
+;; Then A is likely to make similar judgments with regard to E1 and E2.
+(=> 
+    (similar ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (equal ?O1 ?O2) Likely)))
+
+;; Equal is too strong, yet there's the problem of a recursive definition.
+(=> 
+    (similar ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (similar ?A ?O1 ?O2) Likely)))
+
+;; This might help.
+(=>
+    (equal ?E1 ?E2)
+    (forall (?A)
+        (similar ?A ?E1 ?E2)))
+
+(<=> 
+    (similar ?A ?E1 ?E2)
+    (similar ?A ?E2 ?E1))
+
+;; Maybe we could connect the specific similarity "measure" to the ontological similar
+;; By saying that if S1 and S2 are similar with regard to a binary predicate, 
+;; Then it's likely that they're similar for all agents :D.
+;; (#ObviouslyARoughDraft)
+(=>
+    (similarSetsWithBP ?BP ?S1 ?S2)
+    (modalAttribute 
+        (forall (?A) 
+            (Similarity ?A ?S1 ?S2) Likely)))
+
+;; I've decided that for Virtue Ethics, I should just use the ontological similarity.
+
+;; It seems I only 'reified' versions of DecisionOptionFn that don't specify whether they're classes or instances.
+
+;; One is deciding from a non-empty set of options.
+(=>
+    (instance ?DECIDE Deciding)
+    (instance (DecisionOptionFn ?DECIDE) NonNullSet))
+
+;; Let's just do a subclass version for now!
+(documentation DecisionSubclassOptionFn EnglishLanguage "A UnaryFunction that maps an instance of DecidingSubclass 
+to the set of possibilities that are available.")
+(domain DecisionSubclassOptionFn 1 DecidingSubclass)
+(instance DecisionSubclassOptionFn TotalValuedRelation)
+(instance DecisionSubclassOptionFn UnaryFunction)
+(range DecisionSubclassOptionFn Set)
+
+(<=>
+    (element ?P (DecisionSubclassOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+;; It is morally good for there to be an instance of a class of behaviors according to agent J
+;; if and only if J believes that if a virtuous agent is making a decision with a similar set of options 
+;; to the decision resulting in this behvior class, then the virtuous agent is likely to come to the same conclusion.
+;; Should I include the agent taking the behavior? 
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute 
+                        (exists (?IBEHAVE)
+                            (instance ?IBEHAVE ?CBEHAVE)) MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV VirtuousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute 
+                        (exists (?IBEHAVE)
+                            (instance ?IBEHAVE ?CBEHAVE)) MorallyBad)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV ViciousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+;; I think that's roughly it for Virtue Ethics.  
+;; I'm a bit unsure about lumping the decision resulting in the behavior and the virtuous agent's decision together.
+;; Maybe I want to use two implications?  
+;; Except they're technically equivalent with metarial implication.
+;; Maybe I could move the part about the decision being made for CBEHAVE into the moral judging expression?
+
+
 
 
 

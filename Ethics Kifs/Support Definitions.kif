@@ -59,6 +59,16 @@
     (exists (?INSTANCE)
         (instance ?INSTANCE ?CLASS)))
 
+;; If an agent is deciding whether to enact a process, 
+;; then the agent believes it has the capability to enact the process.
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?CPROCESS))
+    (believes ?AGENT 
+        (capability ?CPROCESS agent ?AGENT)))
+
 ;; A process conforms to a formula if and only if there exists a proposition such that:
 ;; a) the formula contains the information of the proposition.
 ;; b) the process is the realization of the proposition.
@@ -82,23 +92,25 @@
                     (instance ?IPROCESS ?CPROCESS)
                     (realization ?IPROCESS ?PROP))))))
 
-
-;; lol, I see there's room for abstraction
 (<=>
-    (member ?P (DecisionOptionFn ?DECIDE))
+    (element ?P (DecisionOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+(<=>
+    (element ?P (DecisionSubclassOptionFn ?DECIDE))
     (patient ?DECIDE ?P))
 
 (<=> 
-    (member ?ATT (ProcessAttributeFn ?P))
+    (element ?ATT (ProcessAttributeFn ?P))
     (attribute ?P ?ATT))
 
 (<=> 
-    (member ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
+    (element ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
     (and
-        (member ?E1 ?S1)
+        (element ?E1 ?S1)
         (exists (?E2) 
             (and 
-                (member ?E2 ?S2)
+                (element ?E2 ?S2)
                 (?BP ?E1 ?E2)))))
 
 (<=> 
@@ -124,8 +136,10 @@
         (equal ?SP2 (ProcessAttributeFn ?P2))
         (similarSets ?SP1 ?SP2)))
 
+;; The idea here is that if E1 and E2 are similar to agent A, 
+;; Then A is likely to make similar judgments with regard to E1 and E2.
 (=> 
-    (Similarity ?A ?E1 ?E2)
+    (similar ?A ?E1 ?E2)
     (=>
         (and
             (instance ?J1 Judging)
@@ -134,12 +148,34 @@
             (result ?J1 ?O1)
             (instance ?J2 Judging)
             (agent ?J2 ?A)
-            (patient ?J2 ?E2))
-        (modalAttribute (result ?J2 ?O1) Likely)))
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (equal ?O1 ?O2) Likely)))
+
+;; Equal is too strong, yet there's the problem of a recursive definition.
+(=> 
+    (similar ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (similar ?A ?O1 ?O2) Likely)))
+
+;; This might help.
+(=>
+    (equal ?E1 ?E2)
+    (forall (?A)
+        (similar ?A ?E1 ?E2)))
 
 (<=> 
-    (Similarity ?A ?E1 ?E2)
-    (Similarity ?A ?E2 ?E1))
+    (similar ?A ?E1 ?E2)
+    (similar ?A ?E2 ?E1))
 
 ;; O is an outcome if and only if there exists some process P such that O is the result of P.
 (<=>

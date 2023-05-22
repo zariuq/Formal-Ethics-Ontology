@@ -118,7 +118,8 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; So two sets here are similar if most of S1 are similar with some element of S2
 ;; And most of S2 are similar with some element of S1.
-(documentation similarSetsWithBP EnglishLanguage "A ternary predicate that indicates whether most of each set satisfies a binary predicate with regard regard to an element in another set.")
+(documentation similarSetsWithBP EnglishLanguage "A ternary predicate that indicates whether most of each set 
+satisfies a binary predicate with regard regard to an element in another set.")
 (domain similarSetsWithBP 1 BinaryPredicate)
 (domain similarSetsWithBP 2 Set)
 (domain similarSetsWithBP 3 Set)
@@ -131,14 +132,13 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (domain similarProcesses 2 Process)
 (instance similarProcesses BinaryPredicate)
 
-;; The idea here is that if E1 and E2 are similar to agent A, 
-;; Then A is likely to make similar judgments with regard to E1 and E2.
-;; This should ontologically work for the Virtue ethics case above... without providing a specific measure.
-(documentation Similarity EnglishLanguage "Similarity attempts to capture the ontologic notion of similarity from a subjective point of view.")
-(instance Similarity TernaryPredicate) ;; or subclass?  Meh for now.  Just wanna sketch things out and move on.  
-(domain Similarity 1 CognitiveAgent)
-(domain Similarity 2 Entity)
-(domain Similarity 3 Entity)
+;; This should ontologically work for the Virtue ethics case without providing a specific measure.
+(documentation similar EnglishLanguage "The predicate similar attempts to capture the ontologic notion of similarity 
+from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are similar to cognitive agent ?A.")
+(instance similar TernaryPredicate) ;; or subclass?  Meh for now.  Just wanna sketch things out and move on.  
+(domain similar 1 CognitiveAgent)
+(domain similar 2 Entity)
+(domain similar 3 Entity)
 
 ;; A utility function that maps an action to the net pleasure (pleasure - pain) it creates. (GPT-4 + Zar)
 ;; Does this actually 'exist'?  Well, that's up for debate.  It can be used in a high-level definition, however, like a black box function :- p.
