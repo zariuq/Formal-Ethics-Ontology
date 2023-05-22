@@ -572,8 +572,20 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Actually, it's harder to make sense of how to do this.  
 ;; What I'm doing with the existence of an instance IS the class-sensitive approach. 
 ;; So I think I'll just move on for now :- )
+;; Next up is virtue ethics and its similar sets etc :- )
 
+;; “the study of behavior and its value” --- I might wish to actually do MY definition in SUMO :D
+(and 
+    (refers Ethics ?BEHAVE)
+    (instance ?BEHAVE AutonomousAgentProcess)
+    (refers Ethics ?VALUE)
+    (instance ?VALUE SubjectiveAssessmentAttribute))
 
+;; lolol, this doesn't work.
+;; There's no good entry in SUMO atm for "value" (which I began sketching in draft 2)
+;; Moreover, the current map to Subjective Assessment Attributes doesn't work because 
+;; Attributes only apply to objects.
+;; Maybe I'll get back to this later.
 
 
 
