@@ -498,7 +498,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                                                 (and
                                                     (instance ?BEHAVE AutonomousAgentProcess)
                                                     (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
-                
+             
 ;;; I'll add the confersNorm part below.
 ;; Also, apparently Law is a subattribute of obligation, Legal of permission, and Illegal of prohibition.  
 ;; LegislativeBill (a proposed law) is the only outlier that should be fixed, probably
@@ -688,13 +688,13 @@ to the set of possibilities that are available.")
                 (agent ?JUDGE ?AGENTJ)
                 (patient ?JUDGE
                     (modalAttribute 
-                        (exists (?IBEHAVE)
-                            (instance ?IBEHAVE ?CBEHAVE)) MorallyGood)))
+                        (hasInstance ?CBEHAVE) MorallyGood)))
             (believes ?AGENTJ
                 (=>
                     (and 
                         (instance ?DECIDE DecidingSubclass)
                         (result ?DECIDE ?CBEHAVE)
+                        (subclass ?CBEHAVE AutonomousAgentProcess)
                         (agent ?DECIDEV ?AGENTV)
                         (instance ?AGENTV VirtuousAgent)
                         (instance ?DECIDEV DecidingSubclass)
@@ -729,6 +729,74 @@ to the set of possibilities that are available.")
 ;; Maybe I want to use two implications?  
 ;; Except they're technically equivalent with metarial implication.
 ;; Maybe I could move the part about the decision being made for CBEHAVE into the moral judging expression?
+
+;; Let's just copy this over.
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(domain UtilityFn 1 AutonomousAgentProcess)
+(instance UtilityFn TotalValuedRelation)
+(instance UtilityFn UnaryFunction)
+(range UtilityFn RealNumber)
+
+(documentation UtilitySubclassFn EnglishLanguage "A UnaryFunction that maps a subclass of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).  
+For the case of classes of behavior, this could be understood as an expectation.")
+(domainSubclass UtilitySubclassFn 1 AutonomousAgentProcess)
+(instance UtilitySublassFn TotalValuedRelation)
+(instance UtilitySubclassFn UnaryFunction)
+(range UtilitySubclassFn RealNumber)
+
+;; A class of behaviors is good to enact if its expected utility is positive.
+;; All complications are swept into the magical utility function.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood)))
+                (greaterThan (UtilitySubclassFn ?CBEHAVE) 0))
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))
+                (lessThan (UtilitySubclassFn ?CBEHAVE) 0)))))
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood)))
+                (=> 
+                    (hasInstance ?CBEHAVE)
+                    (modalAttribute 
+                        (and 
+                            (instance ?IBEHAVE ?CBEHAVE)
+                            (greaterThan (utilityFn ?IBEHAVE) 0)) Likely)))
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))
+                (=> 
+                    (hasInstance ?CBEHAVE)
+                    (modalAttribute 
+                        (and 
+                            (instance ?IBEHAVE ?CBEHAVE)
+                            (lessThan (utilityFn ?IBEHAVE) 0)) Likely))))))
+
+
+
+
 
 
 
