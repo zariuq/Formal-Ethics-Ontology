@@ -794,8 +794,68 @@ For the case of classes of behavior, this could be understood as an expectation.
                             (instance ?IBEHAVE ?CBEHAVE)
                             (lessThan (utilityFn ?IBEHAVE) 0)) Likely))))))
 
+;; As in draft two, an action is morally good if it is an action of the class with 
+;; the highest expected utility available in a decision process.
+;; This avoids mention of cases where behavior is judged w/o being the result of a decision process.
+;; An action class is morally bad if there exists a better option.  (We could add that it should have negative utility, lol.)
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (forall (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (greaterThanOrEqualTo (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood))))
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (exists (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (lessThan (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))
 
+;; We can throw in the agent.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?DECIDE DecidingSubclass)
+                (agent ?DECIDE ?AGENT)
+                (result ?DECIDE ?CBEHAVE)
+                (subclass ?CBEHAVE AutonomousAgentProcess)
+                (forall (?OPTION)
+                    (=> 
+                        (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                        (greaterThanOrEqualTo (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE
+                    (modalAttribute 
+                        (exists (?IBEHAVE)
+                            (and
+                                (instance ?IBEHAVE ?CBEHAVE)
+                                (agent ?IBEHAVE ?AGENT))) MorallyGood))))))
 
+;; TODO: it would be cool to define a specific utility function that results in consequentialism
+;; Thus demonstrating the modularity of the ontology.
 
 
 
