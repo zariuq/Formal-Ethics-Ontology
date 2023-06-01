@@ -63,7 +63,11 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 (subclass Outcome Physical)
 
-
+(documentation DecidingSubclass EnglishLanguage "The subclass of Selecting where the agent opts for one course of action 
+out of a set of multiple possibilities that are open to him/ her, which are represented as subclasses of Process, 
+some instance of which can be enacted.")
+(subclass DecidingSubclass Selecting)
+(termFormat EnglishLanguage DecidingSubclass "deciding")
 
 
 ;; And relation or function declarations here
@@ -87,11 +91,19 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subrelation realizesFormulaSubclass represents)
 
 
-(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to the set of possibilities that are available.")
+(documentation DecisionOptionFn EnglishLanguage "A UnaryFunction that maps an instance of Deciding to 
+the set of possibilities that are available.")
 (domain DecisionOptionFn 1 Deciding)
 (instance DecisionOptionFn TotalValuedRelation)
 (instance DecisionOptionFn UnaryFunction)
 (range DecisionOptionFn Set)
+
+(documentation DecisionSubclassOptionFn EnglishLanguage "A UnaryFunction that maps an instance of DecidingSubclass 
+to the set of possibilities that are available.")
+(domain DecisionSubclassOptionFn 1 DecidingSubclass)
+(instance DecisionSubclassOptionFn TotalValuedRelation)
+(instance DecisionSubclassOptionFn UnaryFunction)
+(range DecisionSubclassOptionFn Set)
 
 ;; The set of attributes applying to a Process.
 (documentation ProcessAttributeFn EnglishLanguage "A UnaryFunction that maps a Process to the set of attributes that apply to it.")

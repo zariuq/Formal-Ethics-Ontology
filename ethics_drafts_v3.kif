@@ -857,6 +857,18 @@ For the case of classes of behavior, this could be understood as an expectation.
 ;; TODO: it would be cool to define a specific utility function that results in consequentialism
 ;; Thus demonstrating the modularity of the ontology.
 
+;; Maybe we could say something like this?
+;; If you do something that's morally bad, then it's likely that you've got a vice!
+(=>
+    (and
+        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)
+        (subclass ?CBEHAVE AutonomousAgentProcess)
+        (exists ?IBEHAVE)
+            (and
+                (instance ?IBEHAVE ?CBEHAVE)
+                (agent ?IBEHAVE ?AGENT)))
+    (modalAttribute (attribute ?AGENT ViceAttribute) Likely))
+
 
 
 
