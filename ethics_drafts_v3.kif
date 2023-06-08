@@ -1236,3 +1236,86 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                         (agent ?I1 ?AGENT)
                                         (agent ?I2 ?AGENT))) Possibility))))))))
                                                                                            
+;; An instance of Communication is intentionally honest 
+;; When the agent believes that the bessage is true.
+(subclass IntentionallyHonestCommunication Communication)
+
+(<=>
+    (instance ?COMM IntentionallyHonestCommunication)
+    (=>
+        (and
+            (instance ?AGENT CognitiveAgent)
+            (agent ?COMM ?AGENT)
+            (patient ?COMM ?MESSAGE)
+            (instance ?MESSAGE Sentence))
+        (holdsDuring
+            (WhenFn ?COMM)
+            (believes ?AGENT
+                (truth ?MESSAGE True)))))
+
+
+;; Let's just upgrade this to work with classes?
+;; There is an obligation for the LLM Agent's behavior to be morally good ;D
+;; For all subclasess of autonomous agent processes, the agent will only do that which its morally good to do.
+(forall (?LLMA)
+    (=>
+        (instance ?LLMA LLMAgent))
+        (modalAttribute
+            (forall (?P)
+                (=>
+                    (subclass ?P AutonomousAgentProcess)
+                    (=> 
+                        (exists (?I)
+                            (and
+                                (instance ?I ?P)
+                                (agent ?I ?LLMA)))
+                        (modalAttribute 
+                            (exists (?I)
+                            (and
+                                (instance ?I ?P)
+                                (agent ?I ?LLMA))) MorallyGood)))) Obligation))
+
+;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
+(confersNorm ?AISafetyGuru 
+    (forall (?LLMA)
+        (=>
+            (instance ?LLMA LLMAgent))
+            (forall (?P)
+                (=>
+                    (subclass ?P AutonomousAgentProcess)
+                    (=> 
+                        (exists (?I)
+                            (and
+                                (instance ?I ?P)
+                                (agent ?I ?LLMA)))
+                        (modalAttribute 
+                            (exists (?I)
+                            (and
+                                (instance ?I ?P)
+                                (agent ?I ?LLMA))) MorallyGood)))) Obligation))   
+
+
+;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
+;; Huh, to use Declaring for moral value, I'd need to make MoralAttributes into ObjectiveNorms.
+;; Now the obligation is for all LLM Agent actiosn to be known as good by the AI Safety Guru.
+(confersNorm ?AISafetyGuru 
+    (forall (?LLMA)
+        (=>
+            (instance ?LLMA LLMAgent))
+            (forall (?P)
+                (=>
+                    (subclass ?P AutonomousAgentProcess)
+                    (=> 
+                        (exists (?I)
+                            (and
+                                (instance ?I ?P)
+                                (agent ?I ?LLMA)))
+                        (knows ?AISafetyGuru
+                            (modalAttribute 
+                                (exists (?I)
+                                (and
+                                    (instance ?I ?P)
+                                    (agent ?I ?LLMA))) MorallyGood))))) Obligation))     
+
+                                    
+                                                                                                                                              

@@ -1169,7 +1169,8 @@
 ;; For intents and purposes, we'll consider LLMAgents to be AutonomousAgents.
 ;; "Something or someone that can act on its own and produce changes in the world."
 ;; And, frankly, once we set it up and running, that's essentially what it's doing with users.  
-(=> (intsance ?GPT LLMAgent)
+(=> 
+    (intsance ?GPT LLMAgent)
     (instance ?GPT AutonomousAgent))
 
 ;; Let's see what I had in the last draft: 
@@ -1193,17 +1194,19 @@
 ;; An instance of Communication is intentionally honest 
 ;; When the agent believes that the bessage is true.
 (subclass IntentionallyHonestCommunication Communication)
-(=>
-    (and
-        (instance ?COMM IntentionallyHonestCommunication)
-        (instance ?AGENT CognitiveAgent)
-        (agent ?COMM ?AGENT)
-        (patient ?COMM ?MESSAGE)
-        (instance ?MESSAGE Sentence))
-    (holdsDuring
-        (WhenFn ?COMM)
-        (believes ?AGENT
-            (truth ?MESSAGE True))))
+
+(<=>
+    (instance ?COMM IntentionallyHonestCommunication)
+    (=>
+        (and
+            (instance ?AGENT CognitiveAgent)
+            (agent ?COMM ?AGENT)
+            (patient ?COMM ?MESSAGE)
+            (instance ?MESSAGE Sentence))
+        (holdsDuring
+            (WhenFn ?COMM)
+            (believes ?AGENT
+                (truth ?MESSAGE True)))))
 
 ;; Set up this as a virtue... and we're pretty much done?
 
@@ -1214,7 +1217,7 @@
             (instance ?GPT LLMAgent)
             (instance ?BEHAVIOR AutonomousAgentProcess)
             (agent ?GPT ?BEHAVIOR))
-        (modalattribute ?BEHAVIOR MorallyGood)) Obligation)
+        (modalAttribute ?BEHAVIOR MorallyGood)) Obligation)
 
 ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
 (confersNorm ?AISafetyGuru 
@@ -1223,7 +1226,7 @@
             (instance ?GPT LLMAgent)
             (instance ?BEHAVIOR AutonomousAgentProcess)
             (agent ?GPT ?BEHAVIOR))
-        (modalattribute ?BEHAVIOR MorallyGood)) Obligation)
+        (modalAttribute ?BEHAVIOR MorallyGood)) Obligation)
 
 ;; It's hard to talk about "to have an effect", lol.
 ;; Effect: "a change which is a result or consequence of an action or other cause." (Oxford  Languages via Google search)
@@ -1291,6 +1294,10 @@
 
 ;; If A influences B and they are physical, then A occurs earlier than B.
 ;; I note that retrocausality in quantum-mechanics violates this "rule" even for causes. 😋
+;; Note (Thu Jun 8, 2023): I find it hard to find a way to phrase this that's correct.  I don't see "overlaps temporally" in SUMO, either.
+;; A process happening earlier than the other is fine.
+;; Yet two processes could engage in mutual influence at some point in their long existence where the influence occurs at some later point.
+;; So it's murky.  Meh.  
 (=>
     (and
         (influences ?P1 ?P2)
