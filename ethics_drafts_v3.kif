@@ -42,13 +42,22 @@ some instance of which can be enacted.")
             (instance ?IPROCESS IntentionalProcess)
             (agent ?IPROCESS ?AGENT))))
 
+;; Use time to say that the agent intends or believes that there will be such an instance after the time of deciding.
+
+(=>
+    (and
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (result ?DECIDE ?CPROCESS))
+    (subclass ?CPROCESS IntentionalProcess))
+
 ;; While the above essentially imply that the patient of a Deciding(Subclass) is a subclass of Process
 ;; I'd like to make it clear.
 (=>
     (and 
         (instance ?DECIDE DecidingSubclass)
         (patient ?DECIDE ?CPROCESS))
-    (subclass ?CPROCESS Process))
+    (subclass ?CPROCESS IntentionalProcess))
 
 ;; The same for Deciding
 (=>
@@ -56,6 +65,43 @@ some instance of which can be enacted.")
         (instance ?DECIDE Deciding)
         (patient ?DECIDE ?IPROCESS))
     (instance ?IPROCESS Process))
+
+;; Messy but, whatever ;D. 
+;; The below is what I'm using for the first SUMO pull request:
+;; Whether to use believes or not is tricky.  It seems more 'proper'.
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?OPTION))
+    (believes ?AGENT 
+        (capability ?OPTION agent ?AGENT)))
+
+;; So if one decides on a course of action,
+;; Then one believes that there will be an instance of this action,
+;; of which one is the agent that takes place after the decision.
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (result ?DECIDE ?DECISION))
+    (believes ?AGENT 
+        (exists (?P)
+          (and 
+            (instance ?P ?DECISION)
+            (agent ?P ?AGENT)
+            (earlier
+              (WhenFn ?DECIDE)
+              (WhenFn ?P))))))
+
+;; And one is deciding among intentional processes.
+;; The existence of an agent is implied by the class-hierarchy, lol.
+(=>
+   (and
+      (instance ?DECIDE Deciding)
+      (patient ?DECIDE ?OPTION))
+   (and
+      (subclass ?OPTION IntentionalProcess))) 
 
 ;; I think this one is pretty much fine, lol.
 ;; Actually, it's a bit weird: it makes it seem as if one is choosing between subclasses of LegalDecision,
@@ -67,6 +113,8 @@ some instance of which can be enacted.")
 ;; than the decision.  And the decision is an instance of the type of legal decision decided upon.
 ;; Which, tbh, seems better than just dealing in instances.
 ;; (I should really look into what the intended semantics of instances are.  )
+
+;; Anyway, i think it's good.  Better to include the connection between the decision and the decision. 
 (=>
     (instance ?DECISION LegalDecision)
     (exists (?DECIDE)
@@ -172,7 +220,10 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                     (exists (?IBEHAVE) 
                         (instance ?IBEHAVE ?CBEHAVE)) ?MORAL)))))
 
-;; Isn't this just type inhabitation or sometihng?
+(modalAttribute 
+(instance ?IBEHAVE ?CBEHAVE)) ?MORAL)
+
+;; Isn't this just type inhabitation or something?
 (documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
 (subclass hasInstance Predicate)
 (domainSubclass hasInstance 1 Class)
@@ -651,7 +702,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (similarSetsWithBP ?BP ?S1 ?S2)
     (modalAttribute 
         (forall (?A) 
-            (Similarity ?A ?S1 ?S2) Likely)))
+            (similar ?A ?S1 ?S2) Likely)))
 
 ;; I've decided that for Virtue Ethics, I should just use the ontological similarity.
 
@@ -856,6 +907,43 @@ For the case of classes of behavior, this could be understood as an expectation.
 
 ;; TODO: it would be cool to define a specific utility function that results in consequentialism
 ;; Thus demonstrating the modularity of the ontology.
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends 
+only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
+
+;; Very general: An outcome is the physical entity that holds when a process ends.
+;; (partition Physical Object Process).
+(subclass Outcome Physical)
+
+;; O is an outcome if and only if there exists some process P such that O is the result of P.
+(<=>
+    (instance ?OUTCOME Outcome)
+    (exists (?P)
+        (and 
+            (instance ?P Process)
+            (result ?P ?OUTCOME))))
+
+;; In theory there could be some overlap, such as the pain caused by punching someone in the face...?
+;; So we should actually say,
+;; If O is an outcome of P, then O does not begin before P begins.
+(=>
+    (and 
+        (instance ?OUTCOME Outcome)
+        (result ?P ?OUTCOME))
+    (not 
+        (before
+            (BeginFn (WhenFn ?OUTCOME)
+            (BeginFn (WhenFn ?P))))))
+
+;; If O is an outcome of P, then P begins before O.
+;; There, that's simple.
+(=>
+    (and 
+        (instance ?OUTCOME Outcome)
+        (result ?P ?OUTCOME))
+    (before
+        (BeginFn (WhenFn ?P))
+        (BeginFn (WhenFn ?OUTCOME))))
 
 ;; Maybe we could say something like this?
 ;; If you do something that's morally bad, then it's likely that you've got a vice!
@@ -869,8 +957,282 @@ For the case of classes of behavior, this could be understood as an expectation.
                 (agent ?IBEHAVE ?AGENT)))
     (modalAttribute (attribute ?AGENT ViceAttribute) Likely))
 
+;; So thanks to the blog worklog, I realized that because a FieldOfStudy is a proposition,
+;; We can make this more precise: 
+;; For all instances of Moral Nihilism, ?MN, there exists a subproposition ?PROP of ?MN such that
+;; ?PROP expresses the information of the statement that there does not exist a moral judgment whose result is a fact.
+(=> 
+    (instance ?MN MoralNihilism)
+    (exists (?PROP)
+        (and
+            (subProposition ?PROP ?MN)
+            (containsInformation ?STATE ?PROP)
+            (equal ?STATE 
+                (not 
+                    (exists (?JUDGE) 
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE ?MORALSTATEMENT)
+                            (instance ?MORALSTATEMENT Fact))))))))
+
+;; And we might wish to use similar instead of equal, lol ;D 
+(=> 
+    (instance ?MN MoralNihilism)
+    (exists (?PROP)
+        (and
+            (subProposition ?PROP ?MN)
+            (containsInformation ?STATE ?PROP)
+            (similar ?STATE 
+                (not 
+                    (exists (?JUDGE) 
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE ?MORALSTATEMENT)
+                            (instance ?MORALSTATEMENT Fact))))))))
+
+(=> 
+    (instance ?MN MoralNihilism)
+    (exists (?PROP)
+        (and
+            (subProposition ?PROP ?MN)
+            (containsInformation ?STATE ?PROP)
+            (similar ?STATE 
+                (not 
+                    (exists (?F ?M)
+                        (and 
+                            (instance ?MORALSTATEMENT Statement)
+                            (equal ?MORALSTATEMENT
+                                (modalAttribute ?F ?M))
+                            (instance ?MORALSTATEMENT Fact))))))))
+
+;; Ethics refers to statements of moral attributes applied to formulas
+(and 
+    (refers Ethics ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (modalAttribute ?F ?M))
+    (instance ?M MoralAttribute)
+    (exists (?CBEHAVE)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (refers ?F ?CBEHAVE))))                    
+
+;; "It's bad to throw eggs at people without good cause" 
+;; I'm not sure how to best formalize this!
+;; Oh, if ThrowingEggs is also a subClass of Rebelling, which is good, 
+;; then we just have the "conflict resolution" problem.
+;; And at the moment I'm just fromalizing it as if conflicts aren't an issue ;-p
+
+;; I improved this from draft 1, so I might as well include it.
+;; Tweaking some SUMO here and there as I write a worklog blog post gets messy!
+(subclass HonestCommunication Communication)
+(<=>
+    (instance ?COMMM HonestCommunication)
+    (=>
+        (and
+            (instance ?COMM Communication)
+            (instance ?AGENT CognitiveAgent)
+            (agent ?COMM ?AGENT)
+            (refers ?CARRIER ?MESSAGE)
+            (patient ?COMM ?CARRIER))
+        (holdsDuring
+            (WhenFn ?COMM)
+            (believes ?AGENT
+                (truth ?MESSAGE True)))))
+
+(subclass UniversalLove Love)
+
+(<=> 
+    (attribute ?BODHISATTVA UniversalLove)
+    (forall (?AGENT)
+        (and
+            (=> 
+                (or
+                    (needs ?AGENT ?OBJECT)
+                    (wants ?AGENT ?OBJECT))
+                (desires ?BODHISATTVA
+                    (and
+                        (instance ?GET Getting)
+                        (destination ?GET ?AGENT)
+                        (patient ?GET ?OBJECT))))
+            (=>
+                (desires ?AGENT ?FORM)
+                (desires ?BODHISATTVA
+                    (exists ?P) 
+                        (and
+                            (containsInformation ?FORM ?PROP )
+                            (represents ?P ?PROP)))))))
+
+(subclass EpistemicUniversalLove Love)
+
+(<=> 
+    (attribute ?BODHISATTVA EpistemicUniversalLove)
+    (forall (?AGENT)
+        (and
+            (=> 
+                (knows ?BODHISATTVA
+                    (or
+                        (needs ?AGENT ?OBJECT)
+                        (wants ?AGENT ?OBJECT)))
+                (desires ?BODHISATTVA
+                    (and
+                        (instance ?GET Getting)
+                        (destination ?GET ?AGENT)
+                        (patient ?GET ?OBJECT))))
+            (=>
+                (knows ?BODHISATTVA
+                    (desires ?AGENT ?FORM))
+                (desires ?BODHISATTVA
+                    (exists ?P) 
+                        (and
+                            (containsInformation ?FORM ?PROP )
+                            (represents ?P ?PROP)))))))
 
 
+;; Let's upgrade it to classes!  Why not ;- )
 
+(documentation ChoicePoint EnglishLanguage "A set of classes of processes where one agent has to choose between two or more (mutually exclusive?) options.")
+(subclass ChoicePoint Set)
+(subclass ChoicePoint NonNullSet)
 
+;; All elements of a choice point are classes of autonomous agent processes.
+(=> 
+    (and 
+        (instance ?CP ChoicePoint)
+        (element ?P ?CP))
+    (subclass ?P AutonomousAgentProcess))
 
+;; For a choice point, there exists an agent such that for all behaviors in the set, it is possible for the agent to instantiate the behavior.
+(=> 
+    (instance ?CP ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (=> 
+                (element ?P ?CP)
+                (modalAttribute
+                    (exists (?I)
+                        (and 
+                            (agent ?I ?AGENT)
+                            (instance ?I ?P ))) Possibility)))))
+
+;; But we can just rewrite this with capability.
+;; For a choice point, there exists an agent that is capable of performing every element of the choice point.
+(=> 
+    (instance ?CP ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (=> 
+                (element ?P ?CP)
+                (capability ?P agent ?AGENT)))))
+
+;; And, hah, because I chose the "believes" version of "Deciding", the duality is broken 😈.
+;; We can't actually say that, "Because A believes P, P is likely/possible"... without knowing that A is a pretty effective agent.
+;; So maybe all we can say that is that A believes that this is a choice point ;- ).
+(=> 
+    (and
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (instance (DecisionOptionFn ?DECIDE) NonNullSet))
+    (believes ?AGENT
+        (instance (DecisionOptionFn ?DECIDE) ChoicePoint)))               
+
+;; We can say this, however: if an agent is deciding on some matter,
+;; Then there exists a choice point that is similar to the decision set.
+;; Basically, even if I'm wrong about being able to do something I'm deciding on, 
+;; I can still decide on "trying to do it", which is a process,
+;; and one will more-or-less make similar judgments about that!
+(=> 
+    (and
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (instance (DecisionOptionFn ?DECIDE) NonNullSet))
+    (exists (?CP)
+        (instance ?CP ChoicePoint)
+        (similar ?CP (DecisionOptionFn ?DECIDE))))         
+
+;; We could also have a SubjectiveChoicePoint and make ObjectiveChoicePoint be a subclass of that:
+(=> 
+    (instance ?CP ChoicePoint)
+    (exists (?AGENT)
+        (forall (?P)
+            (=> 
+                (element ?P ?CP)
+                (believes ?AGENT
+                    (capability ?P agent ?AGENT))))))
+
+;; Upgrading this, too, cuz it's easier than the deontology stuff.  
+(documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
+(subclass MoralDilemma ChoicePoint)
+
+;; A Moral Dilemma is a choice for which every option is likely to be judged morally bad by all moral judgments thereof.
+;; Maybe this is quite strong :- p
+;; I worry about the judgments being taken out of context.  I should have some judgment set, lol.
+;; (Taken from Wikipedia: https://en.wikipedia.org/wiki/Ethical_dilemma)
+(=> 
+    (instance ?MD MoralDilemma)
+    (forall (?B)
+        (=> 
+            (element ?B ?MD)
+            (modalAttribute 
+                (forall (?JUDGE)
+                    (=>
+                        (and 
+                            (instance ?JUDGE MoralJudging)
+                            (patient ?JUDGE ?B)
+                        (result ?JUDGE 
+                            (modalAttribute 
+                                (exists (?I)
+                                    (instance ?I ?B)) MorallyBad))))) Likely))))
+
+;; Literally, for every option of a moral dilemma, there exists a valid deductive argument that it's bad to instantiate that option.
+(=>
+    (instance ?MD MoralDilemma)
+    (forall (?B)
+        (=> 
+            (element ?B MD)
+            (exists (?ARG)
+                (and 
+                    (instance ?ARG ValidDeductiveArgument)
+                    (conclusion 
+                        (modalAttribute 
+                                (exists (?I)
+                                    (instance ?I ?B)) MorallyBad) ?ARG))))))
+
+;; "The crucial features of a moral dilemma are these: 
+;; the agent is required to do each of two (or more) actions; 
+;; the agent can do each of the actions; 
+;; but the agent cannot do both (or all) of the actions." 
+;; (SEP: https://plato.stanford.edu/entries/moral-dilemmas/)
+;; This is a deontology apporach, sort of.
+;; Capability is implied by the new Choice Point definition (Objective version).
+(=> 
+    (instance ?MD MoralDilemma)
+    (and
+        (exists (?AGENT ?BLIST)
+            (and 
+                (forall (?B)
+                    (=> 
+                        (inList ?B ?BLIST)
+                        (element ?B ?MD)))
+                (forall (?B)
+                    (=> 
+                        (inList ?B ?BLIST)
+                        (modalAttribute 
+                            (exists (?I)
+                                (and 
+                                    (agent ?I ?AGENT)
+                                    (instance ?I ?B))) Obligation)))
+                (forall (?B1 ?B2)
+                    (=> 
+                        (and 
+                            (inList ?B1 ?BLIST)
+                            (inList ?B2 ?BLIST))
+                        (not 
+                            (modalAttribute 
+                                (exists (?I1 ?I2)
+                                    (and
+                                        (instance ?I1 ?B1)
+                                        (instance ?I2 ?B2)
+                                        (agent ?I1 ?AGENT)
+                                        (agent ?I2 ?AGENT))) Possibility))))))))
+                                                                                           

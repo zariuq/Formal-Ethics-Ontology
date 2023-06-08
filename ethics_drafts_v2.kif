@@ -726,7 +726,7 @@
             (instance ?P Process)
             (result ?P ?OUTCOME))))
 
-;; If O is an outcome of a process ?P, then the end of ?$ is before the beginning of O.
+;; If O is an outcome of a process ?P, then the end of ?P is before the beginning of O.
 ;; In theory there could be some overlap, such as the pain caused by punching someone in the face...?
 (=>
     (and 
@@ -773,8 +773,9 @@
             (and
                 (instance ?JUDGE MoralJudging)
                 (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MoralAttribute MorallyGood) (equal ?MoralAttribute MorallyBad))
                 (equals ?CONCLUSION
-                    (modalAttribute ?BEHAVE MorallyGood)))
+                    (modalAttribute ?BEHAVE ?MoralAttribute)))
             (exists (?ARGUMENT ?OUTCOME ?PREMISE)
                 (and 
                     (instance ?ARGUMENT Argument)
@@ -800,6 +801,48 @@
                                     (=> 
                                         (attribute ?AGENT ?ATT))
                                         (not (refers ?PROP ?ATT)))))))))))
+
+;; I'll try a simplified version (Tue Jun 6, 2023)
+;; Now there's just an argument such that all physical premises are outcomes of the behavior,
+;; And all premises do not refer to any attributes of the agent nor any manners of the process.
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MoralAttribute MorallyGood) (equal ?MoralAttribute MorallyBad))
+                (equals ?CONCLUSION
+                    (modalAttribute ?BEHAVE ?MoralAttribute)))
+            (exists (?ARGUMENT)
+                (and 
+                    (instance ?ARGUMENT Argument)
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (agent ?BEHAVE ?AGENT)
+                    (forall (?PROP)
+                        (and 
+                            (=> 
+                                (and
+                                    (premise ?ARGUMENT ?PROP)
+                                    (refers ?PROP ?PHYS)
+                                    (instance ?PHYS Physical))
+                                (and 
+                                    (instance ?PHYS Outcome)
+                                    (result ?BEHAVE ?PHYS)))
+                            (=> 
+                                (premise ?ARGUMENT ?PROP)
+                                (and
+                                    (forall (?ATT) 
+                                        (=> 
+                                            (attribute ?AGENT ?ATT))
+                                            (not (refers ?PROP ?ATT)))
+                                    (forall (?MAN)
+                                        (=> 
+                                            (manner ?MAN ?BEHAVE)
+                                            (not (refers ?PROP ?MAN)))))))))))))
+
 
  ;; Note on GPT-4 -- in this case, it was not so easy to receive much help.
  ;; Probably because the challenge is how to actually philosophically frame the problem.

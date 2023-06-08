@@ -423,7 +423,7 @@
                 (modalAttribute ?P1 MorallyGood)
                 (modalAttribute ?P2 MorallyBad))) ?UTILITARIANISM))
 
-;; Maybesomething simpler like the following:
+;; Maybe something simpler like the following:
 (=>
     (instance ?UTILITARIANISM Utilitarianism)
     (containsInformation 
@@ -593,17 +593,21 @@
     (modalAttribute (attribute Dutifulness ?A) Likely))
 
 (subclass HonestCommunication Communication)
-(=>
-    (and
-        (instance ?COMM Communication)
-        (instance ?AGENT CognitiveAgent)
-        (agent ?COMM ?AGENT)
-        (refers ?CARRIER ?MESSAGE)
-        (patient ?COMM ?CARRIER))
-    (holdsDuring
-        (WhenFn ?COMM)
-        (believes ?AGENT
-            (truth ?MESSAGE True))))
+(<=>
+    (instance ?COMMM HonestCommunication)
+    (=>
+        (and
+            (instance ?COMM Communication)
+            (instance ?AGENT CognitiveAgent)
+            (agent ?COMM ?AGENT)
+            (refers ?CARRIER ?MESSAGE)
+            (patient ?COMM ?CARRIER))
+        (holdsDuring
+            (WhenFn ?COMM)
+            (believes ?AGENT
+                (truth ?MESSAGE True)))))
+
+
 
 ;; Veritas, truthfulness, or honesty.
 ;; If an agent is honest, then the agent desires its communications to be honest communications.

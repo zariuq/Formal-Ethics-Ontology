@@ -25,6 +25,19 @@
     (refers Ethics ?JUDGE)
     (instance ?JUDGE MoralJudging))
 
+;; Or perhaps we could focus on moral statements instead of moral judgments.
+;; Ethics refers to statements of moral attributes applied to formulas
+(and 
+    (refers Ethics ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (modalAttribute ?F ?M))
+    (instance ?M MoralAttribute)
+    (exists (?CBEHAVE)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (refers ?F ?CBEHAVE))))    
+
 ;; "Moral nihilism is the view that there are no moral facts." (Ethics: The Fundamentals)
 ;; There is no moral judging (with behavior and moral judgments) that is a fact.
 (and 
