@@ -440,6 +440,7 @@
     (member ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
     (and
         (member ?E1 ?S1)
+        (instance ?BP BinaryPredicate)
         (exists (?E2) 
             (and 
                 (member ?E2 ?S2)
@@ -799,8 +800,8 @@
                                 (premise ?ARGUMENT ?PROP)
                                 (forall (?ATT) 
                                     (=> 
-                                        (attribute ?AGENT ?ATT))
-                                        (not (refers ?PROP ?ATT)))))))))))
+                                        (attribute ?AGENT ?ATT)
+                                        (not (refers ?PROP ?ATT))))))))))))
 
 ;; I'll try a simplified version (Tue Jun 6, 2023)
 ;; Now there's just an argument such that all physical premises are outcomes of the behavior,
@@ -836,8 +837,8 @@
                                 (and
                                     (forall (?ATT) 
                                         (=> 
-                                            (attribute ?AGENT ?ATT))
-                                            (not (refers ?PROP ?ATT)))
+                                            (attribute ?AGENT ?ATT)
+                                            (not (refers ?PROP ?ATT))))
                                     (forall (?MAN)
                                         (=> 
                                             (manner ?MAN ?BEHAVE)
@@ -940,13 +941,15 @@
     (before (WhenFn ?TYING) (WhenFn ?CHOICE)))
 
 ;; During the choice, person 2 cannot be the agent of the process of untying itself from the track :D.
-(and 
-    (holdsDuring (WhenFn ?CHOICE)
-        (and 
-            (not (capable (?UNTYING) agent ?PERSON2))
-            (instance ?UNTYING Untying)
-            (patient ?UNTYING ?TRACK2)
-            (patient ?UNTYING ?PERSON2))))
+(holdsDuring
+  (WhenFn ?CHOICE)
+  (and
+    (not
+      (capable
+        (?UNTYING) agent ?PERSON2))
+    (instance ?UNTYING Untying)
+    (patient ?UNTYING ?TRACK2)
+    (patient ?UNTYING ?PERSON2)))
 
 ;; The track configuration.
 (meetsSpatially ?TROLLEY ?TRACK)
@@ -984,8 +987,8 @@
     (instance ?S SetOfProcesses)
     (forall (?P)
         (=>
-            (member ?P ?S))
-            (instance ?P Process)))
+            (member ?P ?S)
+            (instance ?P Process))))
 
 ;; This is sort of the dual of a Deciding.  
 ;; An instance of deciding implies a set of options.
@@ -1110,7 +1113,7 @@
                             (instance ?JUDGE MoralJudging)
                             (patient ?JUDGE ?BEHAVE))
                         (result ?JUDGE 
-                            (modalAttribute ?BEHAVE MorallyBad))))) Likely)))
+                            (modalAttribute ?BEHAVE MorallyBad)))) Likely))))
 
 
 ;; "The crucial features of a moral dilemma are these: 

@@ -100,8 +100,7 @@ some instance of which can be enacted.")
    (and
       (instance ?DECIDE Deciding)
       (patient ?DECIDE ?OPTION))
-   (and
-      (subclass ?OPTION IntentionalProcess))) 
+   (subclass ?OPTION IntentionalProcess))
 
 ;; I think this one is pretty much fine, lol.
 ;; Actually, it's a bit weird: it makes it seem as if one is choosing between subclasses of LegalDecision,
