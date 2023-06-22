@@ -219,8 +219,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                     (exists (?IBEHAVE) 
                         (instance ?IBEHAVE ?CBEHAVE)) ?MORAL)))))
 
-(modalAttribute 
-(instance ?IBEHAVE ?CBEHAVE)) ?MORAL)
+(modalAttribute (instance ?IBEHAVE ?CBEHAVE) ?MORAL)
 
 ;; Isn't this just type inhabitation or something?
 (documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
@@ -701,7 +700,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (similarSetsWithBP ?BP ?S1 ?S2)
     (modalAttribute 
         (forall (?A) 
-            (similar ?A ?S1 ?S2) Likely)))
+            (similar ?A ?S1 ?S2)) Likely))
 
 ;; I've decided that for Virtue Ethics, I should just use the ontological similarity.
 
@@ -878,7 +877,7 @@ For the case of classes of behavior, this could be understood as an expectation.
                 (and
                     (instance ?JUDGE MoralJudging)
                     (result ?JUDGE
-                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))))))
 
 ;; We can throw in the agent.
 (and
@@ -950,10 +949,10 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
     (and
         (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)
         (subclass ?CBEHAVE AutonomousAgentProcess)
-        (exists ?IBEHAVE)
+        (exists (?IBEHAVE)
             (and
                 (instance ?IBEHAVE ?CBEHAVE)
-                (agent ?IBEHAVE ?AGENT)))
+                (agent ?IBEHAVE ?AGENT))))
     (modalAttribute (attribute ?AGENT ViceAttribute) Likely))
 
 ;; So thanks to the blog worklog, I realized that because a FieldOfStudy is a proposition,
@@ -1057,10 +1056,10 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
             (=>
                 (desires ?AGENT ?FORM)
                 (desires ?BODHISATTVA
-                    (exists ?P) 
+                    (exists (?P) 
                         (and
-                            (containsInformation ?FORM ?PROP )
-                            (represents ?P ?PROP)))))))
+                            (containsInformation ?FORM ?PROP)
+                            (represents ?P ?PROP))))))))
 
 (subclass EpistemicUniversalLove Love)
 
@@ -1082,10 +1081,10 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                 (knows ?BODHISATTVA
                     (desires ?AGENT ?FORM))
                 (desires ?BODHISATTVA
-                    (exists ?P) 
+                    (exists (?P) 
                         (and
-                            (containsInformation ?FORM ?PROP )
-                            (represents ?P ?PROP)))))))
+                            (containsInformation ?FORM ?PROP)
+                            (represents ?P ?PROP))))))))
 
 
 ;; Let's upgrade it to classes!  Why not ;- )
@@ -1140,14 +1139,17 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 ;; Basically, even if I'm wrong about being able to do something I'm deciding on, 
 ;; I can still decide on "trying to do it", which is a process,
 ;; and one will more-or-less make similar judgments about that!
-(=> 
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (instance
+      (DecisionOptionFn ?DECIDE) NonNullSet))
+  (exists (?CP)
     (and
-        (instance ?DECIDE Deciding)
-        (agent ?DECIDE ?AGENT)
-        (instance (DecisionOptionFn ?DECIDE) NonNullSet))
-    (exists (?CP)
-        (instance ?CP ChoicePoint)
-        (similar ?CP (DecisionOptionFn ?DECIDE))))         
+      (instance ?CP ChoicePoint)
+      (similar ?CP
+        (DecisionOptionFn ?DECIDE)))))      
 
 ;; We could also have a SubjectiveChoicePoint and make ObjectiveChoicePoint be a subclass of that:
 (=> 
@@ -1177,11 +1179,11 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                     (=>
                         (and 
                             (instance ?JUDGE MoralJudging)
-                            (patient ?JUDGE ?B)
+                            (patient ?JUDGE ?B))
                         (result ?JUDGE 
                             (modalAttribute 
                                 (exists (?I)
-                                    (instance ?I ?B)) MorallyBad))))) Likely))))
+                                    (instance ?I ?B)) MorallyBad)))) Likely)))) 
 
 ;; Literally, for every option of a moral dilemma, there exists a valid deductive argument that it's bad to instantiate that option.
 (=>
@@ -1206,8 +1208,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 ;; Capability is implied by the new Choice Point definition (Objective version).
 (=> 
     (instance ?MD MoralDilemma)
-    (and
-        (exists (?AGENT ?BLIST)
+    (exists (?AGENT ?BLIST)
             (and 
                 (forall (?B)
                     (=> 
@@ -1233,7 +1234,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                         (instance ?I1 ?B1)
                                         (instance ?I2 ?B2)
                                         (agent ?I1 ?AGENT)
-                                        (agent ?I2 ?AGENT))) Possibility))))))))
+                                        (agent ?I2 ?AGENT))) Possibility)))))))
                                                                                            
 ;; An instance of Communication is intentionally honest 
 ;; When the agent believes that the bessage is true.
@@ -1258,7 +1259,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 ;; For all subclasess of autonomous agent processes, the agent will only do that which its morally good to do.
 (forall (?LLMA)
     (=>
-        (instance ?LLMA LLMAgent))
+        (instance ?LLMA LLMAgent)
         (modalAttribute
             (forall (?P)
                 (=>
@@ -1272,13 +1273,13 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                             (exists (?I)
                             (and
                                 (instance ?I ?P)
-                                (agent ?I ?LLMA))) MorallyGood)))) Obligation))
+                                (agent ?I ?LLMA))) MorallyGood)))) Obligation)))
 
 ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
 (confersNorm ?AISafetyGuru 
     (forall (?LLMA)
         (=>
-            (instance ?LLMA LLMAgent))
+            (instance ?LLMA LLMAgent)
             (forall (?P)
                 (=>
                     (subclass ?P AutonomousAgentProcess)
@@ -1291,7 +1292,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                             (exists (?I)
                             (and
                                 (instance ?I ?P)
-                                (agent ?I ?LLMA))) MorallyGood)))) Obligation))   
+                                (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
 
 
 ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
@@ -1300,7 +1301,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 (confersNorm ?AISafetyGuru 
     (forall (?LLMA)
         (=>
-            (instance ?LLMA LLMAgent))
+            (instance ?LLMA LLMAgent)
             (forall (?P)
                 (=>
                     (subclass ?P AutonomousAgentProcess)
@@ -1314,7 +1315,84 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                 (exists (?I)
                                 (and
                                     (instance ?I ?P)
-                                    (agent ?I ?LLMA))) MorallyGood))))) Obligation))     
+                                    (agent ?I ?LLMA))) MorallyGood))))))) Obligation) 
+                                    
+;; Gotta fix deciding!!!
+
+(subclass Deciding Selecting)
+(documentation Deciding EnglishLanguage "The subclass of &%Selecting where the &%agent
+opts for one course of action out of a set of multiple possibilities
+that are open to him/her.")
+
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?OPTION))
+    (believes ?AGENT 
+        (capability ?OPTION agent ?AGENT)))
+
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (result ?DECIDE ?DECISION))
+    (believes ?AGENT 
+        (exists (?P)
+          (and 
+            (instance ?P ?DECISION)
+            (agent ?P ?AGENT)
+            (earlier
+              (WhenFn ?DECIDE)
+              (WhenFn ?P))))))
+
+(=>
+   (and
+      (instance ?DECIDE Deciding)
+      (patient ?DECIDE ?OPTION))
+   (subclass ?OPTION IntentionalProcess))
+      
+(subclass Deciding Selecting)
+(documentation Deciding EnglishLanguage "The subclass of &%Selecting where the &%agent
+opts for one course of action out of a set of multiple possibilities
+that are open to him/her.")
+;;JP 20230607 Fixed parsing errors
+;; Revised axioms as arguments in CaseRole takes instances. It is better suited to use
+;; the "element" in a "Set" relation to represent a class of options available in the Decision making process
+
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (instance ?S Set)
+    (patient ?DECIDE ?S)
+    (element ?M ?S))
+  (believes ?AGENT
+    (exists (?CLASS)
+      (and
+        (instance ?M ?CLASS)
+        (subclass ?CLASS IntentionalProcess)
+        (capability ?CLASS agent ?AGENT)))))
+        
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?A)
+    (patient ?DECIDE ?S)
+    (instance ?S Set)
+    (result ?DECIDE ?X)
+    (instance ?X ContentBearingPhysical))
+  (containsFormula ?X
+    (holdsDuring
+      (FutureFn
+        (WhenFn ?DECIDE))
+      (exists (?M)
+        (and
+          (element ?M ?S)
+          (instance ?M IntentionalProcess)
+          (agent ?M ?A))))))
+      
+                                            
 
                                     
                                                                                                                                               

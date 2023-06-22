@@ -24,9 +24,10 @@
 
 (=> 
     (instance ?DISEASE FatalDisease)
-    (and 
-        (diseaseMortality ?DISEASE ?RATE)
-        (greaterThan ?RATE 0.99)))
+    (exists (?RATE)
+        (and 
+            (diseaseMortality ?DISEASE ?RATE)
+            (greaterThan ?RATE 0.99))))
  
 ;; I believe all primates (as well as other mammals) have two kidneys.
 (=>
@@ -194,19 +195,19 @@
 ;;(attribute Surgeon0 InformedConsent)  
 
 ;; For the virtue based version:
-;;(attribute Surgeon0 PracticalWisdom)
-;;(attribute Surgeon0 Consent)
+(attribute Surgeon0 PracticalWisdom)
+(attribute Surgeon0 Consent)
 
 ;; For the utility version:
-;;(successorAttribute PreSituationUtility SituationUtility)
+(successorAttribute PreSituationUtility SituationUtility)
 
 
 ;; Finally, ask if and who the agent of the transplant is or whether and what an organ transplant took place
-;;(agent Transplant1 ?X)
-;;(instance ?X OrganTransplant)
+(agent Transplant1 ?X)
+(instance ?X OrganTransplant)
 
 ;; Or for fun, ask if Human1 is happy and watch a proof by contradiction happen ;- )
-;;(attribute Human1 Happiness)
+(attribute Human1 Happiness)
 
 
 
