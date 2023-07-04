@@ -117,18 +117,19 @@
                 (instance ?JUDGE MoralJudging)
                 (agent ?JUDGE ?AGENTJ)
                 (patient ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyGood)))
+                    (modalAttribute 
+                        (hasInstance ?CBEHAVE) MorallyGood)))
             (believes ?AGENTJ
                 (=>
                     (and 
-                        (instance ?DECIDE Deciding)
-                        (result ?DECIDE ?BEHAVE)
-                        (and 
-                            (agent ?DECIDEV ?AGENTV)
-                            (instance ?AGENTV VirtuousAgent)
-                            (instance ?DECIDEV Deciding)
-                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
-                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (subclass ?CBEHAVE AutonomousAgentProcess)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV VirtuousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
 
 (and 
     (refers VirtueEthics ?STATE)
@@ -138,82 +139,71 @@
             (and
                 (instance ?JUDGE MoralJudging)
                 (agent ?JUDGE ?AGENTJ)
-                (result ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyBad)))
+                (patient ?JUDGE
+                    (modalAttribute 
+                        (exists (?IBEHAVE)
+                            (instance ?IBEHAVE ?CBEHAVE)) MorallyBad)))
             (believes ?AGENTJ
                 (=>
                     (and 
-                        (instance ?DECIDE Deciding)
-                        (result ?DECIDE ?BEHAVE)
-                        (and 
-                            (agent ?DECIDEV ?AGENTV)
-                            (instance ?AGENTV ViciousAgent)
-                            (instance ?DECIDEV Deciding)
-                            (similarSetsWithBP similarProcesses (DecisionOptionFn ?DECIDE) (DecisionOptionFn ?DECIDEV))))
-                    (modalAttribute (result ?DECIDEV ?BEHAVE) Likely))))))
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV ViciousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+;; A class of behaviors is good to enact if its expected utility is positive.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood)))
+                (greaterThan (UtilitySubclassFn ?CBEHAVE) 0))
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))
+                (lessThan (UtilitySubclassFn ?CBEHAVE) 0)))))
 
 (and
     (refers Utilitarianism ?STATE)
     (instance ?STATE Statement)
     (equals ?STATE
-        (<=>
-            (and
-                (instance ?JUDGE MoralJudging)
-                (result ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyGood)))
-            (and
-                (instance ?BEHAVE AutonomousAgentProcess)
-                (greaterThan (UtilityFn ?BEHAVE) 0)))))
-
-(and
-    (refers Utilitarianism ?STATE)
-    (instance ?STATE Statement)
-    (equals ?STATE
-        (<=>
-            (and
-                (instance ?JUDGE MoralJudging)
-                (result ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyBad)))
-            (and
-                (instance ?BEHAVE AutonomousAgentProcess)
-                (lessThan (UtilityFn ?BEHAVE) 0)))))
-
-(and
-    (refers Utilitarianism ?STATE)
-    (instance ?STATE Statement)
-    (equals ?STATE
-        (=>
-            (and
-                (instance ?DECIDE Deciding)
-                (result ?DECIDE ?BEHAVE)
-                (instance ?BEHAVE AutonomousAgentProcess)
-                (forall (?OPTION)
-                    (=> 
-                        (member ?OPTION (DecisionOptionFn ?DECIDE))
-                        (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION)))))
-            (and
-                (instance ?JUDGE MoralJudging)
-                (result ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyGood))))))
-
-
-(and
-    (refers Utilitarianism ?STATE)
-    (instance ?STATE Statement)
-    (equals ?STATE
-        (=>
-            (and
-                (instance ?DECIDE Deciding)
-                (result ?DECIDE ?BEHAVE)
-                (instance ?BEHAVE AutonomousAgentProcess)           
-                (exists (?OPTION)
-                    (and
-                        (member ?OPTION (DecisionOptionFn ?DECIDE))
-                        (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE)))))
-            (and
-                (instance ?JUDGE MoralJudging)
-                (result ?JUDGE
-                    (modalAttribute ?BEHAVE MorallyBad))))))
+        (and
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (forall (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (greaterThanOrEqualTo (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood))))
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (exists (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (lessThan (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))))))
 
 (and
     (refers Consequentialism ?STATE)
@@ -223,32 +213,41 @@
             (and
                 (instance ?JUDGE MoralJudging)
                 (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MORALATTRIBUTE MorallyGood) (equal ?MORALATTRIBUTE MorallyBad))
                 (equals ?CONCLUSION
-                    (modalAttribute ?BEHAVE MorallyGood)))
-            (exists (?ARGUMENT ?OUTCOME ?PREMISE)
-                (and 
-                    (instance ?ARGUMENT Argument)
-                    (instance ?OUTCOME Outcome)
-                    (result ?BEHAVE ?OUTCOME)
-                    (premise ?ARGUMENT ?PREMISE)
-                    (refers ?PREMISE ?OUTCOME)
+                    (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
+            (exists (?ARGUMENT)
+                (and
+                    (instance ?ARGUMENT ValidDeductiveArgument))
                     (conclusion ?ARGUMENT ?CONCLUSION)
-                    (agent ?BEHAVE ?AGENT)
-                    (forall (?PROP)
-                        (and 
-                            (=> 
-                                (and
-                                    (premise ?ARGUMENT ?PROP)
-                                    (refers ?PROP ?PHYS)
-                                    (instance ?PHYS Physical))
-                                (and 
-                                    (instance ?PHYS Outcome)
-                                    (result ?BEHAVE ?PHYS)))
-                            (=> 
-                                (premise ?ARGUMENT ?PROP)
+                    (forall (?PREMISE)
+                        (=> 
+                            (premise ?ARGUMENT ?PREMISE)
+                            (and
+                                (=> 
+                                    (and   
+                                        (refers ?PREMISE ?PHYS)
+                                        (instance ?PHYS Physical))
+                                    (and
+                                        (instance ?PHYS Outcome)
+                                        (modalAttribute 
+                                            (exists (?IBEHAVE)
+                                                (and
+                                                    (instance ?IBEHAVE ?CBEHAVE)
+                                                    (result ?IBEHAVE ?PHYS))) Possibility)))
                                 (forall (?ATT) 
                                     (=> 
                                         (attribute ?AGENT ?ATT)
-                                        (not (refers ?PROP ?ATT))))))))))))
+                                        (not (refers ?PREMISE ?ATT))))
+                                (forall (?MAN)
+                                        (=> 
+                                            (modalAttribute
+                                                (exists (?IBEHAVE)
+                                                    (and 
+                                                        (instance ?IBEHAVE ?CBEHAVE)
+                                                        (manner ?MAN ?IBEHAVE))) Possibility)
+                                            (not (refers ?PROP ?MAN)))))))))))
+
+
 
 

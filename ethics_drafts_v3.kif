@@ -903,12 +903,6 @@ For the case of classes of behavior, this could be understood as an expectation.
                                 (instance ?IBEHAVE ?CBEHAVE)
                                 (agent ?IBEHAVE ?AGENT))) MorallyGood))))))
 
-;; TODO: it would be cool to define a specific utility function that results in consequentialism
-;; Thus demonstrating the modularity of the ontology.
-(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends 
-only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
-(subclass Consequentialism Utilitarianism)
-
 ;; Very general: An outcome is the physical entity that holds when a process ends.
 ;; (partition Physical Object Process).
 (subclass Outcome Physical)
@@ -942,6 +936,106 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
     (before
         (BeginFn (WhenFn ?P))
         (BeginFn (WhenFn ?OUTCOME))))
+
+;; TODO: it would be cool to define a specific utility function that results in consequentialism
+;; Thus demonstrating the modularity of the ontology.
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends 
+only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
+
+;; Trying to adapt the draft 2 def to classe of behavior.
+;; So if a class is judged as good/bad,
+;; Then there exists a valid deductive argument with this conclusion, 
+;; Such that all premises of this argument do not refer to agent attributes or possible manners of instances of the behavior,
+;; And if they refer to physcial entities, then these are likely results of instances of the behavior.
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MORALATTRIBUTE MorallyGood) (equal ?MORALATTRIBUTE MorallyBad))
+                (equals ?CONCLUSION
+                    (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
+            (exists (?ARGUMENT)
+                (and
+                    (instance ?ARGUMENT ValidDeductiveArgument))
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (forall (?PREMISE)
+                        (=> 
+                            (premise ?ARGUMENT ?PREMISE)
+                            (and
+                                (=> 
+                                    (and   
+                                        (refers ?PREMISE ?PHYS)
+                                        (instance ?PHYS Physical))
+                                    (and
+                                        (instance ?PHYS Outcome)
+                                        (modalAttribute 
+                                            (forall (?IBEHAVE)
+                                                (and
+                                                    (instance ?IBEHAVE ?CBEHAVE)
+                                                    (result ?IBEHAVE ?PHYS))) Likely)))
+                                (forall (?ATT) 
+                                    (=> 
+                                        (attribute ?AGENT ?ATT)
+                                        (not (refers ?PREMISE ?ATT))))
+                                (forall (?MAN)
+                                        (=> 
+                                            (modalAttribute
+                                                (exists (?IBEHAVE)
+                                                    (and 
+                                                        (instance ?IBEHAVE ?CBEHAVE)
+                                                        (manner ?MAN ?IBEHAVE))) Possibility)
+                                            (not (refers ?PROP ?MAN)))))))))))
+
+;; I think this version is better: for all physical premises of the argument,
+;; It's possible for there to be an instance of the behavior with this outcome.
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MORALATTRIBUTE MorallyGood) (equal ?MORALATTRIBUTE MorallyBad))
+                (equals ?CONCLUSION
+                    (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
+            (exists (?ARGUMENT)
+                (and
+                    (instance ?ARGUMENT ValidDeductiveArgument))
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (forall (?PREMISE)
+                        (=> 
+                            (premise ?ARGUMENT ?PREMISE)
+                            (and
+                                (=> 
+                                    (and   
+                                        (refers ?PREMISE ?PHYS)
+                                        (instance ?PHYS Physical))
+                                    (and
+                                        (instance ?PHYS Outcome)
+                                        (modalAttribute 
+                                            (exists (?IBEHAVE)
+                                                (and
+                                                    (instance ?IBEHAVE ?CBEHAVE)
+                                                    (result ?IBEHAVE ?PHYS))) Possibility)))
+                                (forall (?ATT) 
+                                    (=> 
+                                        (attribute ?AGENT ?ATT)
+                                        (not (refers ?PREMISE ?ATT))))
+                                (forall (?MAN)
+                                        (=> 
+                                            (modalAttribute
+                                                (exists (?IBEHAVE)
+                                                    (and 
+                                                        (instance ?IBEHAVE ?CBEHAVE)
+                                                        (manner ?MAN ?IBEHAVE))) Possibility)
+                                            (not (refers ?PROP ?MAN)))))))))))
+
 
 ;; Maybe we could say something like this?
 ;; If you do something that's morally bad, then it's likely that you've got a vice!
@@ -1013,13 +1107,15 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
     (exists (?CBEHAVE)
         (and 
             (subclass ?CBEHAVE AutonomousAgentProcess)
-            (refers ?F ?CBEHAVE))))                    
+            (refers ?F ?CBEHAVE))))
+
+                    
 
 ;; "It's bad to throw eggs at people without good cause" 
 ;; I'm not sure how to best formalize this!
 ;; Oh, if ThrowingEggs is also a subClass of Rebelling, which is good, 
 ;; then we just have the "conflict resolution" problem.
-;; And at the moment I'm just fromalizing it as if conflicts aren't an issue ;-p
+;; And at the moment I'm just formalizing it as if conflicts aren't an issue ;-p
 
 ;; I improved this from draft 1, so I might as well include it.
 ;; Tweaking some SUMO here and there as I write a worklog blog post gets messy!
@@ -1450,7 +1546,7 @@ that are open to him/her.")
       (patient ?DECISION ?S)
       (subset ?DECISION ?S))))
 
-        
+;; So the next thing would be to uplift Consequentialism to draft 3
         
         
                                       
