@@ -68,45 +68,60 @@
     (refers Deontology ?STATE)
     (instance ?STATE Statement)
     (equal ?STATE
-        (or
-            (exists (?RULE)
-                (and 
+        (exists (?RULE)
+            (and
+                (instance ?DEONTIC DeonticAttribute)
+                (modalAttribute ?RULE ?DEONTIC)
+                (exists (?AGENT) 
+                    (confersNorm ?AGENT ?RULE ?DEONTIC))
+                (=>
                     (modalAttribute ?RULE Obligation)
-                    (=>
-                        (conformsFormula ?BEHAVE ?RULE)
-                        (and 
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE
-                                (modalAttribute ?BEHAVE MorallyGood))))
-                    (=>
-                        (not 
-                            (conformsFormula ?BEHAVE ?RULE))
-                        (and 
-                            (instance ?JUDGE MoralJudging)
-                            (result ?JUDGE
-                                (modalAttribute ?BEHAVE MorallyBad))))))
-             (exists (?RULE)
-                (and 
+                                (and 
+                                    (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyGood)
+                                    (modalAttribute 
+                                        (not 
+                                            (exists (?BEHAVE)
+                                                (and 
+                                                    (realizesFormula ?BEHAVE ?RULE)
+                                                    (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))))      
+                (=>
                     (modalAttribute ?RULE Prohibition)
-                    (=> 
-                        (conformsFormula ?BEHAVE ?RULE)
-                        (and 
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
                             (instance ?JUDGE MoralJudging)
                             (result ?JUDGE
-                                (modalAttribute ?BEHAVE MorallyBad))))))
-            (exists (?RULE) 
-                (and 
+                                (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))
+                (=> 
                     (modalAttribute ?RULE Permission)
-                    (=> 
-                        (and 
-                            (conformsFormula ?BEHAVE1 ?RULE)
-                            (prevents ?BEHAVE2 ?BEHAVE1)
-                            (instance ?BEHAVE2 AutonomousAgentProcess))
-                        (and 
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
                             (instance ?JUDGE MoralJudging)
-                            (result ?JUDGE 
-                                (modalAttribute ?BEHAVE2 MorallyBad)))))))))  
-
+                            (result ?JUDGE
+                                (forall (CBEHAVE)
+                                    (=> 
+                                        (and
+                                            (subclass ?CBEHAVE AutonomousAgentProcess)
+                                            (realizesFormulaSubclass ?CBEHAVE ?RULE))                              
+                                        (modalAttribute 
+                                            (exists (?BEHAVE)
+                                                (and
+                                                    (instance ?BEHAVE AutonomousAgentProcess)
+                                                    (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
 
 (and 
     (refers VirtueEthics ?STATE)

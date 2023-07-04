@@ -961,7 +961,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                     (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
             (exists (?ARGUMENT)
                 (and
-                    (instance ?ARGUMENT ValidDeductiveArgument))
+                    (instance ?ARGUMENT ValidDeductiveArgument)
                     (conclusion ?ARGUMENT ?CONCLUSION)
                     (forall (?PREMISE)
                         (=> 
@@ -989,7 +989,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                                     (and 
                                                         (instance ?IBEHAVE ?CBEHAVE)
                                                         (manner ?MAN ?IBEHAVE))) Possibility)
-                                            (not (refers ?PROP ?MAN)))))))))))
+                                            (not (refers ?PROP ?MAN))))))))))))
 
 ;; I think this version is better: for all physical premises of the argument,
 ;; It's possible for there to be an instance of the behavior with this outcome.
@@ -1006,7 +1006,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                     (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
             (exists (?ARGUMENT)
                 (and
-                    (instance ?ARGUMENT ValidDeductiveArgument))
+                    (instance ?ARGUMENT ValidDeductiveArgument)
                     (conclusion ?ARGUMENT ?CONCLUSION)
                     (forall (?PREMISE)
                         (=> 
@@ -1034,7 +1034,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                                     (and 
                                                         (instance ?IBEHAVE ?CBEHAVE)
                                                         (manner ?MAN ?IBEHAVE))) Possibility)
-                                            (not (refers ?PROP ?MAN)))))))))))
+                                            (not (refers ?PROP ?MAN))))))))))))
 
 
 ;; Maybe we could say something like this?
@@ -1109,7 +1109,73 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
             (subclass ?CBEHAVE AutonomousAgentProcess)
             (refers ?F ?CBEHAVE))))
 
+;; A theory is a set of sentences (in a formal language).
+(documentation Theory EnglishLanguage "A set of sentences.")
+(subclass Theory Set)
+
+(<=> 
+    (instance ?T Theory)
+    (forall (?S)
+        (=> 
+            (element ?S ?T)
+            (instance ?S Sentence))))
+
+(documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral attributes.")
+(subclass DeontologicalTheory Theory)
+
+;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
+;; such that the sentence assigns this  moral attribute to the formula.
+(<=> 
+    (instance ?D DeontologicalTheory)
+    (forall (?S)
+        (=> 
+            (element ?S ?D)
+            (exists (?F ?MORALATTRIBUTE)
+                (and 
+                    (equal ?S
+                       (modalAttribute ?F ?MORALATTRIBUTE))
+                    (instance ?F Formula)
+                    (or (equal ?MORALATTRIBUTE MorallyGood) (equal ?MORALATTRIBUTE MorallyBad)))))))
+    
+(documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
+(subclass VirtueEthicsTheory Theory)
                     
+(<=> 
+    (instance ?V VirtueEthicsTheory)
+    (forall (?S)
+        (=> 
+            (element ?S ?V)
+            (exists (?AGENT ?VIRTUE)
+                (and
+                    (equal ?S 
+                        (attribute ?AGENT ?VIRTUE))
+                    (instance ?AGENT AutonomousAgent)
+                    (or (instance ?VIRTUE VirtueAttribute) (instance ?VIRTUE ViceAttribute)))))))
+
+(documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
+(subclass UtilitarianTheory Theory)
+
+(<=> 
+    (instance ?U UtilitarianTheory)
+    (forall (?S)
+        (=> 
+            (element ?S ?U)
+            (exists (?CBEHAVE ?CBEHAVE2)
+                (and                
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (subclass ?CBEHAVE2 AutonomousAgentProcess)
+                    (or 
+                        (equal ?S 
+                            ((?C (UtilitySubclassFn ?CBEHAVE) 0)))
+                        (equal ?S 
+                            (?C (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?CBEHAVE2))))
+                    (or 
+                        (equal ?C greaterThan)
+                        (equal ?C lessThan)
+                        (equal ?C greaterThanOrEqualTo)
+                        (equal ?C lessThanOrEqualTo)
+                        (equal ?C equal)))))))
+
 
 ;; "It's bad to throw eggs at people without good cause" 
 ;; I'm not sure how to best formalize this!
