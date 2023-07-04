@@ -112,6 +112,12 @@ to the set of possibilities that are available.")
 (instance ProcessAttributeFn UnaryFunction)
 (range ProcessAttributeFn Set)
 
+(documentation ClassToSet EnglishLanguage "A UnaryFunction that maps a Class into the set of instances of the Class.")
+(domainSubclass ClassToSet 1 Class)
+(instance ClassToSet TotalValuedRelation)
+(instance ClassToSet UnaryFunction)
+(range ClassToSet Set)
+
 ;; Ok, I decided to implement an auxiliary function that returns all elements in Set1 that satisfy some binary predicate (aka similary measure) with regard to an element in the other set.
 ;; Basically, all elements in one set that are similar to an element in the other set.
 (documentation ElementsShareBPFn EnglishLanguage "A TernaryFunction that maps a binary predicate (?BP) and two sets to the set of elements in the first set such that the binary predicate holds with an element in the second set.")

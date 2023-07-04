@@ -1613,7 +1613,64 @@ that are open to him/her.")
       (subset ?DECISION ?S))))
 
 ;; So the next thing would be to uplift Consequentialism to draft 3
+
+;;Zar: oh, I see.  In the HO Set export of SUMO, a class is simply a set of instances.
+
+(documentation ClassToSetFn EnglishLanguage "A UnaryFunction that maps a Class into the set of instances of the Class.")
+(domainSubclass ClassToSetFn 1 Class)
+(instance ClassToSetFn TotalValuedRelation)
+(instance ClassToSetFn UnaryFunction)
+(range ClassToSetFn Set)
+
+(<=>
+    (and
+        (equal (ClassToSetFn ?CLASS) ?SET)
+        (subclass ?CLASS Class)
+        (insance ?SET Set))
+    (forall (?INSTANCE)
+            (<=>
+                (element ?INSTANCE ?SET)
+                (instance ?INSTANCE ?CLASS))))  
+
+(<=>
+    (element ?INSTANCE (ClassToSetFn ?CLASS))
+    (instance ?INSTANCE ?CLASS))
         
-        
-                                      
+;; Can I use this to re-use my Classist definition?
+
+;; All patients of deciding are sets corresponding to classes of intentional processes.
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (patient ?DECIDE ?OPTIONSET))
+  (exists (?CLASS)
+    (and
+      (equal
+        (ClassToSetFn ?CLASS) ?OPTIONSET)
+      (subclass ?CLASS IntentionalProcess))))
+
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE (ClassToSetFn ?OPTION)))
+    (believes ?AGENT 
+        (capability ?OPTION agent ?AGENT)))
+
+(=>
+    (and 
+        (instance ?DECIDE Deciding)
+        (agent ?DECIDE ?AGENT)
+        (result ?DECIDE (ClassToSetFn ?DECISION)))
+    (believes ?AGENT
+    (holdsDuring 
+      (FutureFn
+        (WhenFn ?DECIDE))
+      (exists (?P)
+          (and 
+            (instance ?P ?DECISION)
+            (agent ?P ?AGENT)
+            (earlier
+              (WhenFn ?DECIDE)
+              (WhenFn ?P)))))))
                                                                                                                                               
