@@ -1392,7 +1392,66 @@ that are open to him/her.")
           (instance ?M IntentionalProcess)
           (agent ?M ?A))))))
       
-                                            
+;; Suppose we go with the idea to represent the set of options in a decision in terms of a set.
+;; Then we want to say that all the elements thereof are intentional processes.                                      
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (instance ?S Set)
+    (patient ?DECIDE ?S)
+    (element ?O ?S))
+  (subclass ?O IntentionalProcess))
 
-                                    
+;; For every instance of deciding, there is a non-empty set over which one is deciding.
+(=>
+  (instance ?DECIDE Deciding)
+  (exists (?S)
+    (and
+      (instance ?S NonNullSet)
+      (patient ?DECIDE ?S))))
+
+;; For every option in a decision set for an agent,
+;; the agent believes itself capable of performing this option.   
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (instance ?S Set)
+    (patient ?DECIDE ?S)
+    (element ?O ?S))
+    (believes ?AGENT 
+      (capability ?O agent ?AGENT)))
+
+;;  For every resulting decision set element, the agent believes it will enact that behavior in the future.  
+(=>
+  (and 
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (result ?DECIDE ?DECISION)
+    (instance ?DECISION Set)
+    (element ?O ?S))
+  (believes ?AGENT
+    (holdsDuring 
+      (FutureFn
+        (WhenFn ?DECIDE))
+      (exists (?P)
+        (and
+          (instance ?P ?O)
+          (agent ?P ?AGENT))))))
+
+;; The resulting decision-set is a subset of some decision set being decided over.       
+(=>
+  (and 
+    (instance ?DECIDE Deciding)
+    (result ?DECIDE ?DECISION)
+    (instance ?DECISION Set))
+  (exists (?S)
+    (and
+      (patient ?DECISION ?S)
+      (subset ?DECISION ?S))))
+
+        
+        
+        
+                                      
                                                                                                                                               
