@@ -1025,6 +1025,11 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                                     (result ?IBEHAVE ?PHYS))) Possibility)))
                                 (forall (?ATT) 
                                     (=> 
+                                        (modalAttribute 
+                                            (exists (?IBEHAVE)
+                                                (and
+                                                    (instance ?IBEHAVE ?CBEHAVE)
+                                                    (agent ?IBEHAVE ?AGENT))) Possibility))
                                         (attribute ?AGENT ?ATT)
                                         (not (refers ?PREMISE ?ATT))))
                                 (forall (?MAN)
@@ -1155,26 +1160,31 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 (documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
 (subclass UtilitarianTheory Theory)
 
-(<=> 
-    (instance ?U UtilitarianTheory)
-    (forall (?S)
-        (=> 
-            (element ?S ?U)
-            (exists (?CBEHAVE ?CBEHAVE2)
-                (and                
-                    (subclass ?CBEHAVE AutonomousAgentProcess)
-                    (subclass ?CBEHAVE2 AutonomousAgentProcess)
-                    (or 
-                        (equal ?S 
-                            ((?C (UtilitySubclassFn ?CBEHAVE) 0)))
-                        (equal ?S 
-                            (?C (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?CBEHAVE2))))
-                    (or 
-                        (equal ?C greaterThan)
-                        (equal ?C lessThan)
-                        (equal ?C greaterThanOrEqualTo)
-                        (equal ?C lessThanOrEqualTo)
-                        (equal ?C equal)))))))
+(<=>
+  (instance ?U UtilitarianTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?U)
+      (exists (?CBEHAVE ?CBEHAVE2)
+        (and
+          (subclass ?CBEHAVE AutonomousAgentProcess)
+          (subclass ?CBEHAVE2 AutonomousAgentProcess)
+          (or
+            (equal ?S
+              (
+                (?C
+                  (UtilitySubclassFn ?CBEHAVE) ?N)))
+            (equal ?S
+              (?C
+                (UtilitySubclassFn ?CBEHAVE)
+                (UtilitySubclassFn ?CBEHAVE2))))
+          (instance ?N Number)
+          (or
+            (equal ?C greaterThan)
+            (equal ?C lessThan)
+            (equal ?C greaterThanOrEqualTo)
+            (equal ?C lessThanOrEqualTo)
+            (equal ?C equal)))))))
 
 
 ;; "It's bad to throw eggs at people without good cause" 
