@@ -1,0 +1,182 @@
+;; I'll start with the latest version of Deciding
+
+(documentation ClassToSetFn EnglishLanguage "A UnaryFunction that maps a Class into the set of instances of the Class.")
+(domainSubclass ClassToSetFn 1 Class)
+(instance ClassToSetFn TotalValuedRelation)
+(instance ClassToSetFn UnaryFunction)
+(range ClassToSetFn Set)
+
+(<=>
+  (element ?INSTANCE (ClassToSetFn ?CLASS))
+  (instance ?INSTANCE ?CLASS))
+        
+;; All patients of deciding are sets corresponding to classes of intentional processes.
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (patient ?DECIDE ?OPTIONSET))
+  (exists (?CLASS)
+    (and
+      (equal (ClassToSetFn ?CLASS) ?OPTIONSET)
+      (subclass ?CLASS IntentionalProcess))))
+
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (patient ?DECIDE (ClassToSetFn ?OPTION)))
+  (believes ?AGENT
+    (capability ?OPTION agent ?AGENT)))
+
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (result ?DECIDE (ClassToSetFn ?DECISION)))
+  (believes ?AGENT
+    (holdsDuring
+      (FutureFn
+        (WhenFn ?DECIDE))
+      (exists (?P)
+        (and
+          (instance ?P ?DECISION)
+          (agent ?P ?AGENT)
+          (earlier
+            (WhenFn ?DECIDE)
+            (WhenFn ?P)))))))
+
+
+;; And the 'alternative' set of classes approach to make it easier to find and reference.
+;; Suppose we go with the idea to represent the set of options in a decision in terms of a set.
+;; Then we want to say that all the elements thereof are intentional processes.                                      
+; (=>
+;   (and
+;     (instance ?DECIDE Deciding)
+;     (instance ?S Set)
+;     (patient ?DECIDE ?S)
+;     (element ?O ?S))
+;   (subclass ?O IntentionalProcess))
+
+;; For every instance of deciding, there is a non-empty set over which one is deciding.
+; (=>
+;   (instance ?DECIDE Deciding)
+;   (exists (?S)
+;     (and
+;       (instance ?S NonNullSet)
+;       (patient ?DECIDE ?S))))
+
+;; For every option in a decision set for an agent,
+;; the agent believes itself capable of performing this option.   
+; (=>
+;   (and
+;     (instance ?DECIDE Deciding)
+;     (agent ?DECIDE ?AGENT)
+;     (instance ?S Set)
+;     (patient ?DECIDE ?S)
+;     (element ?O ?S))
+;     (believes ?AGENT 
+;       (capability ?O agent ?AGENT)))
+
+;;  For every resulting decision set element, the agent believes it will enact that behavior in the future.  
+; (=>
+;   (and 
+;     (instance ?DECIDE Deciding)
+;     (agent ?DECIDE ?AGENT)
+;     (result ?DECIDE ?DECISION)
+;     (instance ?DECISION Set)
+;     (element ?O ?S))
+;   (believes ?AGENT
+;     (holdsDuring 
+;       (FutureFn
+;         (WhenFn ?DECIDE))
+;       (exists (?P)
+;         (and
+;           (instance ?P ?O)
+;           (agent ?P ?AGENT))))))
+
+;; The resulting decision-set is a subset of some decision set being decided over.       
+; (=>
+;   (and 
+;     (instance ?DECIDE Deciding)
+;     (result ?DECIDE ?DECISION)
+;     (instance ?DECISION Set))
+;   (exists (?S)
+;     (and
+;       (patient ?DECISION ?S)
+;       (subset ?DECISION ?S))))
+
+;; A theory is a set of sentences (in a formal language).
+(documentation Theory EnglishLanguage "A set of sentences.")
+(subclass Theory Set)
+
+(<=>
+  (instance ?T Theory)
+  (forall (?S)
+    (=>
+      (element ?S ?T)
+      (instance ?S Sentence))))
+
+(documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral attributes.")
+(subclass DeontologicalTheory Theory)
+
+;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
+;; such that the sentence assigns this  moral attribute to the formula.
+(<=>
+  (instance ?D DeontologicalTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (exists (?F ?MORALATTRIBUTE)
+        (and
+          (equal ?S
+            (modalAttribute ?F ?MORALATTRIBUTE))
+          (instance ?F Formula)
+          (or
+            (equal ?MORALATTRIBUTE MorallyGood)
+            (equal ?MORALATTRIBUTE MorallyBad)))))))
+    
+(documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
+(subclass VirtueEthicsTheory Theory)
+                    
+(<=>
+  (instance ?V VirtueEthicsTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?V)
+      (exists (?AGENT ?VIRTUE)
+        (and
+          (equal ?S
+            (attribute ?AGENT ?VIRTUE))
+          (instance ?AGENT AutonomousAgent)
+          (or
+            (instance ?VIRTUE VirtueAttribute)
+            (instance ?VIRTUE ViceAttribute)))))))
+            
+(documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
+(subclass UtilitarianTheory Theory)
+
+(<=>
+  (instance ?U UtilitarianTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?U)
+      (exists (?CBEHAVE ?CBEHAVE2 ?N ?C)
+        (and
+          (subclass ?CBEHAVE AutonomousAgentProcess)
+          (subclass ?CBEHAVE2 AutonomousAgentProcess)
+          (or
+            (equal ?S
+              (
+                (?C
+                  (UtilitySubclassFn ?CBEHAVE) ?N)))
+            (equal ?S
+              (?C
+                (UtilitySubclassFn ?CBEHAVE)
+                (UtilitySubclassFn ?CBEHAVE2))))
+          (instance ?N Number)
+          (or
+            (equal ?C greaterThan)
+            (equal ?C lessThan)
+            (equal ?C greaterThanOrEqualTo)
+            (equal ?C lessThanOrEqualTo)
+            (equal ?C equal)))))))
