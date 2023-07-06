@@ -105,6 +105,106 @@
 ;       (patient ?DECISION ?S)
 ;       (subset ?DECISION ?S))))
 
+
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
+which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+(subclass Ethics Philosophy)
+(subclass Ethics Science)
+
+(documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
+Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
+(subclass MoralNihilism Ethics)
+
+(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
+based on the action adheres to a set of rules and principles.")
+(subclass Deontology Ethics)
+
+(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
+based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
+(subclass Utilitarianism Ethics)
+
+(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
+do in the circumstances' (On Virtue Ethics -- Right Action).")
+(subclass VirtueEthics Ethics)
+
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)
+
+(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
+(subclass MoralAttribute NormativeAttribute)
+
+(instance MorallyGood MoralAttribute)
+(instance MorallyBad MoralAttribute)
+
+(subclass VirtueAttribute MoralAttribute)
+(subclass ViceAttribute MoralAttribute)
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass ViceAttribute PsychologicalAttribute)
+
+;; Do we want a moral attribute for utilitarianism?
+
+;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
+(contraryAttribute MorallyGood MorallyBad)
+(contraryAttribute VirtueAttribute ViceAtribute)
+
+(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+(subclass VirtuousAgent AutonomousAgent)
+
+;; Draft 3: Note that it is quantifying over all virtues!  
+;; A very strong requirement for a virtuous agent, lol.
+(=>
+  (and
+    (instance ?AGENT AutonomousAgent)
+    (instance ?VIRTUE VirtueAttribute)
+    (attribute ?AGENT ?VIRTUE))
+  (instance ?AGENT VirtuousAgent))
+
+;; Draft 4: This version seems better: an agent posessing a virtue increases the likelihood that the agent is virtuous ;- ).
+(increasesLikelihood
+  (exists (?VIRTUE)
+    (and
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VIRTUE VirtueAttribute)
+      (attribute ?AGENT ?VIRTUE)))
+  (instance ?AGENT VirtuousAgent))
+  
+(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+(subclass ViciousAgent AutonomousAgent)
+
+(=>
+  (and
+    (instance ?AGENT AutonomousAgent)
+    (instance ?VICE ViceAttribute)
+    (attribute ?AGENT ?VICE))
+  (instance ?AGENT ViciousAgent))
+  
+(increasesLikelihood
+  (exists (?VICE)
+    (and
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VICE ViceAttribute)
+      (attribute ?AGENT ?VICE)))
+  (instance ?AGENT ViciousAgent))
+
+;; Encapsulate the Autonomous Agent aspect of "behavior"-type processes.
+(documentation AutonomousAgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an autonomous agent.")
+(subclass AutonomousAgentProcess Process)
+(subclass BodyMotion AutonomousAgentProcess)
+(subclass Vocalizing AutonomousAgentProcess)
+
+(=>
+  (instance ?PROC AutonomousAgentProcess)
+  (exists (?AGENT)
+    (and
+      (agent ?PROC ?AGENT)
+      (instance ?AGENT AutonomousAgent))))
+
 ;; A theory is a set of sentences (in a formal language).
 (documentation Theory EnglishLanguage "A set of sentences.")
 (subclass Theory Set)
@@ -116,8 +216,25 @@
       (element ?S ?T)
       (instance ?S Sentence))))
 
+(documentation MoralTheory EnglishLanguage "A set of sentences in a moral theory")
+(subclass MoralTheory Theory)
+
+;; Insert rules
+;; I'm tempted to partition it but that's crude as there is at least one paradigm I haven't covered (morally nihilistic theories).
+
+;; Maybe I should have a "theory of type X" predicate instead but this seems cleaner.
+(documentation MoralSentence EnglishLanguage "A sentence of a moral theory")
+(subclass MoralSentence Sentence)
+
+(<=>
+  (instance ?SENTENCE MoralSentence)
+  (exists (?THEORY)
+    (and
+      (instance ?THEORY MoralTheory)
+      (element ?SENTENCE ?THEORY))))
+      
 (documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral attributes.")
-(subclass DeontologicalTheory Theory)
+(subclass DeontologicalTheory MoralTheory)
 
 ;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
 ;; such that the sentence assigns this  moral attribute to the formula.
@@ -136,7 +253,7 @@
             (equal ?MORALATTRIBUTE MorallyBad)))))))
     
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
-(subclass VirtueEthicsTheory Theory)
+(subclass VirtueEthicsTheory MoralTheory)
                     
 (<=>
   (instance ?V VirtueEthicsTheory)
@@ -153,7 +270,7 @@
             (instance ?VIRTUE ViceAttribute)))))))
             
 (documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
-(subclass UtilitarianTheory Theory)
+(subclass UtilitarianTheory MoralTheory)
 
 (<=>
   (instance ?U UtilitarianTheory)
@@ -180,3 +297,19 @@
             (equal ?C greaterThanOrEqualTo)
             (equal ?C lessThanOrEqualTo)
             (equal ?C equal)))))))
+
+;; This is actually really clean.  No mucking around in saying that it is judging behavioral (instances or classes), etc.
+(documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is 
+a moral sentence from a moral theory (in a given paradigm).")
+(subclass MoralJudging Judging)
+
+(=>
+  (instance ?JUDGE MoralJudging)
+  (exists (?SENTENCE)
+    (and
+      (instance ?SENTENCE MoralSentence)
+      (result ?JUDGE ?SENTENCE))))
+      
+      
+      
+      
