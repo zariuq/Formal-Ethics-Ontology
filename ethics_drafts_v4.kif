@@ -105,15 +105,41 @@
 ;       (patient ?DECISION ?S)
 ;       (subset ?DECISION ?S))))
 
+;; This should ontologically work for the Virtue ethics case without providing a specific measure.
+(documentation similar EnglishLanguage "The predicate similar attempts to capture the ontologic notion of similarity 
+from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are similar to cognitive agent ?A.")
+(instance similar TernaryPredicate)  
+(domain similar 1 CognitiveAgent)
+(domain similar 2 Entity)
+(domain similar 3 Entity)
 
-(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
-which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
-(subclass Ethics Philosophy)
-(subclass Ethics Science)
+(=>
+  (similar ?A ?E1 ?E2)
+  (forall (?J1 ?J2 ?O1 ?O2)
+    (=>
+      (and
+        (instance ?J1 Judging)
+        (instance ?O1 Formula)
+        (agent ?J1 ?A)
+        (patient ?J1 ?E1)
+        (result ?J1 ?O1)
+        (instance ?J2 Judging)
+        (instance ?O2 Formula)
+        (agent ?J2 ?A)
+        (patient ?J2 ?E2)
+        (result ?J2 ?O2))
+      (modalAttribute
+        (similar ?A ?O1 ?O2) Likely))))
 
-(documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
-Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
-(subclass MoralNihilism Ethics)
+;; This might help.
+(=>
+  (equal ?E1 ?E2)
+  (forall (?A)
+    (similar ?A ?E1 ?E2)))
+
+(<=>
+  (similar ?A ?E1 ?E2)
+  (similar ?A ?E2 ?E1))
 
 (documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
 based on the action adheres to a set of rules and principles.")
@@ -174,6 +200,11 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (attribute ?AGENT ?VIRTUE)))
   (instance ?AGENT VirtuousAgent))
   
+(=>
+  (instance ?AGENT VirtuousAgent)
+  (exists (?VIRTUE)
+    (attribute ?AGENT ?VIRTUE)))
+  
 (documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
 (subclass ViciousAgent AutonomousAgent)
 
@@ -191,6 +222,11 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (instance ?VICE ViceAttribute)
       (attribute ?AGENT ?VICE)))
   (instance ?AGENT ViciousAgent))
+  
+(=>
+  (instance ?AGENT ViciousAgent)
+  (exists (?VICE)
+    (attribute ?AGENT ?VICE)))
 
 ;; Encapsulate the Autonomous Agent aspect of "behavior"-type processes.
 (documentation AutonomousAgentProcess EnglishLanguage "AgentProcess is the Class of all Processes in which there is an autonomous agent.")
@@ -309,7 +345,67 @@ a moral sentence from a moral theory (in a given paradigm).")
     (and
       (instance ?SENTENCE MoralSentence)
       (result ?JUDGE ?SENTENCE))))
-      
-      
-      
-      
+
+(documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
+which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+(subclass Ethics Philosophy)
+(subclass Ethics Science) 
+
+(and
+  (refers Ethics ?JUDGE)
+  (instance ?JUDGE MoralJudging))
+;; The reference definition includes judging (and normativity), so referring to the theory w/o judging/interpreting the theory is
+;; "Necessary but not sufficient".
+(and
+  (refers Ethics ?THEORY)
+  (instance ?THEORY MoralTheory))
+  
+;; Ethics refers to the judgment by a group of a member via a moral sentence (that refers to the member).
+;; It gets a bit vague abstracting out behavior, lol.    
+(and
+  (refers Ethics ?JUDGE)
+  (instance ?JUDGE MoralJudging)
+  (instance ?GROUP Group)
+  (agent ?JUDGE ?AGENT)
+  (or
+    (member ?AGENT ?GROUP)
+    (part ?AGENT ?GROUP))
+  (member ?MEMB ?GROUP)
+  (patient ?JUDGE ?SENTENCE)
+  (instance ?SENTENCE MoralSentence)
+  (refers ?SENTENCE ?MEMB))
+
+(documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
+Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
+(subclass MoralNihilism Ethics)
+  
+(=>
+  (instance ?MN MoralNihilism)
+  (exists (?PROP ?STATE)
+    (and
+      (subProposition ?PROP ?MN)
+      (containsInformation ?STATE ?PROP)
+      (similar ?STATE
+        (not
+          (exists (?MORALSTATEMENT)
+            (and
+              (instance ?MORALSTATEMENT MoralSentence)
+              (instance ?MORALSTATEMENT Fact))))))))
+
+(=>
+  (instance ?MN MoralNihilism)
+  (exists (?PROP ?STATE)
+    (and
+      (subProposition ?PROP ?MN)
+      (containsInformation ?STATE ?PROP)
+      (similar ?STATE
+        (not
+          (exists (?BEHAVIORCLASS)
+            (and
+              (subclass ?BEHAVIORCLASS AutonomousAgentProcess)
+              (modalAttribute
+                (exists (?BEHAVIORINSTANCE)
+                  (instance ?BEHAVIORINSTANCE ?BEHAVIORCLASS)) MorallyWrong))))))))
+                          
+                    
+                                            
