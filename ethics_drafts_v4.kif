@@ -141,10 +141,6 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
   (similar ?A ?E1 ?E2)
   (similar ?A ?E2 ?E1))
 
-(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
-based on the action adheres to a set of rules and principles.")
-(subclass Deontology Ethics)
-
 (documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
 based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
 (subclass Utilitarianism Ethics)
@@ -407,5 +403,117 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
                 (exists (?BEHAVIORINSTANCE)
                   (instance ?BEHAVIORINSTANCE ?BEHAVIORCLASS)) MorallyWrong))))))))
                           
-                    
+(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+
+(domain realizesFormula 1 Process)
+(domain realizesFormula 2 Formula)
+(instance realizesFormula BinaryPredicate)
+(subrelation realizesFormula represents)
+
+;; A process conforms to a formula if and only if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) the process is the realization of the proposition.
+(<=>
+  (realizesFormula ?PROCESS ?FORMULA)
+  (exists (?PROP)
+    (and
+      (containsInformation ?FORMULA ?PROP)
+      (realization ?PROCESS ?PROP))))
+
+(documentation realizesFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+
+(domainSubclass realizesFormulaSubclass 1 Process)
+(domain realizesFormulaSubclass 2 Formula)
+(instance realizesFormulaSubclass BinaryPredicate)
+(subrelation realizesFormulaSubclass represents)              
                                             
+;; A subclass of Process conforms to a formula if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) all instances of the subclass are realizations of the proposition.
+(<=>
+  (realizesFormulaSubclass ?CPROCESS ?FORMULA)
+  (exists (?PROP)
+    (and
+      (containsInformation ?FORMULA ?PROP)
+      (forall (?IPROCESS)
+        (=>
+          (instance ?IPROCESS ?CPROCESS)
+          (realization ?IPROCESS ?PROP))))))
+
+(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
+based on the action adheres to a set of rules and principles.")
+(subclass Deontology Ethics)
+
+;; Hmm, how to do this is tricky.  Why say that the process is something YOU do?  It's just good for there to be some process realizing obligations, right?
+;; Also, I'm not sure how to mix in the deontological language.
+;; The below will be very experimental!
+(=>
+  (instance ?D Deontology)
+  (exists (?PROP ?STATE)
+    (and
+      (subProposition ?PROP ?D)
+      (containsInformation ?STATE ?PROP)
+      (similar ?STATE
+        (exists (?RULE ?DEONTIC)
+          (and
+            (instance ?DEONTIC DeonticAttribute)
+            (modalAttribute ?RULE ?DEONTIC)
+            (=>
+              (modalAttribute ?RULE Obligation)
+              (modalAttribute
+                (exists (?PROCESS)
+                  (realizesFormula ?PROCESS ?RULE)) MorallyGood))))))))
+
+;; All instances of deontology have subpropositions that contain moral sentences.
+;; These moral sentences are elements of a deontological theory.
+;; I think this is good to say.  Clearly I want a "this sentence is a deontological sentence" shorthand".               
+(=>
+  (instance ?D Deontology)
+  (exists (?PROP ?SENT)
+    (and
+      (subProposition ?PROP ?D)
+      (containsInformation ?SENT ?PROP)
+      (instance ?SENT MoralSentence)
+      (exists (?THEORY)
+        (and 
+          (instance ?THEORY DeontologicalTheory)
+          (element ?SENT ?THEORY))))))    
+                
+;; What about something whacky like this?
+;; There exists a moral theory and a moral philosophy such that
+;; every sentence of the moral theory is contained in the moral philosophy
+;; and for every sentence, there is a corresponding rule?
+(exists (?MT ?MP)
+  (and
+    (instance ?MP Deontology)
+    (instance ?MT DeontologicalTheory)
+    (forall (?S)
+      (=>
+        (element ?S ?MT)
+        (and
+          (exists (?PROP)
+            (and
+              (containsInformation ?S ?PROP)
+              (subProposition ?PROP ?S)))
+          (exists (?RULE ?DEONTIC)
+            (and
+              (instance ?DEONTIC DeonticAttribute)
+              (modalAttribute ?RULE ?DEONTIC)
+              (=>
+                (equal ?DEONTIC Obligation)
+                (equal ?S
+                  (and
+                    (modalAttribute
+                      (exists (?PROC)
+                        (realizesFormula ?PROC ?RULE)) MorallyGood)
+                    (modalAttribute
+                      (not
+                        (exists (?PROC)
+                          (realizesFormula ?PROC ?RULE))) MorallyBad)))))))))))
+            
+
+        
+       
+          
+                
+                
