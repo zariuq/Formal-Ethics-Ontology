@@ -270,7 +270,10 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
 ;; such that the sentence assigns this  moral attribute to the formula.
-(<=>
+;;  I think the inverse direction works for the Virtue and Utilitarian approaches as we're not quantifying over general formulas.
+;; Yet I am not fully sure how I wish to constrain formulas.
+;; Existential formulas over processes or physical entities or... what?
+(=>
   (instance ?D DeontologicalTheory)
   (forall (?S)
     (=>
@@ -466,7 +469,8 @@ based on the action adheres to a set of rules and principles.")
 
 ;; All instances of deontology have subpropositions that contain moral sentences.
 ;; These moral sentences are elements of a deontological theory.
-;; I think this is good to say.  Clearly I want a "this sentence is a deontological sentence" shorthand".               
+;; I think this is good to say.  Clearly I want a "this sentence is a deontological sentence" shorthand".
+;;                
 (=>
   (instance ?D Deontology)
   (exists (?PROP ?SENT)
@@ -477,8 +481,21 @@ based on the action adheres to a set of rules and principles.")
       (exists (?THEORY)
         (and 
           (instance ?THEORY DeontologicalTheory)
-          (element ?SENT ?THEORY))))))    
-                
+          (element ?SENT ?THEORY))))))
+          
+(=>
+  (instance ?MT DeontologicalTheory)
+  (exists (?MP)
+    (and
+      (instance ?MP Deontology)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?PROP)
+            (and
+              (containsInformation ?S ?PROP)
+              (subProposition ?PROP ?MP))))))))
+              
 ;; What about something whacky like this?
 ;; There exists a moral theory and a moral philosophy such that
 ;; every sentence of the moral theory is contained in the moral philosophy
@@ -494,7 +511,7 @@ based on the action adheres to a set of rules and principles.")
           (exists (?PROP)
             (and
               (containsInformation ?S ?PROP)
-              (subProposition ?PROP ?S)))
+              (subProposition ?PROP ?MP)))
           (exists (?RULE ?DEONTIC)
             (and
               (instance ?DEONTIC DeonticAttribute)
@@ -511,8 +528,69 @@ based on the action adheres to a set of rules and principles.")
                         (exists (?PROC)
                           (realizesFormula ?PROC ?RULE))) MorallyBad)))))))))))
             
-
-        
+;; This can be modularly simplified!
+(exists (?MT)
+  (and
+    (instance ?MT DeontologicalTheory)
+    (forall (?S)
+      (=>
+        (element ?S ?MT)
+        (exists (?RULE ?DEONTIC)
+          (and
+            (instance ?DEONTIC DeonticAttribute)
+            (modalAttribute ?RULE ?DEONTIC)
+            (=>
+              (equal ?DEONTIC Obligation)
+              (equal ?S
+                (and
+                  (modalAttribute
+                    (exists (?PROC)
+                      (realizesFormula ?PROC ?RULE)) MorallyGood)
+                  (modalAttribute
+                    (not
+                      (exists (?PROC)
+                        (realizesFormula ?PROC ?RULE))) MorallyBad))))))))))
+     
+;; Let's just say that the standard deontic operators cover all deontolgical theories.
+;; Assuming rights-based approaches etc can be translated into this form ;- )
+(=>
+  (instance ?MT DeontologicalTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?RULE ?DEONTIC)
+        (and
+          (instance ?DEONTIC DeonticAttribute)
+          (modalAttribute ?RULE ?DEONTIC)
+          (=>
+            (equal ?DEONTIC Obligation)
+            (equal ?S
+              (and
+                (modalAttribute
+                  (exists (?PROC)
+                    (realizesFormula ?PROC ?RULE)) MorallyGood)
+                (modalAttribute
+                  (not
+                    (exists (?PROC)
+                      (realizesFormula ?PROC ?RULE))) MorallyBad))))
+          (=>
+            (equal ?DEONTIC Prohibition)
+            (equal ?S
+              (modalAttribute
+                (exists (?PROC)
+                  (realizesFormula ?PROC ?RULE)) MorallyBad)))
+          (=>
+            (equal ?DEONTIC Permission)
+            (equal ?S
+              (forall (?CPROC)
+                (=>
+                  (realizesFormulaSubclass ?CPROC ?RULE)
+                  (modalAttribute
+                    (exists (?PREN)
+                      (and
+                        (instance ?PREN AutonomousAgentProcess)
+                        (prevents ?PREN ?CPROC))) MorallyBad))))))))))
+                                    
        
           
                 
