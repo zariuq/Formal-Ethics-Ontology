@@ -1,5 +1,8 @@
 ;; I'll start with the latest version of Deciding
 
+;; It seems helpful to have a wrapper for classes that allows them to be treated as instances.
+;; Sort of an inverse of the KappaFn?  -- I think for the reverse direction, KappaFn should be used.
+;; I would wish to define a subclass of Set for Sets of Instances to make the type checking easier.
 (documentation ClassToSetFn EnglishLanguage "A UnaryFunction that maps a Class into the set of instances of the Class.")
 (domainSubclass ClassToSetFn 1 Class)
 (instance ClassToSetFn TotalValuedRelation)
@@ -141,27 +144,12 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
   (similar ?A ?E1 ?E2)
   (similar ?A ?E2 ?E1))
 
-(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
-based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
-(subclass Utilitarianism Ethics)
-
-(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
-based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
-'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
-do in the circumstances' (On Virtue Ethics -- Right Action).")
-(subclass VirtueEthics Ethics)
-
-(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
-(subclass HedonisticUtilitarianism Utilitarianism)
-
-(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
-(subclass Consequentialism Utilitarianism)
-
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
 
 (instance MorallyGood MoralAttribute)
 (instance MorallyBad MoralAttribute)
+(instance MorallyNeutral MoralAttribute)
 
 (subclass VirtueAttribute MoralAttribute)
 (subclass ViceAttribute MoralAttribute)
@@ -173,7 +161,34 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
 (contraryAttribute MorallyGood MorallyBad)
+(contraryAttribute MorallyGood MorallyNeutral)
+(contraryAttribute MorallyBad MorallyNeutral)
 (contraryAttribute VirtueAttribute ViceAtribute)
+
+;; Why not say it explicitly, too.  
+(=>
+  (modalAttribute ?F MorallyGood)
+  (not (modalAttribute ?F MorallyBad)))
+  
+(=>
+  (modalAttribute ?F MorallyGood)
+  (not (modalAttribute ?F MorallyNeutral)))
+  
+(=>
+  (modalAttribute ?F MorallyBad)
+  (not (modalAttribute ?F MorallyGood)))
+  
+(=>
+  (modalAttribute ?F MorallyBad)
+  (not (modalAttribute ?F MorallyNeutral)))
+  
+(=>
+  (modalAttribute ?F MorallyNeutral)
+  (not (modalAttribute ?F MorallyGood)))
+  
+(=>
+  (modalAttribute ?F MorallyNeutral)
+  (not (modalAttribute ?F MorallyBad)))
 
 (documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
 (subclass VirtuousAgent AutonomousAgent)
@@ -286,7 +301,36 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (or
             (equal ?MORALATTRIBUTE MorallyGood)
             (equal ?MORALATTRIBUTE MorallyBad)))))))
-    
+
+;; The above is too strong.  The sentence may describe the context in which the moral judgment is being dished out.
+(=>
+  (instance ?D DeontologicalTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (exists (?F ?MORALATTRIBUTE)
+        (and
+          (part (modalAttribute ?F ?MORALATTRIBUTE) ?S)
+          (instance ?F Formula)
+          (or
+            (equal ?MORALATTRIBUTE MorallyGood)
+            (equal ?MORALATTRIBUTE MorallyBad)
+            (equal ?MORALATTRIBUTE MorallyNeutral))))))
+            
+(documentation ImperativeTheory EnglishLanguage "A set of sentences assigning moral imperatives.")
+(subclass ImperativeTheory MoralTheory)
+
+(=> 
+  (instance ?MT ImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?F ?DEONTICATTRIBUTE)
+        (and
+          (part (modalAttribute ?F ?DEONTICATTRIBUTE) ?S)
+          (instance ?F Formula)
+          (instance ?DEONTICATTRIBUTE DeonticAttribute))))))
+          
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
 (subclass VirtueEthicsTheory MoralTheory)
                     
@@ -346,7 +390,7 @@ a moral sentence from a moral theory (in a given paradigm).")
       (result ?JUDGE ?SENTENCE))))
 
 (documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, 
-which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (LIllie, 1948))")
+which judges this conduct to be right or wrong, to be good or bad, or in some similar way. (An Introduction to Ethics (Lillie, 1948))")
 (subclass Ethics Philosophy)
 (subclass Ethics Science) 
 
@@ -360,7 +404,8 @@ which judges this conduct to be right or wrong, to be good or bad, or in some si
   (instance ?THEORY MoralTheory))
   
 ;; Ethics refers to the judgment by a group of a member via a moral sentence (that refers to the member).
-;; It gets a bit vague abstracting out behavior, lol.    
+;; It gets a bit vague abstracting out behavior, lol.  
+;; Note that the English says that a subCollection is a "proper part", however there is no rule that implies this.  
 (and
   (refers Ethics ?JUDGE)
   (instance ?JUDGE MoralJudging)
@@ -373,6 +418,75 @@ which judges this conduct to be right or wrong, to be good or bad, or in some si
   (patient ?JUDGE ?SENTENCE)
   (instance ?SENTENCE MoralSentence)
   (refers ?SENTENCE ?MEMB))
+
+;; Let's get a version that works with moral theories.
+;; Ethics refers to a moral theory and a group where each sentence is believed to be true by the group
+;; and each sentence refers to a behavior such that it's believed some member of the group is capable of this behavior.
+(and
+  (refers Ethics
+    (and ?MT ?GROUP))
+  (instance ?MT MoralTheory)
+  (instance ?GROUP Group)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (and
+        (believes ?GROUP ?S)
+        (refers ?S (ClassToSetFn ?B))
+        (subclass ?B AutonomousAgentProcess)
+        (believes ?GROUP
+          (exists (?MEMB)
+            (and
+              (member ?MEMB ?GROUP)
+              (capability ?B agent ?MEMB))))))))
+
+;; As this 'belief' is the result of the moral judgment, we can throw moral judgments in.
+;; This implies that ?S is believed.
+;; However, it also implies that prior to the act of judgment, it was not believed to be so. 
+;; Which implies some judgment process by which this moral sentence came to be believed.
+(and
+  (refers Ethics
+    (and ?MT ?GROUP))
+  (instance ?MT MoralTheory)
+  (instance ?GROUP Group)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?JUDGE)
+        (and
+          (instance ?JUDGE MoralJudging)
+          (agent ?JUDGE ?GROUP)
+          (result ?JUDGE ?S)
+          (refers ?S (ClassToSetFn ?B))
+          (subclass ?B AutonomousAgentProcess)
+          (believes ?GROUP
+            (exists (?MEMB)
+              (and
+                (member ?MEMB ?GROUP)
+                (capability ?B agent ?MEMB)))))))))
+
+;; Decided that by their structure, the sentences do not necessarily refer to behavior.
+;; The moral judgment process may, however!
+(and
+  (refers Ethics
+    (and ?MT ?GROUP))
+  (instance ?MT MoralTheory)
+  (instance ?GROUP Group)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?JUDGE)
+        (and
+          (instance ?JUDGE MoralJudging)
+          (agent ?JUDGE ?GROUP)
+          (result ?JUDGE ?S)
+          (refers ?JUDGE (ClassToSetFn ?B))
+          (subclass ?B AutonomousAgentProcess)
+          (believes ?GROUP
+            (exists (?MEMB)
+              (and
+                (member ?MEMB ?GROUP)
+                (capability ?B agent ?MEMB)))))))))
 
 (documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
 Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
@@ -590,8 +704,143 @@ based on the action adheres to a set of rules and principles.")
                       (and
                         (instance ?PREN AutonomousAgentProcess)
                         (prevents ?PREN ?CPROC))) MorallyBad))))))))))
-                                    
-       
+
+;; Let's see what it looks like if I place everything within the modalAttribute.
+(=>
+  (instance ?MT DeontologicalTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?RULE ?DEONTIC)
+        (and
+          (instance ?DEONTIC DeonticAttribute)
+          (modalAttribute ?RULE ?DEONTIC)
+          (=>
+            (equal ?DEONTIC Obligation)
+            (exists (?S2 ?G ?B)
+              (and
+                (element ?S2 ?MT)
+                (equal ?G
+                  (modalAttribute
+                    (exists (?PROC)
+                      (realizesFormula ?PROC ?RULE)) MorallyGood))
+                (equal ?B
+                  (modalAttribute
+                    (not
+                      (exists (?PROC)
+                        (realizesFormula ?PROC ?RULE))) MorallyBad))
+                (or 
+                  (and (equal ?S ?G) (equal ?S2 ?B))
+                  (and (equal ?S ?B) (equal ?S2 ?G))))))
+          (=>
+            (equal ?DEONTIC Prohibition)
+            (equal ?S
+              (modalAttribute
+                (exists (?PROC)
+                  (realizesFormula ?PROC ?RULE)) MorallyBad)))
+          (=>
+            (equal ?DEONTIC Permission)
+            (exists (?S2 ?TEMP1 ?TEMP2)
+              (and
+                (element ?S2 ?MT)
+                (equal ?TEMP1
+                  (modalAttribute
+                    (exists (?CPROC)
+                      (realizesFormulaSubclass ?CPROC ?RULE)) MorallyNeutral))
+                (equal ?TEMP2
+                    (modalAttribute
+                        (exists (?CPROC ?PREN)
+                          (and
+                            (realizesFormulaSubclass ?CPROC ?RULE)
+                            (exists (?PREN)
+                              (and
+                                (instance ?PREN AutonomousAgentProcess)
+                                (prevents ?PREN ?CPROC))))) MorallyBad))
+                (or 
+                  (and (equal ?S ?TEMP1) (equal ?S2 ?TEMP1))
+                  (and (equal ?S ?TEMP2) (equal ?S2 ?TEMP2)))))))))))
+
+;; I think to do this I need to define the structure of a ValueJudgmentSentence as well as a ImperativeSentence.
+;; Then I can say that for all parts either they are equal or they are an ImperativeSentence which is equivalent to the ValueJudgmentSentence.
+;; And I wish to say that the theories are equivalent but... in terms of what?
+;; I'll also do the reverse mapping...?  Hmm.
+;; Well, this is my OPPA Mapping Style!
+; (=> 
+;   (instance ?IT ImperativeTheory)
+;   (exists (?DT)
+;     (and
+;       (instance ?DT DeontologicalTheory))))
+
+(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
+do in the circumstances' (On Virtue Ethics -- Right Action).")
+(subclass VirtueEthics Ethics)
+
+;; Linking Virtue Ethics with its Theories.
+(=>
+  (instance ?D VirtueEthics)
+  (exists (?PROP ?SENT)
+    (and
+      (subProposition ?PROP ?D)
+      (containsInformation ?SENT ?PROP)
+      (instance ?SENT MoralSentence)
+      (exists (?THEORY)
+        (and
+          (instance ?THEORY VirtueEthicsTheory)
+          (element ?SENT ?THEORY))))))
           
-                
-                
+(=>
+  (instance ?MT VirtueEthicsTheory)
+  (exists (?MP)
+    (and
+      (instance ?MP VirtueEthics)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?PROP)
+            (and
+              (containsInformation ?S ?PROP)
+              (subProposition ?PROP ?MP))))))))
+
+; (=>
+;   (instance ?MT VirtueEthicsTheory)
+;   (forall (?S)
+;     (=>
+;       (element ?S ?MT)  )))                              
+(and
+  (refers VirtueEthics ?STATE)
+  (instance ?STATE Statement)
+  (equals ?STATE
+    (<=>
+      (and
+        (instance ?JUDGE MoralJudging)
+        (agent ?JUDGE ?AGENTJ)
+        (patient ?JUDGE
+          (modalAttribute
+            (hasInstance ?CBEHAVE) MorallyGood)))
+      (believes ?AGENTJ
+        (=>
+          (and
+            (instance ?DECIDE DecidingSubclass)
+            (result ?DECIDE ?CBEHAVE)
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (agent ?DECIDEV ?AGENTV)
+            (instance ?AGENTV VirtuousAgent)
+            (instance ?DECIDEV DecidingSubclass)
+            (similar ?AGENTJ
+              (DecisionSubclassOptionFn ?DECIDE)
+              (DecisioSubclassnOptionFn ?DECIDEV)))
+          (modalAttribute
+            (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+
+(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
+based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
+(subclass Utilitarianism Ethics)
+
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds that 'whether an act is morally right depends only on consequences (as opposed to the circumstances or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass Consequentialism Utilitarianism)                    
