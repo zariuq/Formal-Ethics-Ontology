@@ -279,9 +279,67 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
     (and
       (instance ?THEORY MoralTheory)
       (element ?SENTENCE ?THEORY))))
-      
+
 (documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral attributes.")
 (subclass DeontologicalTheory MoralTheory)
+
+(documentation DeontologicalSentence EnglishLanguage "A sentence of a deontological language/theory.")      
+(subclass DeontologicalSentence MoralSentence)
+
+(<=>
+  (instance ?SENTENCE MoralSentence)
+  (exists (?THEORY)
+    (and
+      (instance ?THEORY DeontologicalTheory)
+      (element ?SENTENCE ?THEORY))))
+
+(documentation SimpleValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
+(subclass SimpleValueJudgmentSentence DeontologicalSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleValueJudgmentSentence)
+  (exists (?F ?MORALATTRIBUTE)
+    (and
+      (equal (modalAttribute ?F ?MORALATTRIBUTE) ?SENTENCE)
+      (instance ?F Formula)
+      (or
+        (equal ?MORALATTRIBUTE MorallyGood)
+        (equal ?MORALATTRIBUTE MorallyBad)
+        (equal ?MORALATTRIBUTE MorallyNeutral)))))
+
+(documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
+(subclass ValueJudgmentSentence DeontologicalSentence)
+
+(<=>
+  (instance ?SENTENCE ValueJudgmentSentence)
+  (exists (?VJS)
+    (and
+      (instance ?VJS SimpleValueJudgmentSentence)
+      (part ?VJS ?SENTENCE))))
+
+(documentation SimpleImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
+(subclass SimpleImperativeSentence DeontologicalSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleImperativeSentence)
+  (exists (?F ?DEONTICATTRIBUTE)
+        (and
+          (equal (modalAttribute ?F ?DEONTICATTRIBUTE) ?SENTENCE)
+          (instance ?F Formula)
+          (instance ?DEONTICATTRIBUTE DeonticAttribute))))
+
+(documentation ImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
+(subclass ImperativeSentence DeontologicalSentence)    
+
+(<=>
+  (instance ?SENTENCE ImperativeSentence)
+  (exists (?IT)
+    (and
+      (instance ?IT SimpleImperativeSentence)
+      (part ?IT ?SENTENCE))))
+
+(documentation DeontologicalValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
+(subclass DeontologicalValueJudgmentTheory DeontologicalTheory)
 
 ;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
 ;; such that the sentence assigns this  moral attribute to the formula.
@@ -289,7 +347,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 ;; Yet I am not fully sure how I wish to constrain formulas.
 ;; Existential formulas over processes or physical entities or... what?
 (=>
-  (instance ?D DeontologicalTheory)
+  (instance ?D DeontologicalValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?D)
@@ -304,7 +362,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 
 ;; The above is too strong.  The sentence may describe the context in which the moral judgment is being dished out.
 (=>
-  (instance ?D DeontologicalTheory)
+  (instance ?D DeontologicalValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?D)
@@ -315,21 +373,25 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
           (or
             (equal ?MORALATTRIBUTE MorallyGood)
             (equal ?MORALATTRIBUTE MorallyBad)
-            (equal ?MORALATTRIBUTE MorallyNeutral))))))
+            (equal ?MORALATTRIBUTE MorallyNeutral)))))))
+
+;; Now I can simplify things and say that a Deontological Value Judgment Theory is one in which all sentences contain a value judgment sentence as a part!
+(=>
+  (instance ?D DeontologicalValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (instance ?S ValueJudgmentSentence))))
             
-(documentation ImperativeTheory EnglishLanguage "A set of sentences assigning moral imperatives.")
-(subclass ImperativeTheory MoralTheory)
+(documentation DeontologicalImperativeTheory EnglishLanguage "A set of sentences containing moral imperatives.")
+(subclass DeontologicalImperativeTheory DeontologicalTheory)
 
 (=> 
-  (instance ?MT ImperativeTheory)
+  (instance ?MT DeontologicalImperativeTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
-      (exists (?F ?DEONTICATTRIBUTE)
-        (and
-          (part (modalAttribute ?F ?DEONTICATTRIBUTE) ?S)
-          (instance ?F Formula)
-          (instance ?DEONTICATTRIBUTE DeonticAttribute))))))
+      (instance ?S ImperativeSentence))))
           
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
 (subclass VirtueEthicsTheory MoralTheory)
@@ -617,7 +679,7 @@ based on the action adheres to a set of rules and principles.")
 (exists (?MT ?MP)
   (and
     (instance ?MP Deontology)
-    (instance ?MT DeontologicalTheory)
+    (instance ?MT DeontologicalValueJudgmentTheory)
     (forall (?S)
       (=>
         (element ?S ?MT)
@@ -645,7 +707,7 @@ based on the action adheres to a set of rules and principles.")
 ;; This can be modularly simplified!
 (exists (?MT)
   (and
-    (instance ?MT DeontologicalTheory)
+    (instance ?MT DeontologicalValueJudgmentTheory)
     (forall (?S)
       (=>
         (element ?S ?MT)
@@ -664,11 +726,57 @@ based on the action adheres to a set of rules and principles.")
                     (not
                       (exists (?PROC)
                         (realizesFormula ?PROC ?RULE))) MorallyBad))))))))))
+
+;; This function basically is what I've been calling "Deontology":
+;; A mapping from imperative-type deontological sentences into value judgment-type deontological sentences
+;; And then the mapping of Moral Judgments over the sentences as if to say, 
+;; Society has considered these moral sentences and concluded them to be 'true' (or whatever else one does with them).
+(documentation ImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences.")
+(domain ImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
+(range ImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance ImperativeToValueJudgmentSentenceFn TotalValuedRelation)
+(instance ImperativeToValueJudgmentSentenceFn UnaryFunction)
+
+(=> 
+  (and 
+    (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
+    (instance ?RULE Formula)
+    (instance ?DEONTIC DeonticAttribute))
+  (and
+    (=>
+      (equal ?DEONTIC Obligation)
+      (equal ?VJS
+        (and
+          (modalAttribute
+            (exists (?PROC)
+              (realizesFormula ?PROC ?RULE)) MorallyGood)
+          (modalAttribute
+            (not
+              (exists (?PROC)
+                (realizesFormula ?PROC ?RULE))) MorallyBad))))
+    (=>
+      (equal ?DEONTIC Prohibition)
+      (equal ?VJS
+        (modalAttribute
+          (exists (?PROC)
+            (realizesFormula ?PROC ?RULE)) MorallyBad)))
+    (=>
+      (equal ?DEONTIC Permission)
+      (equal ?VJS
+        (forall (?CPROC)
+          (=>
+            (realizesFormulaSubclass ?CPROC ?RULE)
+            (modalAttribute
+              (exists (?PREN)
+                (and
+                  (instance ?PREN AutonomousAgentProcess)
+                  (prevents ?PREN ?CPROC))) MorallyBad))))))) 
      
 ;; Let's just say that the standard deontic operators cover all deontolgical theories.
 ;; Assuming rights-based approaches etc can be translated into this form ;- )
 (=>
-  (instance ?MT DeontologicalTheory)
+  (instance ?MT DeontologicalValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
@@ -707,7 +815,7 @@ based on the action adheres to a set of rules and principles.")
 
 ;; Let's see what it looks like if I place everything within the modalAttribute.
 (=>
-  (instance ?MT DeontologicalTheory)
+  (instance ?MT DeontologicalValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
@@ -760,16 +868,23 @@ based on the action adheres to a set of rules and principles.")
                   (and (equal ?S ?TEMP1) (equal ?S2 ?TEMP1))
                   (and (equal ?S ?TEMP2) (equal ?S2 ?TEMP2)))))))))))
 
-;; I think to do this I need to define the structure of a ValueJudgmentSentence as well as a ImperativeSentence.
-;; Then I can say that for all parts either they are equal or they are an ImperativeSentence which is equivalent to the ValueJudgmentSentence.
+;; I think to do this I need to define the structure of a SimpleValueJudgmentSentence as well as a ImperativeSentence.
+;; Then I can say that for all parts either they are equal or they are an ImperativeSentence which is equivalent to the SimpleValueJudgmentSentence.
 ;; And I wish to say that the theories are equivalent but... in terms of what?
 ;; I'll also do the reverse mapping...?  Hmm.
 ;; Well, this is my OPPA Mapping Style!
-; (=> 
-;   (instance ?IT ImperativeTheory)
-;   (exists (?DT)
-;     (and
-;       (instance ?DT DeontologicalTheory))))
+;; Oh, I could actually just define the map, lol!
+;; (=> 
+;;   (instance ?IT DeontologicalImperativeTheory)
+;;   (exists (?DT)
+;;     (and
+;;       (instance ?DT DeontologicalValueJudgmentTheory)
+;;       (forall (?S1)
+;;         (=> 
+;;           (element ?S1 ?IT)
+;;           (and
+;;             (=> 
+;;               (not (instance ?S1 ?SimpleImperativeSentence))))))))
 
 (documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
