@@ -725,53 +725,7 @@ based on the action adheres to a set of rules and principles.")
                   (modalAttribute
                     (not
                       (exists (?PROC)
-                        (realizesFormula ?PROC ?RULE))) MorallyBad))))))))))
-
-;; This function basically is what I've been calling "Deontology":
-;; A mapping from imperative-type deontological sentences into value judgment-type deontological sentences
-;; And then the mapping of Moral Judgments over the sentences as if to say, 
-;; Society has considered these moral sentences and concluded them to be 'true' (or whatever else one does with them).
-(documentation ImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences.")
-(domain ImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
-(range ImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
-(instance ImperativeToValueJudgmentSentenceFn TotalValuedRelation)
-(instance ImperativeToValueJudgmentSentenceFn UnaryFunction)
-
-(=> 
-  (and 
-    (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
-    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
-    (instance ?RULE Formula)
-    (instance ?DEONTIC DeonticAttribute))
-  (and
-    (=>
-      (equal ?DEONTIC Obligation)
-      (equal ?VJS
-        (and
-          (modalAttribute
-            (exists (?PROC)
-              (realizesFormula ?PROC ?RULE)) MorallyGood)
-          (modalAttribute
-            (not
-              (exists (?PROC)
-                (realizesFormula ?PROC ?RULE))) MorallyBad))))
-    (=>
-      (equal ?DEONTIC Prohibition)
-      (equal ?VJS
-        (modalAttribute
-          (exists (?PROC)
-            (realizesFormula ?PROC ?RULE)) MorallyBad)))
-    (=>
-      (equal ?DEONTIC Permission)
-      (equal ?VJS
-        (forall (?CPROC)
-          (=>
-            (realizesFormulaSubclass ?CPROC ?RULE)
-            (modalAttribute
-              (exists (?PREN)
-                (and
-                  (instance ?PREN AutonomousAgentProcess)
-                  (prevents ?PREN ?CPROC))) MorallyBad))))))) 
+                        (realizesFormula ?PROC ?RULE))) MorallyBad))))))))))      
      
 ;; Let's just say that the standard deontic operators cover all deontolgical theories.
 ;; Assuming rights-based approaches etc can be translated into this form ;- )
@@ -874,6 +828,65 @@ based on the action adheres to a set of rules and principles.")
 ;; I'll also do the reverse mapping...?  Hmm.
 ;; Well, this is my OPPA Mapping Style!
 ;; Oh, I could actually just define the map, lol!
+
+;; This function basically is what I've been calling "Deontology":
+;; A mapping from imperative-type deontological sentences into value judgment-type deontological sentences
+;; And then the mapping of Moral Judgments over the sentences as if to say, 
+;; Society has considered these moral sentences and concluded them to be 'true' (or whatever else one does with them).
+(documentation ImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences.")
+(domain ImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
+(range ImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance ImperativeToValueJudgmentSentenceFn TotalValuedRelation)
+(instance ImperativeToValueJudgmentSentenceFn UnaryFunction)
+
+(=> 
+  (and 
+    (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
+    (instance ?RULE Formula)
+    (instance ?DEONTIC DeonticAttribute))
+  (and
+    (=>
+      (equal ?DEONTIC Obligation)
+      (equal ?VJS
+        (and
+          (modalAttribute
+            (exists (?PROC)
+              (realizesFormula ?PROC ?RULE)) MorallyGood)
+          (modalAttribute
+            (not
+              (exists (?PROC)
+                (realizesFormula ?PROC ?RULE))) MorallyBad))))
+    (=>
+      (equal ?DEONTIC Prohibition)
+      (equal ?VJS
+        (modalAttribute
+          (exists (?PROC)
+            (realizesFormula ?PROC ?RULE)) MorallyBad)))
+    (=>
+      (equal ?DEONTIC Permission)
+      (equal ?VJS
+        (forall (?CPROC)
+          (=>
+            (realizesFormulaSubclass ?CPROC ?RULE)
+            (modalAttribute
+              (exists (?PREN)
+                (and
+                  (instance ?PREN AutonomousAgentProcess)
+                  (prevents ?PREN ?CPROC))) MorallyBad))))))) 
+
+;; So now the 'too strong' claim above can be expressed very simply.
+;; Now it's like, uhm, why even say this?
+;; Because it's the kind of thing we'd probably like to be able to say.
+(=>
+  (instance ?MT DeontologicalValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?ITS)
+        (and
+          (instance ?ITS SimpleImperativeSentence)
+          (equal ?S (ImperativeToValueJudgmentSentenceFn ?ITS)))))))  
 ;; (=> 
 ;;   (instance ?IT DeontologicalImperativeTheory)
 ;;   (exists (?DT)
@@ -885,6 +898,135 @@ based on the action adheres to a set of rules and principles.")
 ;;           (and
 ;;             (=> 
 ;;               (not (instance ?S1 ?SimpleImperativeSentence))))))))
+
+;; Let's do the inverse!
+(documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
+(domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
+(range ValueJudgmentToImperativeSentenceFn ImperativeSentence)
+(instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
+(instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
+
+;; This might be too simple and strong?  
+;; There is the issue of the strength of an obligation etc, right?
+;; One cannot go from imperatives to value judgments and back to imperatives.
+;; A quite quirk is that going from a value judgment to an imperative and back says that:
+;; It is MorallyBad to prevent someone from doing something that is MorallyNeutral?
+(=> 
+  (and 
+    (equal (ValueJudgmentToImperativeSentenceFn ?VJS) ?ITS)
+    (equal ?ITS (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (instance ?SITUATION Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?ITS 
+        (modalAttribute ?SITUATION Obligation)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?ITS
+        (modalAttribute ?SITUATION Prohibition)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?ITS
+        (modalAttribute ?SITUATION Permission)))))
+
+;; Might as well see how this looks and feels.
+(documentation GenericImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
+(domain GenericImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
+(range GenericImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance GenericImperativeToValueJudgmentSentenceFn TotalValuedRelation)
+(instance GenericImperativeToValueJudgmentSentenceFn UnaryFunction)
+
+;; So letting the Rule be fully general, such as 
+;; (exists (?PET)
+;;             (and
+;;                 (instance ?PET DomesticAnimal)
+;;                 (located ?PET ?LOC)))
+;; If this is prohibited, then it's morally bad for the pet to be located there.
+;; Do we wish to say that it's morally bad to instantiate a process that realizes the pet being there?
+;; Yeah, kind of, to be honest.
+;; Yet it's also good to just say that it's bad, lol.
+;; Maybe I like the generic versions.
+;; And wish to do the realizing and the causal realization claims separately?
+(=> 
+  (and 
+    (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
+    (instance ?RULE Formula)
+    (instance ?DEONTIC DeonticAttribute))
+  (and
+    (=>
+      (equal ?DEONTIC Obligation)
+      (equal ?VJS
+        (and
+          (modalAttribute ?RULE MorallyGood)
+          (modalAttribute (not ?RULE) MorallyBad))))
+    (=>
+      (equal ?DEONTIC Prohibition)
+      (equal ?VJS
+        (modalAttribute ?RULE MorallyBad)))
+    (=>
+      (equal ?DEONTIC Permission)
+      (equal ?VJS 
+        (modalAttribute ?RULE MorallyNeutral)))))
+
+;; This is also obviously too strrong, I guess.
+(=>
+  (instance ?MT DeontologicalImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (exists (?VJS)
+        (and
+          (instance ?VJS SimpleValueJudgmentSentence)
+          (equal ?S (ValueJudgmentToImperativeSentenceFn ?VJS)))))))
+
+;; What about this?
+;; For every imperative deontological theory,
+;; For every part of a sentence that is a simple imperative sentence,
+;; There exists some value judgment sentence that gets mapped to it.
+(=>
+  (instance ?MT DeontologicalImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (forall (?P)
+        (=> 
+          (and 
+            (part ?P ?S)
+            (instance ?P SimpleImperativeSentence))
+          (exists (?VJS)
+            (and
+              (instance ?VJS SimpleValueJudgmentSentence)
+              (equal ?P (ValueJudgmentToImperativeSentenceFn ?VJS)))))))))
+
+;; For every deontological value judgment theory, 
+;; For every part of each sentence that is a simple value judgment,
+;; There exists some imperative statement of which this is a part.
+;; Basically I'm constraining the form of the Formulas in the value judgments to be:
+;; (a) realizing X is good
+;; (b) realizing X is bad
+;; (c) not realizing X is bad
+;; (d) preventing Y from realizing X is bad.
+;; Maybe I should just say this explicitly, lol.
+;; And it clearly misses stuff like, "If X is bad to do, then preventing Y from realizing X is good."
+;; But you can fit that into (A) by substituting "prevetning Y yfrom doing X" into X.
+;; So, technically, this is going to be contradicted by the general rule for value judgment statements.
+(=>
+  (instance ?MT DeontologicalValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (forall (?P)
+        (=> 
+          (and
+            (part ?P ?S)
+            (instance ?P SimpleValueJudgmentSentence))
+          (exists (?ITS)
+            (and
+              (instance ?ITS SimpleImperativeSentence)
+              (part ?P (ImperativeToValueJudgmentSentenceFn ?ITS)))))))))
 
 (documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
