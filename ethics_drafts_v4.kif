@@ -294,7 +294,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (element ?SENTENCE ?THEORY))))
 
 (documentation SimpleValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
-(subclass SimpleValueJudgmentSentence DeontologicalSentence)
+(subclass SimpleValueJudgmentSentence MoralSentence)
 
 (<=>
   (instance ?SENTENCE SimpleValueJudgmentSentence)
@@ -308,7 +308,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
         (equal ?MORALATTRIBUTE MorallyNeutral)))))
 
 (documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
-(subclass ValueJudgmentSentence DeontologicalSentence)
+(subclass ValueJudgmentSentence MoralSentence)
 
 (<=>
   (instance ?SENTENCE ValueJudgmentSentence)
@@ -338,8 +338,8 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (instance ?IT SimpleImperativeSentence)
       (part ?IT ?SENTENCE))))
 
-(documentation DeontologicalValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
-(subclass DeontologicalValueJudgmentTheory DeontologicalTheory)
+(documentation ValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
+(subclass ValueJudgmentTheory DeontologicalTheory)
 
 ;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
 ;; such that the sentence assigns this  moral attribute to the formula.
@@ -347,7 +347,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 ;; Yet I am not fully sure how I wish to constrain formulas.
 ;; Existential formulas over processes or physical entities or... what?
 (=>
-  (instance ?D DeontologicalValueJudgmentTheory)
+  (instance ?D ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?D)
@@ -362,7 +362,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 
 ;; The above is too strong.  The sentence may describe the context in which the moral judgment is being dished out.
 (=>
-  (instance ?D DeontologicalValueJudgmentTheory)
+  (instance ?D ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?D)
@@ -377,7 +377,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 
 ;; Now I can simplify things and say that a Deontological Value Judgment Theory is one in which all sentences contain a value judgment sentence as a part!
 (=>
-  (instance ?D DeontologicalValueJudgmentTheory)
+  (instance ?D ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?D)
@@ -679,7 +679,7 @@ based on the action adheres to a set of rules and principles.")
 (exists (?MT ?MP)
   (and
     (instance ?MP Deontology)
-    (instance ?MT DeontologicalValueJudgmentTheory)
+    (instance ?MT ValueJudgmentTheory)
     (forall (?S)
       (=>
         (element ?S ?MT)
@@ -707,7 +707,7 @@ based on the action adheres to a set of rules and principles.")
 ;; This can be modularly simplified!
 (exists (?MT)
   (and
-    (instance ?MT DeontologicalValueJudgmentTheory)
+    (instance ?MT ValueJudgmentTheory)
     (forall (?S)
       (=>
         (element ?S ?MT)
@@ -730,7 +730,7 @@ based on the action adheres to a set of rules and principles.")
 ;; Let's just say that the standard deontic operators cover all deontolgical theories.
 ;; Assuming rights-based approaches etc can be translated into this form ;- )
 (=>
-  (instance ?MT DeontologicalValueJudgmentTheory)
+  (instance ?MT ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
@@ -769,7 +769,7 @@ based on the action adheres to a set of rules and principles.")
 
 ;; Let's see what it looks like if I place everything within the modalAttribute.
 (=>
-  (instance ?MT DeontologicalValueJudgmentTheory)
+  (instance ?MT ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
@@ -879,7 +879,7 @@ based on the action adheres to a set of rules and principles.")
 ;; Now it's like, uhm, why even say this?
 ;; Because it's the kind of thing we'd probably like to be able to say.
 (=>
-  (instance ?MT DeontologicalValueJudgmentTheory)
+  (instance ?MT ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
@@ -900,9 +900,10 @@ based on the action adheres to a set of rules and principles.")
 ;;               (not (instance ?S1 ?SimpleImperativeSentence))))))))
 
 ;; Let's do the inverse!
+;; In this case it is simple -> simple!
 (documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
 (domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
-(range ValueJudgmentToImperativeSentenceFn ImperativeSentence)
+(range ValueJudgmentToImperativeSentenceFn SimpleImperativeSentence)
 (instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
 (instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
 
@@ -939,10 +940,11 @@ based on the action adheres to a set of rules and principles.")
 (instance GenericImperativeToValueJudgmentSentenceFn UnaryFunction)
 
 ;; So letting the Rule be fully general, such as 
-;; (exists (?PET)
-;;             (and
-;;                 (instance ?PET DomesticAnimal)
-;;                 (located ?PET ?LOC)))
+;; (modalAttribute
+;;   (exists (?PET)
+;;     (and
+;;         (instance ?PET DomesticAnimal)
+;;         (located ?PET ?LOC))) Prohibition)
 ;; If this is prohibited, then it's morally bad for the pet to be located there.
 ;; Do we wish to say that it's morally bad to instantiate a process that realizes the pet being there?
 ;; Yeah, kind of, to be honest.
@@ -971,7 +973,7 @@ based on the action adheres to a set of rules and principles.")
       (equal ?VJS 
         (modalAttribute ?RULE MorallyNeutral)))))
 
-;; This is also obviously too strrong, I guess.
+;; This is also obviously too strong, I guess.
 (=>
   (instance ?MT DeontologicalImperativeTheory)
   (forall (?S)
@@ -1013,8 +1015,9 @@ based on the action adheres to a set of rules and principles.")
 ;; And it clearly misses stuff like, "If X is bad to do, then preventing Y from realizing X is good."
 ;; But you can fit that into (A) by substituting "prevetning Y yfrom doing X" into X.
 ;; So, technically, this is going to be contradicted by the general rule for value judgment statements.
+;; Mmm, no, I think the simple version works for this, actually.
 (=>
-  (instance ?MT DeontologicalValueJudgmentTheory)
+  (instance ?MT ValueJudgmentTheory)
   (forall (?S)
     (=>
       (element ?S ?MT)
