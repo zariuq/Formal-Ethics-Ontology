@@ -900,7 +900,7 @@ based on the action adheres to a set of rules and principles.")
 ;;               (not (instance ?S1 ?SimpleImperativeSentence))))))))
 
 ;; Let's do the inverse!
-;; In this case it is simple -> simple!
+;; In this case it is simple -> simpl:
 (documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
 (domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
 (range ValueJudgmentToImperativeSentenceFn SimpleImperativeSentence)
@@ -953,7 +953,7 @@ based on the action adheres to a set of rules and principles.")
 ;; And wish to do the realizing and the causal realization claims separately?
 (=> 
   (and 
-    (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal (GenericImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
     (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
     (instance ?RULE Formula)
     (instance ?DEONTIC DeonticAttribute))
@@ -973,6 +973,63 @@ based on the action adheres to a set of rules and principles.")
       (equal ?VJS 
         (modalAttribute ?RULE MorallyNeutral)))))
 
+;; This demonstrates that the 'second' rule of the obligation translation is not needed
+;; For it is implied by the first in an Imperative Theory.
+(=>
+  (and
+    (=>
+      (modalAttribute ?FORMULA Obligation)
+      (not
+        (modalAttribute
+          (not ?FORMULA) Permission)))
+    (=>
+      (not
+        (modalAttribute
+          (not ?FORMULA) Permission))
+      (modalAttribute
+        (not ?FORMULA) Prohibition)))
+  (modalAttribute
+    (not ?FORMULA) Prohibition))
+
+;; For this rule, we only need to deal with the permissive case because Obligation ?F => Permission ?F. 
+;; Thus this is not part of the translation between the imperative and value judgment languages.
+;; It's actually a lemma of a moral theory ;- ).
+;; One might claim that a prohibition on NOT ?FORMULA implies that preventing ?FORMULA is bad...,
+;; Which probably does follow . . ..
+;; I wonder if one needs to add agents in here, i.e., is choosing not to do something preventing myself?  Not quite...?
+(forall (?RULE ?CPROC)
+  (=>
+    (and
+      (realizesFormulaSubclass ?CPROC ?RULE)
+      (modalAttribute ?RULE Permission))
+    (modalAttribute
+      (exists (?PREV)
+        (and
+          (instance ?PREV AutonomousAgentProcess)
+          (prevents ?PREV ?CPROC))) Prohibition)))
+    
+
+;; Maybe it should be simplified to the following:
+(=> 
+  (and 
+    (equal (GenericImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
+    (instance ?RULE Formula)
+    (instance ?DEONTIC DeonticAttribute))
+  (and
+    (=>
+      (equal ?DEONTIC Obligation)
+      (equal ?VJS
+        (modalAttribute ?RULE MorallyGood)))
+    (=>
+      (equal ?DEONTIC Prohibition)
+      (equal ?VJS
+        (modalAttribute ?RULE MorallyBad)))
+    (=>
+      (equal ?DEONTIC Permission)
+      (equal ?VJS 
+        (modalAttribute ?RULE MorallyNeutral)))))
+        
 ;; This is also obviously too strong, I guess.
 (=>
   (instance ?MT DeontologicalImperativeTheory)
@@ -1030,6 +1087,50 @@ based on the action adheres to a set of rules and principles.")
             (and
               (instance ?ITS SimpleImperativeSentence)
               (part ?P (ImperativeToValueJudgmentSentenceFn ?ITS)))))))))
+
+;; Anyway, this can be corrected into a clean version.
+(=>
+  (instance ?MT ValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?MT)
+      (forall (?P)
+        (=> 
+          (and
+            (part ?P ?S)
+            (instance ?P SimpleValueJudgmentSentence))
+          (exists (?ITS)
+            (and
+              (instance ?ITS SimpleImperativeSentence)
+              (equal ?P (GenericImperativeToValueJudgmentSentenceFn ?ITS)))))))))
+
+;; What I want to do really should just be done with proper structural recursion in terms of subFormula with pattern match...
+;; (=>
+;;   (instance ?VJT ValueJudgmentTheory)
+;;   (exists (?IT)
+;;     (forall (?VJS)
+;;       (=>
+;;         (element ?S ?MT)
+;;         (forall (?PJS)
+;;           (=>
+;;             (part ?PJS ?VJS)
+;;             (or
+;;               (=>
+;;                 (instance ?P SimpleImperativeSentence)
+;;                 ())
+;;               )))))))
+
+(=>
+  (instance ?S SimpleValueJudgmentSentence)
+  (equal ?S
+    (GenericImperativeToValueJudgmentSentenceFn
+      (ValueJudgmentToImperativeSentenceFn ?S))))
+
+(=>
+  (instance ?S ImperativeSentence)
+  (equal ?S
+    (ValueJudgmentToImperativeSentenceFn
+      (GenericImperativeToValueJudgmentSentenceFn ?S))))
 
 (documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
