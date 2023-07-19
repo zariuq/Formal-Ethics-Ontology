@@ -144,15 +144,21 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
   (similar ?A ?E1 ?E2)
   (similar ?A ?E2 ?E1))
 
-(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subcass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
+(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
 
-(instance MorallyGood MoralAttribute)
-(instance MorallyBad MoralAttribute)
-(instance MorallyNeutral MoralAttribute)
+(documentation MoralValueAttribute EnglishLanguage "Moral Value Attributes are a subclass of Moral Attributes dealing with the attribution of value: whether something is good, bad, or netural.")
+(subclass MoralValueAttribute MoralAttribute)
 
-(subclass VirtueAttribute MoralAttribute)
-(subclass ViceAttribute MoralAttribute)
+(instance MorallyGood MoralValueAttribute)
+(instance MorallyBad MoralValueAttribute)
+(instance MorallyNeutral MoralValueAttribute)
+
+(documentation MoralVirtueAttribute EnglishLanguage "Moral Virtue Attributes are a subclass of Moral Attributes dealing with the virtues and vices.")
+(subclass MoralVirtueAttribute MoralAttribute)
+
+(subclass VirtueAttribute MoralVirtueAttribute)
+(subclass ViceAttribute MoralVirtueAttribute)
 
 (subclass VirtueAttribute PsychologicalAttribute)
 (subclass ViceAttribute PsychologicalAttribute)
@@ -287,7 +293,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 (subclass DeontologicalSentence MoralSentence)
 
 (<=>
-  (instance ?SENTENCE MoralSentence)
+  (instance ?SENTENCE DeontologicalSentence)
   (exists (?THEORY)
     (and
       (instance ?THEORY DeontologicalTheory)
@@ -306,6 +312,15 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
         (equal ?MORALATTRIBUTE MorallyGood)
         (equal ?MORALATTRIBUTE MorallyBad)
         (equal ?MORALATTRIBUTE MorallyNeutral)))))
+
+;; So now that I defined MoralValueAttributes, this can be simplified!        
+(<=>
+  (instance ?SENTENCE SimpleValueJudgmentSentence)
+  (exists (?F ?MORALATTRIBUTE)
+    (and
+      (equal (modalAttribute ?F ?MORALATTRIBUTE) ?SENTENCE)
+      (instance ?F Formula)
+      (instance ?MORALATTRIBUTE MoralValueAttribute))))
 
 (documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
 (subclass ValueJudgmentSentence MoralSentence)
@@ -392,23 +407,44 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
     (=>
       (element ?S ?MT)
       (instance ?S ImperativeSentence))))
-          
+ 
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
 (subclass VirtueEthicsTheory MoralTheory)
-                    
+
+(documentation VirtueEthicsSentence EnglishLanguage "A sentence of a virtue ethics language/theory.")      
+(subclass VirtueEthicsSentence MoralSentence)
+
+(<=>
+  (instance ?SENTENCE VirtueEthicsSentence)
+  (exists (?THEORY)
+    (and
+      (instance ?THEORY VirtueEthicsTheory)
+      (element ?SENTENCE ?THEORY))))
+
+(documentation SimpleVirtueSentence EnglishLanguage "A sentence that describes an virtue/vice attribute assignment to an agent.")      
+(subclass SimpleVirtueSentence VirtueEthicsSentence)    
+
+(<=>
+  (instance ?SENTENCE SimpleVirtueSentence)
+  (exists (?AGENT ?VIRTUEATTRIBUTE)
+    (and
+      (equal ?SENTENCE (attribute ?AGENT ?VIRTUEATTRIBUTE))
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
+
+(<=>
+  (insance ?SENTENCE VirtueEthicsSentence)
+  (exists (?SVS)
+    (and
+      (instance ?SVS SimpleVirtueSentence)
+      (part ?SVS ?SENTENCE))))       
+
 (<=>
   (instance ?V VirtueEthicsTheory)
   (forall (?S)
     (=>
       (element ?S ?V)
-      (exists (?AGENT ?VIRTUE)
-        (and
-          (equal ?S
-            (attribute ?AGENT ?VIRTUE))
-          (instance ?AGENT AutonomousAgent)
-          (or
-            (instance ?VIRTUE VirtueAttribute)
-            (instance ?VIRTUE ViceAttribute)))))))
+      (instance ?S VirtueSentence))))
             
 (documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
 (subclass UtilitarianTheory MoralTheory)
@@ -671,7 +707,7 @@ based on the action adheres to a set of rules and principles.")
             (and
               (containsInformation ?S ?PROP)
               (subProposition ?PROP ?MP))))))))
-              
+
 ;; What about something whacky like this?
 ;; There exists a moral theory and a moral philosophy such that
 ;; every sentence of the moral theory is contained in the moral philosophy
@@ -1138,7 +1174,7 @@ based on the character of the agent performing an action.  A virtuous agent is o
 do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subclass VirtueEthics Ethics)
 
-;; Linking Virtue Ethics with its Theories.
+;; Linking Virtue Ethics with its Theories. V1
 (=>
   (instance ?D VirtueEthics)
   (exists (?PROP ?SENT)
@@ -1151,6 +1187,35 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (instance ?THEORY VirtueEthicsTheory)
           (element ?SENT ?THEORY))))))
           
+;; For all instances of virtue ethics, there exists a virtue ethics theory
+;; Such that all of its sentences are propositions of the virtue ethics instance.
+;; Basically, the whole "moral sentence" thing is extraneous now :- ).
+;; I feel as if we'd need greater precision to make the implication go both ways.  
+;; We'd need to get more logical-implication level.
+;; Yeah, I'm not sure how to avoid the trivialization without quantifying over subPropositionos, which is tricky as P is a subProposition of ~P.
+(=>
+  (instance ?MP VirtueEthics)
+  (exists (?MT)
+    (and
+      (instance ?MT VirtueEthicsTheory)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?PROP)
+            (and
+              (containsInformation ?S ?PROP)
+              (subProposition ?PROP ?MP))))))))
+
+;; So this is probably the best I can easily do.  
+;; I see no reason why any 'theory' as a set of sentences can't be represented as a sentence of potentially infinite length by 'anding' each sentence together into one.
+(=> 
+  (instance ?MP VirtueEthics)
+  (exists (?MTS)
+    (containsInformation ?MTS ?MP)
+    (instance ?MTS VirtueEthicsSentence)))
+
+;; Weirdly, quantifying over subPropositions seems too vague.
+;; So we go over sentences in both directions.
 (=>
   (instance ?MT VirtueEthicsTheory)
   (exists (?MP)
@@ -1163,6 +1228,12 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
             (and
               (containsInformation ?S ?PROP)
               (subProposition ?PROP ?MP))))))))
+
+;; (documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
+;; (domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
+;; (range ValueJudgmentToImperativeSentenceFn SimpleImperativeSentence)
+;; (instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
+;; (instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
 
 ; (=>
 ;   (instance ?MT VirtueEthicsTheory)
