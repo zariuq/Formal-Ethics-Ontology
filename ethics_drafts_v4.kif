@@ -1211,8 +1211,9 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (=> 
   (instance ?MP VirtueEthics)
   (exists (?MTS)
-    (containsInformation ?MTS ?MP)
-    (instance ?MTS VirtueEthicsSentence)))
+    (and 
+      (containsInformation ?MTS ?MP)
+      (instance ?MTS VirtueEthicsSentence))))
 
 ;; Weirdly, quantifying over subPropositions seems too vague.
 ;; So we go over sentences in both directions.
@@ -1229,11 +1230,100 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
               (containsInformation ?S ?PROP)
               (subProposition ?PROP ?MP))))))))
 
-;; (documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
-;; (domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
-;; (range ValueJudgmentToImperativeSentenceFn SimpleImperativeSentence)
-;; (instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
-;; (instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
+;; So let's define a map from simple virtue ethics statements to value judgment statements.
+(documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
+(domain SimpleVirtueToValueJudgmentSentenceFn 1 VirtueEthicsSentence)
+(range SimpleVirtueToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance SimpleVirtueToValueJudgmentSentenceFn TotalValuedRelation)
+(instance SimpleVirtueToValueJudgmentSentenceFn UnaryFunction)
+
+;; I see how the target-centric virtue ethics is important here.
+;; If one is ascribed the virtue of honesty, then when a decision involves the scope of honesty,
+;; one's behavior resulting from the decision is likely to be morally good.
+;; This doesn't extend beyond the relevant scope, however!
+(=>
+  (and
+    (equal
+      (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
+    (equal ?SVS
+      (attribute ?AGENT ?VIRTUEATTRIBUTE))
+    (instance ?AGENT AutonomousAgent))
+  (and
+    (=>
+      (instance ?VIRTUEATTRIBUTE VirtueAttribute)
+      (equal ?VJS
+        (forall (?DECIDE ?DECISION)
+          (=>
+            (and
+              (instance ?DECIDE Deciding)
+              (agent ?DECIDE ?AGENT)
+              (refers ?VIRTUEATTRIBUTE ?DECIDE)
+              (result ?DECIDE
+                (ClassToSetFn ?DECISION)))
+            (modalAttribute
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (and
+                    (agent ?INSTANCE ?AGENT)
+                    (instance ?INSTANCE ?DECISION))) MorallyGood) Likely)))))
+    (=>
+      (instance ?VIRTUEATTRIBUTE ViceAttribute)
+      (equal ?VJS
+        (forall (?DECIDE ?DECISION)
+          (=>
+            (and
+              (instance ?DECIDE Deciding)
+              (agent ?DECIDE ?AGENT)
+              (refers ?VIRTUEATTRIBUTE ?DECIDE)
+              (result ?DECIDE
+                (ClassToSetFn ?DECISION)))
+            (modalAttribute
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (and
+                    (agent ?INSTANCE ?AGENT)
+                    (instance ?INSTANCE ?DECISION))) MorallyBad) Likely)))))))
+
+;; Let's try to remove the decision middle-man.
+;; This time, if a virtuous entity is known to have taken some behavior, then it's probably a good thing to do in general.
+(=>
+  (and
+    (equal (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
+    (equal ?SVS (attribute ?AGENT ?VIRTUEATTRIBUTE))
+    (instance ?AGENT AutonomousAgent))
+  (and 
+    (=> 
+      (instance ?VIRTUEATTRIBUTE VirtueAttribute) 
+      (equal ?VJS 
+        (forall (?PROC)
+          (=> 
+            (and
+              (subclass ?PROC AutonomousAgentProcess)
+              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (exists (?INSTANCE)
+                (and 
+                  (agent ?INSTANCE ?AGENT)
+                  (instance ?INSTANCE ?PROC))))
+            (modalAttribute 
+              (modalAttribute 
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyGood) Likely)))))
+    (=>
+      (instance ?VIRTUEATTRIBUTE ViceAttribute) 
+      (equal ?VJS 
+        (forall (?PROC)
+          (=> 
+            (and
+              (subclass ?PROC AutonomousAgentProcess)
+              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (exists (?INSTANCE)
+                (and
+                  (agent ?INSTANCE ?AGENT)
+                  (instance ?INSTANCE ?PROC))))
+            (modalAttribute 
+              (modalAttribute 
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyBad) Likely)))))))
 
 ; (=>
 ;   (instance ?MT VirtueEthicsTheory)
