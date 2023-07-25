@@ -951,7 +951,7 @@ based on the action adheres to a set of rules and principles.")
 (=> 
   (and 
     (equal (ValueJudgmentToImperativeSentenceFn ?VJS) ?ITS)
-    (equal ?ITS (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (equal ?VJS (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (instance ?SITUATION Formula)
     (instance ?MORALATTRIBUTE MoralAttribute))
   (and
@@ -1324,6 +1324,140 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
               (modalAttribute 
                 (exists (?INSTANCE)
                   (instance ?INSTANCE ?PROC)) MorallyBad) Likely)))))))
+
+;; Maybe let's say that if it's likely for the virtuous agent to do X, then it's likely good to do X in general.
+(=>
+  (and
+    (equal (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
+    (equal ?SVS (attribute ?AGENT ?VIRTUEATTRIBUTE))
+    (instance ?AGENT AutonomousAgent))
+  (and 
+    (=> 
+      (instance ?VIRTUEATTRIBUTE VirtueAttribute) 
+      (equal ?VJS 
+        (forall (?PROC)
+          (=> 
+            (and
+              (subclass ?PROC AutonomousAgentProcess)
+              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (and 
+                    (agent ?INSTANCE ?AGENT)
+                    (instance ?INSTANCE ?PROC))) Likely))
+            (modalAttribute 
+              (modalAttribute 
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyGood) Likely)))))
+    (=>
+      (instance ?VIRTUEATTRIBUTE ViceAttribute) 
+      (equal ?VJS 
+        (forall (?PROC)
+          (=> 
+            (and
+              (subclass ?PROC AutonomousAgentProcess)
+              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (and 
+                    (agent ?INSTANCE ?AGENT)
+                    (instance ?INSTANCE ?PROC))) Likely))
+            (modalAttribute 
+              (modalAttribute 
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyBad) Likely)))))))
+
+;; We can generalize this beyond the 'agent' role!
+;; We'll get a rule that probably too associatively considers an process a virtuous agent is a part of as 'good'.
+(=>
+  (and
+    (equal
+      (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
+    (equal ?SVS
+      (attribute ?AGENT ?VIRTUEATTRIBUTE))
+    (instance ?AGENT AutonomousAgent))
+  (and
+    (=>
+      (instance ?VIRTUEATTRIBUTE VirtueAttribute)
+      (equal ?VJS
+        (forall (?PROC ?ROLE ?TIME ?PLACE)
+          (=>
+            (and
+              (subclass ?PROC Process)
+              (playsRoleInEventOfType ?AGENT ?ROLE ?PROC ?TIME ?PLACE)
+              (refers ?VIRTUEATTRIBUTE ?PROC))
+            (modalAttribute
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyGood) Likely)))))
+    (=>
+      (instance ?VIRTUEATTRIBUTE ViceAttribute)
+      (equal ?VJS
+        (forall (?PROC)
+          (=>
+            (and
+              (subclass ?PROC Process)
+              (playsRoleInEventOfType ?AGENT ?ROLE ?PROC ?TIME ?PLACE)
+              (refers ?VIRTUEATTRIBUTE ?PROC))
+            (modalAttribute
+              (modalAttribute
+                (exists (?INSTANCE)
+                  (instance ?INSTANCE ?PROC)) MorallyBad) Likely)))))))
+
+;; If something is good, then a virtuous person is likely to do it in the appropriate situation.
+(documentation SimpleValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences into simple virtue ethics sentences.")
+(domain SimpleValueJudgmentToVirtueSentenceFn 1 ValueJudgmentSentence)
+(range SimpleValueJudgmentToVirtueSentenceFn VirtueEthicsSentence)
+(instance SimpleValueJudgmentToVirtueSentenceFn TotalValuedRelation)
+(instance SimpleValueJudgmentToVirtueSentenceFn UnaryFunction)
+
+;; Maybe I need some sort of "Lemma": 
+;; if a formula is good and there's some process that realizes the formula, then this process is good.
+;; This is basically what I had in the old 'translation'..., and now that it's been simplified, 
+;; it's an additional lemma!
+;; Also, note, if the process is an autonomous agent process, the existence of an agent is provided by a lemma already in SUMO.
+
+(=>
+  (and 
+    (instance ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (instance ?SITUATION Formula)
+    (realizesFormulaSubclass ?PROC ?SITUATION))
+  (modalAttribute
+    (exists (?INSTANCE)
+      (instance ?INSTANCE ?PROC)) ?MORALATTRIBUTE))
+
+;; Causing a non-process situation seems not so well dealt-with,
+;; But we can suggest it by saying that if some agent-process causes the realization of a situation,
+;; Then it's good/bad for it to exist if the situation is good/bad.
+;; Adding in likely because the behavior could have additional consequences.
+(=>
+  (and 
+    (instance ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (instance ?SITUATION Formula)
+    (realizesFormulaSubclass ?PROC ?SITUATION)
+    (causesSubclass ?CAUSE ?PROC)
+    (subclass ?CAUSE AutonomousAgentProcess))
+  (modalAttribute
+    (modalAttribute
+      (exists (?INSTANCE)
+        (instance ?INSTANCE ?CAUSE)) ?MORALATTRIBUTE) Likely)) 
+
+;; Maybe let's make a version that goes through Deciding and one version that doesn't!
+;; Just use refers... excessively... because the goal isn't exactly to fill in all the details.
+;; Use 'influnces'?  Ugh, this is hard!
+(=>
+  (and
+    (equal (SimpleValueJudgmentToVirtueSentenceFn ?SVJ) ?VES)
+    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE)
+    (instance ?SITUATION Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (refers ?SITUATION ?PROC)
+    (subclass ?PROC AutonomousAgentProcess)))
+  (and  
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad))))
 
 ; (=>
 ;   (instance ?MT VirtueEthicsTheory)
