@@ -1862,6 +1862,34 @@ based on whether it maximizes the good over the bad, which is typically determin
               (containsInformation ?S ?P)
               (subProposition ?P ?MP))))))))
 
+(documentation UtilityAssignmentToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
+(domain UtilityAssignmentToValueJudgmentSentence 1 UtilityAssignmentSentence)
+(range UtilityAssignmentToValueJudgmentSentence SimpleValueJudgmentSentence)
+(instance UtilityAssignmentToValueJudgmentSentence TotalValuedRelation)
+(instance UtilityAssignmentToValueJudgmentSentence UnaryFunction)
+
+;; So if the utility is positive, it's good; negative, it's bad; and if it's zero, then it's neutral.
+;; Super clean and simple!
+(=> 
+  (and 
+    (equal (UtilityAssignmentToValueJudgmentSentence ?UAS) ?VJS)
+    (equal ?UAS (equal (UtilityFormulaFn ?FORMULA) ?VALUE))
+    (instance ?FORMULA Formula)
+    (instance ?VALUE Number))
+  (and
+    (=>
+      (greaterThan ?VALUE 0)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyGood)))
+    (=>
+      (lessThan ?VALUE 0)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyBad)))
+    (=>
+      (equal ?VALUE 0)
+      (equal ?VJS 
+        (modalAttribute ?FORMULA MorallyNeutral)))))
+
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
 
