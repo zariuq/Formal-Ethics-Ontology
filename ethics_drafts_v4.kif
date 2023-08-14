@@ -269,6 +269,62 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (element ?S ?T)
       (instance ?S Sentence))))
 
+;; Maybe I should change all the sentences to Formulas
+(documentation SentenceList EnglishLanguage "A list of Sentences.")
+(subclass SentenceList List)
+
+(=>
+  (and
+    (instance ?LIST SentenceList)
+    (inList ?SENTENCE ?LIST))
+  (instance ?SENTENCE Sentence))
+
+(documentation ListAndFn EnglishLanguage "The and-concatenation of all the sentences in a SentenceList.")
+(domain ListAndFn 1 SentenceList)
+(instance ListAndFn UnaryFunction)
+(range ListAndFn Sentence)
+
+(=>
+  (and
+    (equal ?S
+      (ListAndFn ?L))
+    (equal 1
+      (ListLengthFn ?L)))
+  (equal ?S
+    (ListOrderFn ?L 1)))
+
+(=>
+  (and
+    (equal ?S
+      (ListAndFn ?L))
+    (greaterThan
+      (ListLengthFn ?L) 1))
+  (equal ?S
+    (and
+      (FirstFn ?L)
+      (ListAndFn
+        (SubListFn 2
+          (ListLengthFn ?L) ?L)))))
+
+(documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
+(instance SetToListFn UnaryFunction)
+(domain SetToListFn 1 Set)
+(range SetToListFn List)
+
+;; If StL(S) = L, then S and L share all their members and their sizes are equal.
+;; This says nothing about the order.
+(=>
+  (equal
+    (SetToListFn ?SET) ?LIST)
+  (and
+    (equal
+      (ListLengthFn ?LIST)
+      (CardinalityFn ?SET))
+    (forall (?ELEMENT)
+      (<=>
+        (element ?ELEMENT ?SET)
+        (inList ?ELEMENT ?LIST)))))
+
 (documentation MoralTheory EnglishLanguage "A set of sentences in a moral theory")
 (subclass MoralTheory Theory)
 
@@ -1722,6 +1778,89 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 
 based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
 (subclass Utilitarianism Ethics)
+
+;; MP for Moral Philosophy or Moral Predicate
+(=>
+  (instance ?MP Utilitarianism)
+  (exists (?MTS)
+    (and 
+      (containsInformation ?MTS ?MP)
+      (instance ?MTS UtilitarianSentence))))
+
+(=>
+  (instance ?MP Utilitarianism)
+  (exists (?MT)
+    (and
+      (instance ?MT UtilitarianTheory)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?P)
+            (and
+              (containsInformation ?S ?P)
+              (subProposition ?P ?MP))))))))
+
+;; So for a Utilitarian Proposition, there is some sentence that contains its information.
+;; And there is a Utilitarian theory such that each sentence is a sub-string of this mega-sentence
+;; And each sentence also corresponds to a su-proposition of the utilitarian proposition.
+(=>
+  (instance ?MP Utilitarianism)
+  (exists (?MT ?MTS)
+    (and
+      (containsInformation ?MTS ?MP)
+      (instance ?MTS UtilitarianSentence)
+      (instance ?MT UtilitarianTheory)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (and
+              (subString ?S ?MTS)
+              (exists (?P)
+                (and
+                  (containsInformation ?S ?P)
+                  (subProposition ?P ?MP)))))))))
+
+;; Now that we can take the concatenation of a theory of sentences,
+;; We can say that for a moral philosophy, 
+;; there exists a moral theory whose 'and'-sentence contains the information of the philosophy.
+(=>
+  (instance ?MP Utilitarianism)
+  (exists (?MT)
+    (and
+      (instance ?MT UtilitarianTheory)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT)))
+      (containsInformation ?MTS ?MP))))
+
+;; And it might be nice to add that each sentence corresponds to a particular sub-proposition.  Y not?
+(=>
+  (instance ?MP Utilitarianism)
+  (exists (?MT)
+    (and
+      (instance ?MT UtilitarianTheory)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT)))
+      (containsInformation ?MTS ?MP)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?P)
+            (and
+              (containsInformation ?S ?P)
+              (subProposition ?P ?MP))))))))
+
+;; The latter part is perhaps extraneous now, actually!  
+(=>
+  (instance ?MT UtilitarianTheory)
+  (exists (?MP)
+    (and 
+      (instance ?MP Utilitarianism)
+      (containsInformation (ListAndFn (SetToListFn ?MT)) ?MP)
+      (forall (?S)
+        (=>
+          (element ?S ?MT)
+          (exists (?P)
+            (and
+              (containsInformation ?S ?P)
+              (subProposition ?P ?MP))))))))
 
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
