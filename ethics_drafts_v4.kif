@@ -1825,7 +1825,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 ;; there exists a moral theory whose 'and'-sentence contains the information of the philosophy.
 (=>
   (instance ?MP Utilitarianism)
-  (exists (?MT)
+  (exists (?MT ?MTS)
     (and
       (instance ?MT UtilitarianTheory)
       (equal ?MTS (ListAndFn (SetToListFn ?MT)))
@@ -1834,7 +1834,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 ;; And it might be nice to add that each sentence corresponds to a particular sub-proposition.  Y not?
 (=>
   (instance ?MP Utilitarianism)
-  (exists (?MT)
+  (exists (?MT ?MTS)
     (and
       (instance ?MT UtilitarianTheory)
       (equal ?MTS (ListAndFn (SetToListFn ?MT)))
@@ -1889,6 +1889,34 @@ based on whether it maximizes the good over the bad, which is typically determin
       (equal ?VALUE 0)
       (equal ?VJS 
         (modalAttribute ?FORMULA MorallyNeutral)))))
+
+(documentation ValueJudgmentToUtilityAssignmentSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
+(domain ValueJudgmentToUtilityAssignmentSentence 1 SimpleValueJudgmentSentence)
+(range ValueJudgmentToUtilityAssignmentSentence UtilityAssignmentSentence)
+(instance ValueJudgmentToUtilityAssignmentSentence TotalValuedRelation)
+(instance ValueJudgmentToUtilityAssignmentSentence UnaryFunction)
+
+;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
+;; If there's a notion of the strengths of moral value judgments, this ports over cleanly.
+(=> 
+  (and 
+    (equal (ValueJudgmentToUtilityAssignmentSentence ?VJS) ?UAS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?UAS 
+        (equal (UtilityFormulaFn ?FORMULA) 1)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?UAS
+        (equal (UtilityFormulaFn ?FORMULA) -1)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?UAS
+        (equal (UtilityFormulaFn ?FORMULA) 0)))))
 
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
