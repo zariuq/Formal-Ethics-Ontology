@@ -299,8 +299,12 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (instance ?THEORY DeontologicalTheory)
       (element ?SENTENCE ?THEORY))))
 
+
+(documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
+(subclass ValueJudgmentSentence MoralSentence)
+
 (documentation SimpleValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
-(subclass SimpleValueJudgmentSentence MoralSentence)
+(subclass SimpleValueJudgmentSentence ValueJudgmentSentence)
 
 (<=>
   (instance ?SENTENCE SimpleValueJudgmentSentence)
@@ -313,7 +317,7 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
         (equal ?MORALATTRIBUTE MorallyBad)
         (equal ?MORALATTRIBUTE MorallyNeutral)))))
 
-;; So now that I defined MoralValueAttributes, this can be simplified!        
+;; So now that I defined MoralValueAttribute, this can be simplified!        
 (<=>
   (instance ?SENTENCE SimpleValueJudgmentSentence)
   (exists (?F ?MORALATTRIBUTE)
@@ -322,8 +326,19 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (instance ?F Formula)
       (instance ?MORALATTRIBUTE MoralValueAttribute))))
 
-(documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
-(subclass ValueJudgmentSentence MoralSentence)
+;; The definition of ethics is that it focuses on judging actions.
+(documentation SimpleActionValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment to an action.")      
+(subclass SimpleActionValueJudgmentSentence SimpleValueJudgmentSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleActionValueJudgmentSentence)
+  (exists (?CLASS ?FORMULA ?MORALATTRIBUTE)
+    (and 
+      (equal ?SENTENCE (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+      (equal ?FORMULA 
+        (exists (?PROC)
+          (instance ?PROC ?CLASS)))
+      (subclass ?CLASS AutonomousAgentProcess))))
 
 (<=>
   (instance ?SENTENCE ValueJudgmentSentence)
@@ -332,8 +347,11 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
       (instance ?VJS SimpleValueJudgmentSentence)
       (part ?VJS ?SENTENCE))))
 
+(documentation ImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
+(subclass ImperativeSentence DeontologicalSentence)    
+
 (documentation SimpleImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
-(subclass SimpleImperativeSentence DeontologicalSentence)
+(subclass SimpleImperativeSentence ImperativeSentence)
 
 (<=>
   (instance ?SENTENCE SimpleImperativeSentence)
@@ -342,9 +360,6 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
           (equal (modalAttribute ?F ?DEONTICATTRIBUTE) ?SENTENCE)
           (instance ?F Formula)
           (instance ?DEONTICATTRIBUTE DeonticAttribute))))
-
-(documentation ImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
-(subclass ImperativeSentence DeontologicalSentence)    
 
 (<=>
   (instance ?SENTENCE ImperativeSentence)
@@ -449,6 +464,63 @@ from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are
 (documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
 (subclass UtilitarianTheory MoralTheory)
 
+(documentation UtilitarianSentence EnglishLanguage "A sentence of the variety of a utilitarian theory.")
+(subclass UtilitarianSentence MoralSentence)
+
+(documentation SimpleUtilitarianSentence EnglishLanguage "A sentence that assigns or compares the value of situations described by formulas.")      
+(subclass SimpleUtilitarianSentence UtilitarianSentence) 
+
+(documentation UtilityAssignmentSentence EnglishLanguage "A Sentence that assigns a (real) number value 
+to a situation described by a formula.")
+(subclass UtilityAssignmentSentence SimpleUtilitarianSentence)
+
+(<=>
+  (instance ?SENTENCE UtilityAssignmentSentence)
+  (exists (?FORMULA ?VALUE)
+    (and 
+      (equal ?SENTENCE (equal (UtilityFormulaFn ?FORMULA) ?VALUE))
+      (instance ?FORMULA Formula)
+      (instance ?VALUE Number))))
+
+(documentation UtilityComparisonSentence EnglishLanguage "A sentence that compares the value of 
+two situations described by formulas.")
+(subclass UtilityComparisonSentence SimpleUtilitarianSentence)
+
+(<=> 
+  (instance ?SENTENCE UtilityComparisonSentence)
+  (exists (?FORMULA1 ?FORMULA2 ?COMPARATOR)
+    (and
+      (instance ?FORMULA1 Formula)
+      (instance ?FORMULA2 Formula)
+      (or
+            (equal ?COMPARATOR greaterThan)
+            (equal ?COMPARATOR lessThan)
+            (equal ?COMPARATOR greaterThanOrEqualTo)
+            (equal ?COMPARATOR lessThanOrEqualTo))
+      (equal ?SENTENCE (?COMPARATOR (UtilityFormulaFn ?FORMULA1) (UtilityFormulaFn ?FORMULA2))))))
+
+(<=>
+  (instance ?SENTENCE SimpleUtilitarianSentence)
+  (or
+    (instance ?SENTENCE UtilityComparisonSentence)
+    (instance ?SENTENCE UtilityAssignmentSentence)))
+
+;; Ultimately, I will wish to weaken this so that this only represents one variety of Utilitarian theory.
+(<=>
+  (instance ?SENTENCE UtilitarianSentence)
+  (exists (?SUS)
+    (and 
+      (instance ?SUS SimpleUtilitarianSentence)
+      (part ?SUS ?SENTENCE))))
+
+(<=> 
+  (instance ?U UtilitiarianTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?U)
+      (instance ?S UtilitarianSentence))))
+
+;; I switched to formulas for consistency with the deontology stuff.
 (<=>
   (instance ?U UtilitarianTheory)
   (forall (?S)
@@ -1168,7 +1240,7 @@ based on the action adheres to a set of rules and principles.")
     (ValueJudgmentToImperativeSentenceFn
       (GenericImperativeToValueJudgmentSentenceFn ?S))))
 
-(documentation VirtueEthics EngnlishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+(documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
 'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
 do in the circumstances' (On Virtue Ethics -- Right Action).")
@@ -1232,7 +1304,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; So let's define a map from simple virtue ethics statements to value judgment statements.
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
-(domain SimpleVirtueToValueJudgmentSentenceFn 1 VirtueEthicsSentence)
+(domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
 (range SimpleVirtueToValueJudgmentSentenceFn ValueJudgmentSentence)
 (instance SimpleVirtueToValueJudgmentSentenceFn TotalValuedRelation)
 (instance SimpleVirtueToValueJudgmentSentenceFn UnaryFunction)
@@ -1404,9 +1476,61 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                 (exists (?INSTANCE)
                   (instance ?INSTANCE ?PROC)) MorallyBad) Likely)))))))
 
+;; Copied from Draft 3 for now . . . 
+(documentation Change EnglishLanguage "Processes that involve altering a property of an Entity.")
+(subclass Change Process)
+(subclass InternalChange Change)
+
+(=>
+  (and
+    (instance ?CHANGE Change)
+    (patient ?CHANGE ?ENTITY))
+  (exists (?PROPERTY)
+    (or
+      (and
+        (holdsDuring
+          (BeginFn
+            (WhenFn ?CHANGE))
+          (property ?ENTITY ?PROPERTY))
+        (holdsDuring
+          (EndFn
+            (WhenFn ?CHANGE))
+          (not
+            (property ?ENTITY ?PROPERTY))))
+      (and
+        (holdsDuring
+          (BeginFn
+            (WhenFn ?CHANGE))
+          (not
+            (property ?ENTITY ?PROPERTY)))
+        (holdsDuring
+          (EndFn
+            (WhenFn ?CHANGE))
+          (property ?ENTITY ?PROPERTY))))))
+
+;; Likewise, copied . . .
+(documentation influences EnglishLanguage "The influence relation between instances of Entities (influences ?ENTITY1 ?ENTITY2 denotes that ?ENTITY has some effect on ?ENTITY2")
+(domain influences 1 Entity)
+(domain influences 2 Entity)
+(instance influences BinaryPredicate)
+(relatedInternalConcept influences causes)
+
+(=>
+  (causes ?P1 ?P2)
+  (influences ?P1 ?P2))
+
+(=>
+  (influences ?E1 ?E2)
+  (exists (?CHANGE ?PROCESS)
+    (and
+      (instance ?CHANGE Change)
+      (patient ?CHANGE ?E2)
+      (causes ?PROCESS ?CHANGE)
+      (involvedInEvent ?PROCESS ?E1))))
+
 ;; If something is good, then a virtuous person is likely to do it in the appropriate situation.
-(documentation SimpleValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences into simple virtue ethics sentences.")
-(domain SimpleValueJudgmentToVirtueSentenceFn 1 ValueJudgmentSentence)
+(documentation SimpleValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into simple virtue ethics sentences.")
+(domain SimpleValueJudgmentToVirtueSentenceFn 1 SimpleValueJudgmentSentence)
 (range SimpleValueJudgmentToVirtueSentenceFn VirtueEthicsSentence)
 (instance SimpleValueJudgmentToVirtueSentenceFn TotalValuedRelation)
 (instance SimpleValueJudgmentToVirtueSentenceFn UnaryFunction)
@@ -1418,9 +1542,9 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Also, note, if the process is an autonomous agent process, the existence of an agent is provided by a lemma already in SUMO.
 
 (=>
-  (and 
-    (instance ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
-    (instance ?SITUATION Formula)
+  (and
+    (instance ?SVJ SimpleValueJudgmentSentence)
+    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (realizesFormulaSubclass ?PROC ?SITUATION))
   (modalAttribute
     (exists (?INSTANCE)
@@ -1432,8 +1556,8 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Adding in likely because the behavior could have additional consequences.
 (=>
   (and 
-    (instance ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
-    (instance ?SITUATION Formula)
+    (instance ?SVJ SimpleValueJudgmentSentence)
+    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (realizesFormulaSubclass ?PROC ?SITUATION)
     (causesSubclass ?CAUSE ?PROC)
     (subclass ?CAUSE AutonomousAgentProcess))
@@ -1442,53 +1566,157 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (exists (?INSTANCE)
         (instance ?INSTANCE ?CAUSE)) ?MORALATTRIBUTE) Likely)) 
 
+;; Probably I just need this Lemma to rule out perverse situations such as, "it's good for 1+1=2".
+;; For every moral value judgment, there exists a behavior such that either,
+;; 1) the situation refers to the behavior
+;; 2) the situation refers to a process influenced by the behavior.
+;; Can I make this a generic physical entity?  Or, meh, 
+;; Maybe I should just make a predicate to denote the class of processes referred to by a situation?
+;; It's confusing af.  The ontology here makes this sort of thing really hard to specify... 🤔
+(=>
+  (and 
+    (instance ?SVJ SimpleValueJudgmentSentence)
+    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (instance ?SITUATION Formula))
+  (exists (?PROC)
+    (and 
+      (subclass ?PROC AutonomousAgentProcess)
+      (or
+        (refers ?SITUATION (ClassToSetFn ?PROC))
+        (exists (?PROC2)
+          (and
+            (refers ?SITUATION (ClassToSetFn ?PROC2))
+            (subclass ?PROC2 Process)
+            (influencs ?PROC ?PROC2)))))))
+
 ;; Maybe let's make a version that goes through Deciding and one version that doesn't!
 ;; Just use refers... excessively... because the goal isn't exactly to fill in all the details.
 ;; Use 'influnces'?  Ugh, this is hard!
+;; (=>
+;;   (and
+;;     (equal (SimpleValueJudgmentToVirtueSentenceFn ?SVJ) ?VES)
+;;     (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE)
+;;     (instance ?SITUATION Formula)
+;;     (instance ?MORALATTRIBUTE MoralAttribute)
+;;     (refers ?SITUATION ?PROC)
+;;     (subclass ?PROC AutonomousAgentProcess)))
+;;   (and  
+;;     (=>
+;;       (equal ?MORALATTRIBUTE MorallyGood))
+;;     (=>
+;;       (equal ?MORALATTRIBUTE MorallyBad))))
+
+(documentation SimpleActionValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple action value judgment sentences into simple virtue ethics sentences.")
+(domain SimpleActionValueJudgmentToVirtueSentenceFn 1 ValueJudgmentSentence)
+(range SimpleActionValueJudgmentToVirtueSentenceFn VirtueEthicsSentence)
+(instance SimpleActionValueJudgmentToVirtueSentenceFn PartialValuedRelation)
+(instance SimpleActionValueJudgmentToVirtueSentenceFn UnaryFunction)
+
+;; So, leaving off anything about situations,
+;; If an action is good/right and an agent possesses a virtue referring to this class of actions,
+;; then it's likely the agent will take the action.
+(=>
+  (and 
+    (equal (SimpleActionValueJudgmentToVirtueSentenceFn ?SAVJ) ?VES)
+    (equal ?SAVJ (modalAttribute 
+      (exists (?PROC)
+        (instance ?PROC ?CLASS)) ?MORALATTRIBUTE)))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?VES
+        (forall (?AGENT)
+          (=> 
+            (and
+              (instance ?AGENT VirtuousAgent)
+              (exists (?VIRTUE)
+                (and
+                  (instance ?VIRTUE VirtueAttribute)
+                  (attribute ?AGENT ?VIRTUE)
+                  (refers ?VIRTUE ?PROC))))
+            (modalAttribute 
+              (exists (?PROC)
+                (and
+                  (instance ?PROC ?CLASS)
+                  (agent ?PROC ?AGENT))) Likely)))))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?VES
+        (forall (?AGENT)
+          (=> 
+            (and
+              (instance ?AGENT ViciousAgent)
+              (exists (?VICE)
+                (and 
+                  (instance ?VICE ViceAtribute)
+                  (attribute ?AGENT ?VICE)
+                  (refers ?VICE ?PROC))))
+            (modalAttribute 
+              (exists (?PROC)
+                (and
+                  (instance ?PROC ?CLASS)
+                  (agent ?PROC ?AGENT))) Likely)))))))
+
+;; Ok, another stab at a more general variety:
+;; Oh, maybe I could say that if ?S is morally good, then if an agent takes an action that makes ?S more likely, 
+;; then ?S is likely virtuous in all virtues relevant to ?S!!!  Ahahaha, what a good idea!  
+;; IncreasesLikeliHood and CausesProposition both... exist ;- D.
+
 (=>
   (and
-    (equal (SimpleValueJudgmentToVirtueSentenceFn ?SVJ) ?VES)
-    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE)
-    (instance ?SITUATION Formula)
-    (instance ?MORALATTRIBUTE MoralAttribute)
-    (refers ?SITUATION ?PROC)
-    (subclass ?PROC AutonomousAgentProcess)))
-  (and  
-    (=>
-      (equal ?MORALATTRIBUTE MorallyGood))
-    (=>
-      (equal ?MORALATTRIBUTE MorallyBad))))
+    (equal
+      (SimpleValueJudgmentToVirtueSentenceFn ?SAVJ) ?VES)
+    (equal ?SAVJ
+      (modalAttribute ?FORMULA ?MORALATTRIBUTE)))
+  (equal ?VES
+    (forall (?AGENT ?PROC)
+      (=>
+        (and
+          (instance ?AGENT AutonomousAgent)
+          (subclass ?PROC AutonomousAgentProcess)
+          (exists (?INSTANCE)
+            (CausesProposition
+              (and
+                (agent ?INSTANCE ?AGENT)
+                (instance ?INSTANCE ?PROC)) ?FORMULA)))
+        (forall (?VIRTUE)
+          (=>
+            (and
+              (instance ?VIRTUE MoralVirtueAttribute)
+              (refers ?VIRTUE ?FORMULA))
+            (modalAttribute
+              (attribute ?AGENT ?VIRTUE) Likely)))))))
+
+(=>
+  (and
+    (equal
+      (SimpleValueJudgmentToVirtueSentenceFn ?SAVJ) ?VES)
+    (equal ?SAVJ
+      (modalAttribute ?FORMULA ?MORALATTRIBUTE)))
+  (equal ?VES
+    (forall (?AGENT ?PROC)
+      (=>
+        (and
+          (instance ?AGENT AutonomousAgent)
+          (subclass ?PROC AutonomousAgentProcess)
+          (exists (?INSTANCE)
+            (increasesLikelihood
+              (and
+                (agent ?INSTANCE ?AGENT)
+                (instance ?INSTANCE ?PROC)) ?FORMULA)))
+        (forall (?VIRTUE)
+          (=>
+            (and
+              (instance ?VIRTUE MoralVirtueAttribute)
+              (refers ?VIRTUE ?FORMULA))
+            (modalAttribute
+              (attribute ?AGENT ?VIRTUE) Likely)))))))
 
 ; (=>
 ;   (instance ?MT VirtueEthicsTheory)
 ;   (forall (?S)
 ;     (=>
 ;       (element ?S ?MT)  )))                              
-(and
-  (refers VirtueEthics ?STATE)
-  (instance ?STATE Statement)
-  (equals ?STATE
-    (<=>
-      (and
-        (instance ?JUDGE MoralJudging)
-        (agent ?JUDGE ?AGENTJ)
-        (patient ?JUDGE
-          (modalAttribute
-            (hasInstance ?CBEHAVE) MorallyGood)))
-      (believes ?AGENTJ
-        (=>
-          (and
-            (instance ?DECIDE DecidingSubclass)
-            (result ?DECIDE ?CBEHAVE)
-            (subclass ?CBEHAVE AutonomousAgentProcess)
-            (agent ?DECIDEV ?AGENTV)
-            (instance ?AGENTV VirtuousAgent)
-            (instance ?DECIDEV DecidingSubclass)
-            (similar ?AGENTJ
-              (DecisionSubclassOptionFn ?DECIDE)
-              (DecisioSubclassnOptionFn ?DECIDEV)))
-          (modalAttribute
-            (result ?DECIDEV ?CBEHAVE) Likely))))))
 
 
 (documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action 

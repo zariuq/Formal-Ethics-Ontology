@@ -196,3 +196,26 @@
         (BeginFn (WhenFn ?OUTCOME))))
 
 
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(domain UtilityFn 1 AutonomousAgentProcess)
+(instance UtilityFn TotalValuedRelation)
+(instance UtilityFn UnaryFunction)
+(range UtilityFn RealNumber)
+
+(documentation UtilitySubclassFn EnglishLanguage "A UnaryFunction that maps a subclass of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).  
+For the case of classes of behavior, this could be understood as an expectation.")
+(domainSubclass UtilitySubclassFn 1 AutonomousAgentProcess)
+(instance UtilitySublassFn TotalValuedRelation)
+(instance UtilitySubclassFn UnaryFunction)
+(range UtilitySubclassFn RealNumber)
+
+(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
+which is described.  Typically, the formula should refer to an action.")
+(domain UtilityFn 1 Formula)
+(instance UtilityFn TotalValuedRelation)
+(instance UtilityFn UnaryFunction)
+(range UtilityFn RealNumber)
+
+
