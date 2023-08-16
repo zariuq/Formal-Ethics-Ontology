@@ -258,7 +258,7 @@ because situations have one enduring region whereas a process could cover multip
         (WhereFn ?SITUATION ?TS))
       (equal ?LP
         (WhereFn ?PHYSICAL ?TP))
-      (part ?LP ?S))))
+      (part ?LP ?LS))))
 
 ;; What if I wish to say that the situation is the minimal spatiotemporally containing physical entity.
 ;; So for all physical entities, if they contain this physical entity, then either the situation is a proper part of it
@@ -295,7 +295,7 @@ because situations have one enduring region whereas a process could cover multip
   (forall (?NEAR)
     (=>
       (orientation ?NEAR ?PHYSICAL Near)
-      (exists (?TS ?TR ?LS ?LP)
+      (exists (?TS ?TR ?LS ?LR)
         (and
           (equal ?TS
             (WhenFn ?SITUATION))
@@ -306,7 +306,7 @@ because situations have one enduring region whereas a process could cover multip
             (WhereFn ?SITUATION ?TS))
           (equal ?LR
             (WhereFn ?NEAR ?TR))
-          (part ?LR ?S))))))   
+          (part ?LR ?LS))))))   
 
 ;; If the physical entity is a process that has an agent, then everything near the agent is included in the situation.      
 (=>
@@ -318,7 +318,7 @@ because situations have one enduring region whereas a process could cover multip
   (forall (?NEAR)
     (=>
       (orientation ?NEAR ?AGENT Near)
-      (exists (?TS ?TR ?LS ?LP)
+      (exists (?TS ?TR ?LS ?LR)
         (and
           (equal ?TS
             (WhenFn ?SITUATION))
@@ -329,7 +329,7 @@ because situations have one enduring region whereas a process could cover multip
             (WhereFn ?SITUATION ?TS))
           (equal ?LR
             (WhereFn ?NEAR ?TR))
-          (part ?LR ?S))))))
+          (part ?LR ?LS))))))
  
 ;; The situation of a physical entity spatiotemporally contains the situation of everything relevant to the physical entity.
 ;; Definitely too strong, tbh.  Yet, for now, w/e ;D ;D ;D
@@ -350,23 +350,23 @@ because situations have one enduring region whereas a process could cover multip
 ;; If a Process realizes a Formula, then the situation of the formula is the situation of the process.
 (=>
   (and
-    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
-    (realizesFormula ?PROCESS ?FORMURA)))
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA))
+    (realizesFormula ?PROCESS ?FORMURA))
   (equal ?SITUATION (SituationFn ?PROCESS)))
 
 ;; The same for Objects and conforms.
 (=>
   (and
-    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
-    (conformsFormula ?OBJECT ?FORMURA)))
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA))
+    (conformsFormula ?OBJECT ?FORMURA))
   (equal ?SITUATION (SituationFn ?OBJECT)))
 
 ;; And let's say the same for represents in general
 (=>
   (and
-    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA))
     (represents ?PHYSICAL ?FORMURA)
-    (instance ?PHYSICAL Physical)))
+    (instance ?PHYSICAL Physical))
   (equal ?SITUATION (SituationFn ?PHYSICAL)))
 
 ;; If there is a Situation of something Physical that represents a Formula,
