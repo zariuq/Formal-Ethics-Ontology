@@ -176,25 +176,55 @@ own research'.")
     (eventLocated ?E2 ?E1))
   (relevant ?E1 ?E2))
 
+;; This isn't a case role, so  it's distinct ;- ).
+;; Partly located may be too strong yet let's be general, eh, bruh?  
+(=> 
+  (and 
+    (instance ?E1 Physical)
+    (instance ?E2 Process)
+    (partlyLocated ?E2 ?E1))
+  (relevant ?E1 ?E2))
+
 (documentation Situation EnglishLanguage "A spatiotemporal situation in which something occurs or exists.")
 (subclass Situation Physical)
+
+;; I guess this is already there in that WhenFn can be applied to any Physical entity?
+;; Basically for every situation, there is a time and place of the situation 😎.
+(=>
+  (instance ?S Situation)
+  (exists (?T)
+    (equal ?T (WhenFn ?S))))
+    
+(=> 
+  (instance ?S Situation)
+  (exists (?L)
+    (equal ?L (WhereFn ?S (BeginFn (WhenFn ?S))))))
 
 ;; Probably too storng
 ;; For every situation, the location of the beginning and end of the time interval of the situation is the same.
 (=>
-  (instance ?S Situation)
-  (and 
-    (equal ?T (WhenFn ?S))
-    (equal (WhereFn ?S (BeginFn ?T)) (WhereFn ?S (EndFn ?T)))))
+  (and
+    (instance ?S Situation)
+    (equal ?T
+      (WhenFn ?S)))
+  (equal
+    (WhereFn ?S
+      (BeginFn ?T))
+    (WhereFn ?S
+      (EndFn ?T))))
 
 (documentation CapableInSituation EnglishLanguage "(CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION) 
 means that ?OBJECT has the ability to play the CaseRole ?ROLE in Processes of ?TYPE in ?SITUATION.")
 
 (<=>
-  (CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
   (and
-    (equal ?TIME (WhenFn ?S))
-    (equal ?LOCATION (WhereFn (BeginFn ?TIME))) 
+    (CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
+    (equal ?TIME
+      (WhenFn ?S))
+    (equal ?LOCATION
+      (WhereFn
+        (BeginFn ?TIME))))
+  (and
     (capabilityDuring ?TYPE ?ROLE ?OBJECT ?TIME)
     (capabilityAtLocation ?TYPE ?ROLE ?OBJECT ?LOCATION)))
 
@@ -208,6 +238,108 @@ because situations have one enduring region whereas a process could cover multip
 (instance SituationFn TotalValuedRelation)
 (relatedInternalConcept SituationFn WhereFn)
 (relatedInternalConcept SituationFn WhenFn)
+
+;; The situation of a physical entity spatiotemporally contains the physical entity.
+;; Self-commentary: how to quantify this seems tricky, actually.
+;; I'm just assigning names to the time and place.
+;; For all vars ?TS, this holds?  It's more that for all vars ?TS, if the var is equal to the time, then this holds.
+;; Or I want to say that there exists a var ?TS such that it's e qual to the time and this holds?
+(=>
+  (equal ?SITUATION
+    (SituationFn ?PHYSICAL))
+  (exists (?TS ?TP ?LS ?LP)
+    (and
+      (equal ?TS
+        (WhenFn ?SITUATION))
+      (equal ?TP
+        (WhenFn ?PHYSICAL))
+      (temporalPart ?TP ?TS)
+      (equal ?LS
+        (WhereFn ?SITUATION ?TS))
+      (equal ?LP
+        (WhereFn ?PHYSICAL ?TP))
+      (part ?LP ?S))))
+
+;; What if I wish to say that the situation is the minimal spatiotemporally containing physical entity.
+;; So for all physical entities, if they contain this physical entity, then either the situation is a proper part of it
+;; or it is equal to the situation?
+;; Or I could say that there does not exist a physical entity that contains the physical entity which is a proper part of the situation.
+;; But then I'll just get that the situation is the physical entity, lol.
+;; Well, I need to add some additional property to confound this 😏.
+;; ... I kind of wish to say that there is no physical entity satisfying the properties of a situation aside from the one given by this function.
+;; An idea could be:
+;; 1) SituationToPhysicalFn that gives all physical entities that are in a situation
+;; 2) SituationFn that gives the minimal situation for a physical entity.
+;; This way with (1) I could specify the general properties.
+;; For now, I'll leave the minimality constraints out.
+;; (=>
+;;   (equal ?SITUATION (SituationFn ?PHYSICAL))
+;;   (not
+;;     (exists (?PHYS)
+;;       (and
+;;         (equal ?TS (WhenFn ?PHYS))
+;;         (equal ?TP (WhenFn ?PHYSICAL))
+;;         (temporalPart ?TP ?TS)
+;;         (equal ?LS (WhereFn ?PHYS ?TS))
+;;         (equal ?LP (WhereFn ?PHYSICAL ?TP))
+;;         (part ?LP ?S)
+;;         (properPart ?PHYS ?SITUATION)))))
+
+;; Instead of relevance, let's say that the situation contains everything nearby if the physical entity is an object.
+;; I won't use the situation of the nearby entities because this would introduce transitivity.
+(=>
+  (and
+    (equal ?SITUATION
+      (SituationFn ?PHYSICAL))
+    (instance ?PHYSICAL Object))
+  (forall (?NEAR)
+    (=>
+      (orientation ?NEAR ?PHYSICAL Near)
+      (exists (?TS ?TR ?LS ?LP)
+        (and
+          (equal ?TS
+            (WhenFn ?SITUATION))
+          (equal ?TR
+            (WhenFn ?NEAR))
+          (temporalPart ?TR ?TS)
+          (equal ?LS
+            (WhereFn ?SITUATION ?TS))
+          (equal ?LR
+            (WhereFn ?NEAR ?TR))
+          (part ?LR ?S))))))   
+
+;; If the physical entity is a process that has an agent, then everything near the agent is included in the situation.      
+(=>
+  (and
+    (equal ?SITUATION
+      (SituationFn ?PHYSICAL))
+    (instance ?PHYSICAL Process)
+    (agent ?PHYSICAL ?AGENT))
+  (forall (?NEAR)
+    (=>
+      (orientation ?NEAR ?AGENT Near)
+      (exists (?TS ?TR ?LS ?LP)
+        (and
+          (equal ?TS
+            (WhenFn ?SITUATION))
+          (equal ?TR
+            (WhenFn ?NEAR))
+          (temporalPart ?TR ?TS)
+          (equal ?LS
+            (WhereFn ?SITUATION ?TS))
+          (equal ?LR
+            (WhereFn ?NEAR ?TR))
+          (part ?LR ?S))))))
+ 
+;; The situation of a physical entity spatiotemporally contains the situation of everything relevant to the physical entity.
+;; Definitely too strong, tbh.  Yet, for now, w/e ;D ;D ;D
+(=>
+  (equal ?SITUATION (SituationFn ?PHYSICAL))
+  (forall (?REL)
+    (=>
+      (relevant ?REL ?PHYSICAL)     
+      (part (SituationFn ?REL) ?SITUATION))))
+  
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
