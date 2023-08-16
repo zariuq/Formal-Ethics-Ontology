@@ -339,7 +339,46 @@ because situations have one enduring region whereas a process could cover multip
     (=>
       (relevant ?REL ?PHYSICAL)     
       (part (SituationFn ?REL) ?SITUATION))))
-  
+
+(documentation SituationFormulaFn EnglishLanguage "Maps a Formula to the Situation it describes or the Situation of what it describes.")  
+(domain SituationFormulaFn 1 Formula)
+(range SituationFormulaFn Situation)
+(instance SituationFormulaFn UnaryFunction)
+(instance SituationFormulaFn TotalValuedRelation)
+(relatedInternalConcept SituationFormulaFn SituationFn)
+
+;; If a Process realizes a Formula, then the situation of the formula is the situation of the process.
+(=>
+  (and
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
+    (realizesFormula ?PROCESS ?FORMURA)))
+  (equal ?SITUATION (SituationFn ?PROCESS)))
+
+;; The same for Objects and conforms.
+(=>
+  (and
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
+    (conformsFormula ?OBJECT ?FORMURA)))
+  (equal ?SITUATION (SituationFn ?OBJECT)))
+
+;; And let's say the same for represents in general
+(=>
+  (and
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)
+    (represents ?PHYSICAL ?FORMURA)
+    (instance ?PHYSICAL Physical)))
+  (equal ?SITUATION (SituationFn ?PHYSICAL)))
+
+;; If there is a Situation of something Physical that represents a Formula,
+;; Then the Situation is also of the formula!
+;; Maybe this should let me use Situation over formulas... as I'm sort of doing that for ease now... :'- ).
+(=> 
+  (and 
+    (equal ?SITUATION (SituationFn ?PHYSICAL))
+    (represents ?PHYSICAL ?FORMULA)
+    (instance ?PHYSICAL Physical)
+    (instacne ?FROMULA Formula))
+  (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
@@ -942,9 +981,21 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
               (modalAttribute
                 (exists (?BEHAVIORINSTANCE)
                   (instance ?BEHAVIORINSTANCE ?BEHAVIORCLASS)) MorallyWrong))))))))
-                          
-(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 
+(documentation conformsFormula EnglishLanguage "(conforms ?OBJ ?FORMULA) describes how ?OBJ follows the ideas outlined by the proposition represented by ?FORMULA.")
+(domain conformsFormula 1 Object)
+(domain conformsFormula 2 Formula)
+(instance conformsFormula BinaryPredicate)
+(subrelation conformsFormula represents)
+
+(<=>
+  (conformsFormula ?OBJ ?FORMULA)
+  (exists (?PROP)
+    (and
+      (containsInformation ?FORMULA ?PROP)
+      (conforrms ?OBJ ?PROP))))
+                       
+(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
 (domain realizesFormula 2 Formula)
 (instance realizesFormula BinaryPredicate)
@@ -961,7 +1012,6 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
       (realization ?PROCESS ?PROP))))
 
 (documentation realizesFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
-
 (domainSubclass realizesFormulaSubclass 1 Process)
 (domain realizesFormulaSubclass 2 Formula)
 (instance realizesFormulaSubclass BinaryPredicate)
@@ -1871,6 +1921,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (=>
   (and 
     (equal (SimpleActionValueJudgmentToVirtueSentenceFn ?SAVJ) ?VES)
+    (subclass ?CLASS AutonomousAgentProcess)
     (equal ?SAVJ (modalAttribute 
       (exists (?PROC)
         (instance ?PROC ?CLASS)) ?MORALATTRIBUTE)))
@@ -1886,7 +1937,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                 (and
                   (instance ?VIRTUE VirtueAttribute)
                   (attribute ?AGENT ?VIRTUE)
-                  (refers ?VIRTUE ?PROC))))
+                  (refers ?VIRTUE (ClassToSetFn ?CLASS)))))
             (modalAttribute 
               (exists (?PROC)
                 (and
@@ -1903,7 +1954,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                 (and 
                   (instance ?VICE ViceAtribute)
                   (attribute ?AGENT ?VICE)
-                  (refers ?VICE ?PROC))))
+                   (refers ?VIRTUE (ClassToSetFn ?CLASS)))))
             (modalAttribute 
               (exists (?PROC)
                 (and
@@ -2146,11 +2197,41 @@ based on whether it maximizes the good over the bad, which is typically determin
         (modalAttribute 
           (equal (UtilityFormulaFn ?FORMULA) 0) Likely)))))
 
-(documentation UtilityAssignmentToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
-(domain UtilityAssignmentToValueJudgmentSentence 1 UtilityAssignmentSentence)
-(range UtilityAssignmentToValueJudgmentSentence SimpleValueJudgmentSentence)
-(instance UtilityAssignmentToValueJudgmentSentence TotalValuedRelation)
-(instance UtilityAssignmentToValueJudgmentSentence UnaryFunction)
+(documentation ValueJudgmentToUtilityComparisonSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility comparison sentences.")
+(domain ValueJudgmentToUtilityComparisonSentence 1 SimpleValueJudgmentSentence)
+(range ValueJudgmentToUtilityComparisonSentence UtilitarianSentence)
+(instance ValueJudgmentToUtilityComparisonSentence TotalValuedRelation)
+(instance ValueJudgmentToUtilityComparisonSentence UnaryFunction)
+
+;; Basically physical is partitioned into process and object
+;; And if I wish to refer to the physical entity that represents a formula, I'd probably go through these.
+;; How do we work the Class-Instance stuff into this?
+;; (documentation conforms EnglishLanguage "(conforms ?OBJ ?PROP) describes how ?OBJ follows the ideas outlined by ?PROP")
+;; (documentation realization EnglishLanguage "A subrelation of represents. (realization ?PROCESS ?PROP) means that ?PROCESS is a Process which expresses the content of ?PROP. Examples include a particular musical performance, which realizes the content of a musical score, or the reading of a poem.")
+;; Well, I can just use it as I wish and then re-work definitions... that's the iterative style ;- ). 
+
+(=> 
+  (and 
+    (equal (ValueJudgmentToUtilityComparisonSentence ?VJS) ?UCS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?UAS
+        (modalAttribute 
+          (greaterThan (UtilityFormulaFn ?FORMULA) 0) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?UAS
+        (modalAttribute 
+          (lessThan (UtilityFormulaFn ?FORMULA) 0) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?UAS
+        (modalAttribute 
+          (equal (UtilityFormulaFn ?FORMULA) 0) Likely)))))
 
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
