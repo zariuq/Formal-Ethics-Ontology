@@ -198,24 +198,39 @@
 
 (documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess 
 to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
-(domain UtilityFn 1 AutonomousAgentProcess)
-(instance UtilityFn TotalValuedRelation)
-(instance UtilityFn UnaryFunction)
-(range UtilityFn RealNumber)
+(subclass UtilityFn TotalValuedRelation)
+(subclass UtilityFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilityFn)
+    (and
+        (domain ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
 
 (documentation UtilitySubclassFn EnglishLanguage "A UnaryFunction that maps a subclass of AutonomousAgentProcess 
 to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).  
 For the case of classes of behavior, this could be understood as an expectation.")
-(domainSubclass UtilitySubclassFn 1 AutonomousAgentProcess)
-(instance UtilitySublassFn TotalValuedRelation)
-(instance UtilitySubclassFn UnaryFunction)
-(range UtilitySubclassFn RealNumber)
+(subclass UtilitySublassFn TotalValuedRelation)
+(subclass UtilitySubclassFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilitySubclassFn)
+    (and
+        (domainSubclass ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
 
 (documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
 which is described.  Typically, the formula should refer to an action.")
-(domain UtilityFn 1 Formula)
-(instance UtilityFn TotalValuedRelation)
-(instance UtilityFn UnaryFunction)
-(range UtilityFn RealNumber)
+(subclass UtilityFormulaFn TotalValuedRelation)
+(subclass UtilityFormulaFn UnaryFunction)
 
+(=>
+    (instance ?UF UtilityFormulaFn)
+    (and
+        (domain ?UF 1 Formula)
+        (range ?UF RealNumber)))
+
+(documentation HedonisticUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where utility measures the pain and pleasure exhibited in the situation.")
+(subclass HedonisticUtilityFormulaFn UtilityFormulaFn)
 
