@@ -220,9 +220,9 @@ means that ?OBJECT has the ability to play the CaseRole ?ROLE in Processes of ?T
   (and
     (CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
     (equal ?TIME
-      (WhenFn ?S))
+      (WhenFn ?SITUATION))
     (equal ?LOCATION
-      (WhereFn
+      (WhereFn ?SITUATION
         (BeginFn ?TIME))))
   (and
     (capabilityDuring ?TYPE ?ROLE ?OBJECT ?TIME)
@@ -788,7 +788,8 @@ two situations described by formulas.")
             (equal ?COMPARATOR greaterThan)
             (equal ?COMPARATOR lessThan)
             (equal ?COMPARATOR greaterThanOrEqualTo)
-            (equal ?COMPARATOR lessThanOrEqualTo))
+            (equal ?COMPARATOR lessThanOrEqualTo)
+            (equal ?COMPARATOR equal))
       (equal ?SENTENCE (?COMPARATOR (UtilityFormulaFn ?FORMULA1) (UtilityFormulaFn ?FORMULA2))))))
 
 (<=>
@@ -2210,29 +2211,110 @@ based on whether it maximizes the good over the bad, which is typically determin
 ;; (documentation realization EnglishLanguage "A subrelation of represents. (realization ?PROCESS ?PROP) means that ?PROCESS is a Process which expresses the content of ?PROP. Examples include a particular musical performance, which realizes the content of a musical score, or the reading of a poem.")
 ;; Well, I can just use it as I wish and then re-work definitions... that's the iterative style ;- ). 
 
+;; So if a Formula is morally good, then for all F realizing processes that are possible in the situation 
+;; corresponding to the Formula that's good, it's likely that the utility of the good formula is greater than 
+;; or equal to the utility of this formula.
+;; I think this is showing that for the utility comparisons, we really want to say that "X is morally better than Y"
+;; Rather than that it's good or bad.
+;; I.e., the moral reasoning that, "it's not good but it's the best we could do."
+;; Dunno what to do about morally neutral situations and comparatives.  "Admit", lol.
 (=> 
   (and 
     (equal (ValueJudgmentToUtilityComparisonSentence ?VJS) ?UCS)
     (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
     (instance ?FORMULA Formula)
-    (instance ?MORALATTRIBUTE MoralAttribute))
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
   (and
     (=>
       (equal ?MORALATTRIBUTE MorallyGood)
-      (equal ?UAS
-        (modalAttribute 
-          (greaterThan (UtilityFormulaFn ?FORMULA) 0) Likely)))
+      (equal ?UCS
+        (modalAttribute
+          (forall (?F)
+            (=> 
+              (exists (?AGENT ?CP)
+                (and
+                  (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+                  (realizesFormulaSubclass ?CP ?F)))
+              (greaterThanOrEqualTo (UtilityFormulaFn ?FORMULA) (UtilityFormulaFn ?F)))) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyBad)
-      (equal ?UAS
+      (equal ?UCS
         (modalAttribute 
-          (lessThan (UtilityFormulaFn ?FORMULA) 0) Likely)))
+          (exists (?F ?AGENT ?CP)
+            (and 
+              (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+              (realizesFormulaSubclass ?CP ?F)
+              (lessThan (UtilityFormulaFn ?FORMULA) (UtilityFormulaFn ?F)))) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyNeutral)
-      (equal ?UAS
+      (equal ?UCS
         (modalAttribute 
           (equal (UtilityFormulaFn ?FORMULA) 0) Likely)))))
 
+(documentation UtilityComparisonToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
+(domain UtilityComparisonToValueJudgmentSentence 1 UtilityComparisonSentence)
+(range UtilityComparisonToValueJudgmentSentence ValueJudgmentSentence)
+(instance UtilityComparisonToValueJudgmentSentence TotalValuedRelation)
+(instance UtilityComparisonToValueJudgmentSentence UnaryFunction)
+
+;; Let's be super simple and just say that the comparison translates over to the likelihood that each formula is good.
+(=> 
+  (and 
+    (equal (UtilityComparisonToValueJudgmentSentence ?UCS) ?VJS)
+    (equal ?UCS (?COMPARATOR (UtilityFormulaFn ?FORMULA1) (UtilityFormulaFn ?FORMULA2)))
+    (instance ?FORMULA1 Formula)
+    (instance ?FORMULA2 Formula))
+  (equal ?VJS 
+        (?COMPARATOR 
+          (probabilityFn (modalAttribute ?FORMULA1 MorallyGood)) 
+          (probabilityFn (modalAttribute ?FORMULA2 MorallyGood)))))
+
+;; The following is a partial function because I don't have good technology for recursively going through the structure of the sentences to only translate the "simple utility sentences".
+(documentation UtilityToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps some utility sentences to value judgment sentences.")
+(domain UtilityToValueJudgmentSentence 1 UtilitarianSentence)
+(range UtilityToValueJudgmentSentence ValueJudgmentSentence)
+(instance UtilityToValueJudgmentSentence PartialValuedRelation)
+(instance UtilityToValueJudgmentSentence UnaryFunction)
+
+(=> 
+  (instance ?UCS UtilityComparisonSentence)
+  (equal (UtilityToValueJudgmentSentence ?UCS) (UtilityComparisonToValueJudgmentSentence ?UCS)))
+
+(=>
+  (instance ?UAS UtilityAssignmentSentence)
+  (equal (UtilityToValueJudgmentSentence ?UAS) (UtilityAssignmentToValueJudgmentSentence ?UAS)))
+
+(=> 
+  (and 
+    (equal (UtilityToValueJudgmentSentence ?US) VJS)
+    (equal ?US 
+      (and 
+        (equal ?SITUATION (SituationFormulaFn ?FORMULA))
+        (forall (?F)
+          (=> 
+            (exists (?AGENT ?CP)
+              (and
+                (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+                (realizesFormulaSubclass ?CP ?F)))
+            (greaterThanOrEqualTo (UtilityFormulaFn ?FORMULA) (UtilityFormulaFn ?F)))))))
+  (equal VJS (modalAttribute ?FORMULA MorallyGood)))
+
+(=> 
+  (and 
+    (equal (UtilityToValueJudgmentSentence ?US) VJS)
+    (equal ?US 
+      (and 
+        (equal ?SITUATION (SituationFormulaFn ?FORMULA))
+        (exists (?F ?AGENT ?CP)
+          (and
+            (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+            (realizesFormulaSubclass ?CP ?F)
+            (lessThan (UtilityFormulaFn ?FORMULA) (UtilityFormulaFn ?F)))))))
+  (equal VJS (modalAttribute ?FORMULA MorallyBad)))
+
+;; Not sure how to specify this.  
+;; It has to do with the nature of the utility function, basically, depending on pleasure and pain.
 (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
 
