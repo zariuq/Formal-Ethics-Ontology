@@ -759,6 +759,41 @@ because situations have one enduring region whereas a process could cover multip
 (documentation UtilitarianSentence EnglishLanguage "A sentence of the variety of a utilitarian theory.")
 (subclass UtilitarianSentence MoralSentence)
 
+
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(subclass UtilityFn TotalValuedRelation)
+(subclass UtilityFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilityFn)
+    (and
+        (domain ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
+
+(documentation UtilitySubclassFn EnglishLanguage "A UnaryFunction that maps a subclass of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).  
+For the case of classes of behavior, this could be understood as an expectation.")
+(subclass UtilitySublassFn TotalValuedRelation)
+(subclass UtilitySubclassFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilitySubclassFn)
+    (and
+        (domainSubclass ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
+
+(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
+which is described.  Typically, the formula should refer to an action.")
+(subclass UtilityFormulaFn TotalValuedRelation)
+(subclass UtilityFormulaFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilityFormulaFn)
+    (and
+        (domain ?UF 1 Formula)
+        (range ?UF RealNumber)))
+
 (documentation SimpleUtilitarianSentence EnglishLanguage "A sentence that assigns or compares the value of situations described by formulas.")      
 (subclass SimpleUtilitarianSentence UtilitarianSentence) 
 
@@ -770,7 +805,7 @@ to a situation described by a formula.")
   (instance ?SENTENCE UtilityAssignmentSentence)
   (exists (?FORMULA ?VALUE ?UF)
     (and 
-      (equal ?SENTENCE (equal (?UF ?FORMULA) ?VALUE))
+      (equal ?SENTENCE (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
       (instance ?UF UtilityFormulaFn)
       (instance ?FORMULA Formula)
       (instance ?VALUE Number))))
@@ -792,7 +827,7 @@ two situations described by formulas.")
             (equal ?COMPARATOR greaterThanOrEqualTo)
             (equal ?COMPARATOR lessThanOrEqualTo)
             (equal ?COMPARATOR equal))
-      (equal ?SENTENCE (?COMPARATOR (?UF ?FORMULA1) (?UF ?FORMULA2))))))
+      (equal ?SENTENCE (?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2))))))
 
 (<=>
   (instance ?SENTENCE SimpleUtilitarianSentence)
@@ -831,11 +866,11 @@ two situations described by formulas.")
             (equal ?S
               (
                 (?C
-                  (?UF ?CBEHAVE) ?N)))
+                  (AssignmentFn ?UF ?CBEHAVE) ?N)))
             (equal ?S
               (?C
-                (?UF ?CBEHAVE)
-                (?UF ?CBEHAVE2))))
+                (AssignmentFn ?UF ?CBEHAVE)
+                (AssignmentFn ?UF ?CBEHAVE2))))
           (instance ?N Number)
           (or
             (equal ?C greaterThan)
@@ -2126,7 +2161,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 (=> 
   (and 
     (equal (UtilityAssignmentToValueJudgmentSentence ?UAS) ?VJS)
-    (equal ?UAS (equal (?UF ?FORMULA) ?VALUE))
+    (equal ?UAS (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
     (instance ?UF UtilityFormulaFn)
     (instance ?FORMULA Formula)
     (instance ?VALUE Number))
@@ -2163,16 +2198,16 @@ based on whether it maximizes the good over the bad, which is typically determin
     (=>
       (equal ?MORALATTRIBUTE MorallyGood)
       (equal ?UAS 
-        (equal (?UF ?FORMULA) 1)))
+        (equal (AssignmentFn ?UF ?FORMULA) 1)))
     (=>
       (equal ?MORALATTRIBUTE MorallyBad)
       (equal ?UAS
-        (equal (?UF ?FORMULA) -1)))
+        (equal (AssignmentFn ?UF ?FORMULA) -1)))
     (=>
       (equal ?MORALATTRIBUTE MorallyNeutral)
       (equal ?UAS
-        (equal (?UF ?FORMULA) 0)))))
-
+        (equal (AssignmentFn ?UF ?FORMULA) 0)))))   
+        
 (documentation ValueJudgmentToUtilityAssignmentLikelihoodSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment likelihood sentences.")
 (domain ValueJudgmentToUtilityAssignmentLikelihoodSentence 1 SimpleValueJudgmentSentence)
 (range ValueJudgmentToUtilityAssignmentLikelihoodSentence UtilitarianSentence)
@@ -2193,17 +2228,17 @@ based on whether it maximizes the good over the bad, which is typically determin
       (equal ?MORALATTRIBUTE MorallyGood)
       (equal ?UAS
         (modalAttribute 
-          (greaterThan (?UF ?FORMULA) 0) Likely)))
+          (greaterThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyBad)
       (equal ?UAS
         (modalAttribute 
-          (lessThan (?UF ?FORMULA) 0) Likely)))
+          (lessThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyNeutral)
       (equal ?UAS
         (modalAttribute 
-          (equal (?UF ?FORMULA) 0) Likely)))))
+          (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))
 
 (documentation ValueJudgmentToUtilityComparisonSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility comparison sentences.")
 (domain ValueJudgmentToUtilityComparisonSentence 1 SimpleValueJudgmentSentence)
@@ -2244,7 +2279,7 @@ based on whether it maximizes the good over the bad, which is typically determin
                 (and
                   (CapableInSituation ?CP agent ?AGENT ?SITUATION)
                   (realizesFormulaSubclass ?CP ?F)))
-              (greaterThanOrEqualTo (?UF ?FORMULA) (?UF ?F)))) Likely)))
+              (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyBad)
       (equal ?UCS
@@ -2253,12 +2288,12 @@ based on whether it maximizes the good over the bad, which is typically determin
             (and 
               (CapableInSituation ?CP agent ?AGENT ?SITUATION)
               (realizesFormulaSubclass ?CP ?F)
-              (lessThan (?UF ?FORMULA) (?UF ?F)))) Likely)))
+              (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
     (=>
       (equal ?MORALATTRIBUTE MorallyNeutral)
       (equal ?UCS
         (modalAttribute 
-          (equal (?UF ?FORMULA) 0) Likely)))))
+          (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))
 
 (documentation UtilityComparisonToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
 (domain UtilityComparisonToValueJudgmentSentence 1 UtilityComparisonSentence)
@@ -2270,7 +2305,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 (=> 
   (and 
     (equal (UtilityComparisonToValueJudgmentSentence ?UCS) ?VJS)
-    (equal ?UCS (?COMPARATOR (?UF ?FORMULA1) (?UF ?FORMULA2)))
+    (equal ?UCS (?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
     (instance ?FORMULA1 Formula)
     (instance ?FORMULA2 Formula)
     (instance ?UF UtilityFormulaFn))
@@ -2307,7 +2342,7 @@ based on whether it maximizes the good over the bad, which is typically determin
               (and
                 (CapableInSituation ?CP agent ?AGENT ?SITUATION)
                 (realizesFormulaSubclass ?CP ?F)))
-            (greaterThanOrEqualTo (?UF ?FORMULA) (?UF ?F)))))))
+            (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))))))
   (equal VJS (modalAttribute ?FORMULA MorallyGood)))
 
 (=> 
@@ -2321,7 +2356,7 @@ based on whether it maximizes the good over the bad, which is typically determin
           (and
             (CapableInSituation ?CP agent ?AGENT ?SITUATION)
             (realizesFormulaSubclass ?CP ?F)
-            (lessThan (?UF ?FORMULA) (?UF ?F)))))))
+            (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))))))
   (equal VJS (modalAttribute ?FORMULA MorallyBad)))
 
 ;; Not sure how to specify this.  
@@ -2343,14 +2378,13 @@ which is described.  Typically, the formula should refer to an action.")
 
 (documentation HedonisticUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
 of that which is described where utility measures the pain and pleasure exhibited in the situation.")
-(instance HedonisticUtilityFormulaFn TotalValuedRelation)
-(instance HedonisticUtilityFormulaFn UnaryFunction)
+(subclass HedonisticUtilityFormulaFn UtilityFormulaFn)
 
 ;; Not a full specification but this could be one way to start expressing the ideas... :S
 (=>
   (and
     (instance ?UF HedonisticUtilityFormulaFn)
-    (greaterThan (?UF ?FORMULA) 0))
+    (greaterThan (AssignmentFn ?UF ?FORMULA) 0))
   (modalAttribute 
     (exists (?AGENT)
       (CausesProposition ?FORMULA (attribute ?AGENT Pleasure))) Possibility))
@@ -2358,14 +2392,16 @@ of that which is described where utility measures the pain and pleasure exhibite
 (=> 
   (exists (?AGENT)
       (CausesProposition ?FORMULA (attribute ?AGENT Pleasure)))
-  (and
-    (instance ?UF HedonisticUtilityFormulaFn)
-    (modalAttribute (greaterThan (?UF ?FORMULA) 0))))
+  (modalAttribute 
+    (exists (?UF)
+      (and
+        (instance ?UF HedonisticUtilityFormulaFn)
+        (greaterThan (AssignmentFn ?UF ?FORMULA) 0))) Possibility))
 
 (=>
   (and
     (instance ?UF HedonisticUtilityFormulaFn)
-    (lessThan (?UF ?FORMULA) 0))
+    (lessThan (AssignmentFn ?UF ?FORMULA) 0))
   (modalAttribute 
     (exists (?AGENT)
       (CausesProposition ?FORMULA (attribute ?AGENT Pain))) Possibility))
@@ -2373,9 +2409,11 @@ of that which is described where utility measures the pain and pleasure exhibite
 (=> 
   (exists (?AGENT)
       (CausesProposition ?FORMULA (attribute ?AGENT Pain)))
-  (and
-    (instance ?UF HedonisticUtilityFormulaFn)
-    (modalAttribute (lessThan (?UF ?FORMULA) 0))))
+  (modalAttribute 
+    (exists (?UF)
+      (and
+        (instance ?UF HedonisticUtilityFormulaFn)
+        (lessThan (AssignmentFn ?UF ?FORMULA) 0))) Possibility))
 
 ;; Hedonistic Utilitarianism is that where all utility functions are hedonistic utility functions!
 (=> 
@@ -2383,17 +2421,74 @@ of that which is described where utility measures the pain and pleasure exhibite
   (forall (?S)
     (=> 
       (element ?S ?HUT)
-      (forall (?P)
+      (forall (?P ?UF ?FORMULA)
         (=> 
           (and 
             (part ?P ?S)
-            (equal ?P (?UF ?FORMULA))
+            (equal ?P (AssignmentFn ?UF ?FORMULA))
             (instance ?FORMULA Formula)
             (instance ?UF UtilityFormulaFn))
           (instance ?UF HedonisticUtilityFormulaFn))))))
 
+;; So next up is what Consequentialism says about the utility function... yay.
+;; Then I am sort of wrapping up an dputting together the ethics draft v4!
 
 (documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
-(subclass Consequentialism Utilitarianism)                    
+(subclass Consequentialism Utilitarianism)    
+
+(documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where the utility measurement only depends on the consequences of an action.")
+(subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)
+
+;; I we have a utility function and the formula representing a class of actions, 
+;; Then everything that influences the result of this function 
+;; is a possible consequence/outcome of the class of actions.
+;; The definition of influences is just in terms of properties but I think we could define it in terms of 
+;; Numbers especially easily, actually!
+;; Ok, no, lol, it's not.  Well, I'm moving on for now!
+(=>
+  (and
+    (instance ?UF ConsequentialistUtilityFormulaFn)
+    (realizesFormulaSubclass ?CPROC ?FORMULA)
+    (subclass ?CPROC AutonomousAgentProcess))
+  (forall (?X)
+    (=> 
+      (influences ?X (ConsequentialistUtilityFormulaFn ?FORMULA))
+      (and 
+        (instance ?X Outcome)
+        (modalAttribute
+          (exists (?IPROC)
+            (and 
+              (instance ?IPROC ?CPROC)
+              (result ?IPROC ?X))) Possibility)))))
+
+(=>
+  (and
+    (instance ?UF ConsequentialistUtilityFormulaFn)
+    (realizesFormula ?IPROC ?FORMULA)
+    (instance ?IPROC AutonomousAgentProcess))
+  (forall (?X)
+    (=> 
+      (influences ?X (ConsequentialistUtilityFormulaFn ?FORMULA))
+      (and 
+        (instance ?X Outcome)
+        (modalAttribute
+          (result ?IPROC ?X) Possibility)))))
+
+;; Can we just port this over?
+(=> 
+  (instance ?CUT ConsequentialistUtilityFormulaFn)
+  (forall (?S)
+    (=> 
+      (element ?S ?CUT)
+      (forall (?P ?UF ?FORMULA)
+        (=> 
+          (and 
+            (part ?P ?S)
+            (equal ?P (AssignmentFn ?UF ?FORMULA))
+            (instance ?FORMULA Formula)
+            (instance ?UF UtilityFormulaFn))
+          (instance ?UF ConsequentialistUtilityFormulaFn))))))
+

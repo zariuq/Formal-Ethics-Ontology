@@ -234,3 +234,6 @@ which is described.  Typically, the formula should refer to an action.")
 of that which is described where utility measures the pain and pleasure exhibited in the situation.")
 (subclass HedonisticUtilityFormulaFn UtilityFormulaFn)
 
+(documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where the utility measurement only depends on the consequences of an action.")
+(subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)
