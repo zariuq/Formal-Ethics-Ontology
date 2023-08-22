@@ -213,12 +213,17 @@ own research'.")
     (WhereFn ?S
       (EndFn ?T))))
 
-(documentation CapableInSituation EnglishLanguage "(CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION) 
+(documentation capableInSituation EnglishLanguage "(capableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION) 
 means that ?OBJECT has the ability to play the CaseRole ?ROLE in Processes of ?TYPE in ?SITUATION.")
+(domainSubclass capableInSituation 1 Process)
+(domain capableInSituation 2 CaseRole)
+(domain capableInSituation 3 Object)
+(domain capableInSituation 4 Situation)
+(instance capableInSituation QuaternaryPredicate)
 
 (<=>
   (and
-    (CapableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
+    (capableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
     (equal ?TIME
       (WhenFn ?SITUATION))
     (equal ?LOCATION
@@ -245,19 +250,14 @@ because situations have one enduring region whereas a process could cover multip
 ;; For all vars ?TS, this holds?  It's more that for all vars ?TS, if the var is equal to the time, then this holds.
 ;; Or I want to say that there exists a var ?TS such that it's e qual to the time and this holds?
 (=>
-  (equal ?SITUATION
-    (SituationFn ?PHYSICAL))
+  (equal ?SITUATION (SituationFn ?PHYSICAL))
   (exists (?TS ?TP ?LS ?LP)
     (and
-      (equal ?TS
-        (WhenFn ?SITUATION))
-      (equal ?TP
-        (WhenFn ?PHYSICAL))
+      (equal ?TS (WhenFn ?SITUATION))
+      (equal ?TP (WhenFn ?PHYSICAL))
       (temporalPart ?TP ?TS)
-      (equal ?LS
-        (WhereFn ?SITUATION ?TS))
-      (equal ?LP
-        (WhereFn ?PHYSICAL ?TP))
+      (equal ?LS (WhereFn ?SITUATION ?TS))
+      (equal ?LP (WhereFn ?PHYSICAL ?TP))
       (part ?LP ?LS))))
 
 ;; What if I wish to say that the situation is the minimal spatiotemporally containing physical entity.
@@ -289,30 +289,24 @@ because situations have one enduring region whereas a process could cover multip
 ;; I won't use the situation of the nearby entities because this would introduce transitivity.
 (=>
   (and
-    (equal ?SITUATION
-      (SituationFn ?PHYSICAL))
+    (equal ?SITUATION (SituationFn ?PHYSICAL))
     (instance ?PHYSICAL Object))
   (forall (?NEAR)
     (=>
       (orientation ?NEAR ?PHYSICAL Near)
       (exists (?TS ?TR ?LS ?LR)
         (and
-          (equal ?TS
-            (WhenFn ?SITUATION))
-          (equal ?TR
-            (WhenFn ?NEAR))
+          (equal ?TS (WhenFn ?SITUATION))
+          (equal ?TR (WhenFn ?NEAR))
           (temporalPart ?TR ?TS)
-          (equal ?LS
-            (WhereFn ?SITUATION ?TS))
-          (equal ?LR
-            (WhereFn ?NEAR ?TR))
+          (equal ?LS (WhereFn ?SITUATION ?TS))
+          (equal ?LR (WhereFn ?NEAR ?TR))
           (part ?LR ?LS))))))   
 
 ;; If the physical entity is a process that has an agent, then everything near the agent is included in the situation.      
 (=>
   (and
-    (equal ?SITUATION
-      (SituationFn ?PHYSICAL))
+    (equal ?SITUATION (SituationFn ?PHYSICAL))
     (instance ?PHYSICAL Process)
     (agent ?PHYSICAL ?AGENT))
   (forall (?NEAR)
@@ -320,15 +314,11 @@ because situations have one enduring region whereas a process could cover multip
       (orientation ?NEAR ?AGENT Near)
       (exists (?TS ?TR ?LS ?LR)
         (and
-          (equal ?TS
-            (WhenFn ?SITUATION))
-          (equal ?TR
-            (WhenFn ?NEAR))
+          (equal ?TS (WhenFn ?SITUATION))
+          (equal ?TR (WhenFn ?NEAR))
           (temporalPart ?TR ?TS)
-          (equal ?LS
-            (WhereFn ?SITUATION ?TS))
-          (equal ?LR
-            (WhereFn ?NEAR ?TR))
+          (equal ?LS (WhereFn ?SITUATION ?TS))
+          (equal ?LR (WhereFn ?NEAR ?TR))
           (part ?LR ?LS))))))
  
 ;; The situation of a physical entity spatiotemporally contains the situation of everything relevant to the physical entity.
@@ -377,8 +367,15 @@ because situations have one enduring region whereas a process could cover multip
     (equal ?SITUATION (SituationFn ?PHYSICAL))
     (represents ?PHYSICAL ?FORMULA)
     (instance ?PHYSICAL Physical)
-    (instacne ?FROMULA Formula))
+    (instance ?FROMULA Formula))
   (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
+  
+;; An alternative way to frame things:
+
+(forall (?PROCESS ?FORMULA)
+  (=>
+    (realizesFormula ?PROCESS ?FORMULA)
+    (equal (SituationFn ?PROCESS) (SituationFormulaFn ?FORMULA))))
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
@@ -405,7 +402,7 @@ because situations have one enduring region whereas a process could cover multip
 (contraryAttribute MorallyGood MorallyBad)
 (contraryAttribute MorallyGood MorallyNeutral)
 (contraryAttribute MorallyBad MorallyNeutral)
-(contraryAttribute VirtueAttribute ViceAtribute)
+(contraryAttribute VirtueAttribute ViceAtribute) 
 
 ;; Why not say it explicitly, too.  
 (=>
@@ -844,7 +841,7 @@ two situations described by formulas.")
       (part ?SUS ?SENTENCE))))
 
 (<=> 
-  (instance ?U UtilitiarianTheory)
+  (instance ?U UtilitarianTheory)
   (forall (?S)
     (=>
       (element ?S ?U)
@@ -1645,6 +1642,32 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
               (containsInformation ?S ?PROP)
               (subProposition ?PROP ?MP))))))))
 
+;; Sure, let's add these!         
+(=> 
+  (instance ?MP VirtueEthics)
+  (exists (?MT ?MTS)
+    (and
+      (instace ?MT VirtueEthicsTheory)
+      (containsInformation ?MTS ?MP)
+      (instance ?MTS VirtueEthicsSentence)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT))))))
+      
+(=> 
+  (instance ?MP VirtueEthics)
+  (exists (?MT ?MTS)
+    (and
+      (instace ?MT VirtueEthicsTheory)
+      (containsInformation ?MTS ?MP)
+      (instance ?MTS VirtueEthicsSentence)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT)))
+      (forall (?S)
+        (=> 
+          (element ?S ?MT)
+          (exists (?P)
+            (and
+              (containsInformation ?S ?P)
+              (subProposition ?P ?MP))))))))
+
 ;; So let's define a map from simple virtue ethics statements to value judgment statements.
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
 (domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
@@ -1714,7 +1737,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (=> 
             (and
               (subclass ?PROC AutonomousAgentProcess)
-              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?PROC))
               (exists (?INSTANCE)
                 (and 
                   (agent ?INSTANCE ?AGENT)
@@ -1730,7 +1753,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (=> 
             (and
               (subclass ?PROC AutonomousAgentProcess)
-              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?PROC))
               (exists (?INSTANCE)
                 (and
                   (agent ?INSTANCE ?AGENT)
@@ -1754,7 +1777,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (=> 
             (and
               (subclass ?PROC AutonomousAgentProcess)
-              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?PROC))
               (modalAttribute
                 (exists (?INSTANCE)
                   (and 
@@ -1771,7 +1794,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (=> 
             (and
               (subclass ?PROC AutonomousAgentProcess)
-              (refers ?VIRTUEATTRIBUTE ?PROC)
+              (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?PROC))
               (modalAttribute
                 (exists (?INSTANCE)
                   (and 
@@ -1950,9 +1973,9 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;;       (equal ?MORALATTRIBUTE MorallyBad))))
 
 (documentation SimpleActionValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple action value judgment sentences into simple virtue ethics sentences.")
-(domain SimpleActionValueJudgmentToVirtueSentenceFn 1 ValueJudgmentSentence)
+(domain SimpleActionValueJudgmentToVirtueSentenceFn 1 SimpleActionValueJudgmentSentence)
 (range SimpleActionValueJudgmentToVirtueSentenceFn VirtueEthicsSentence)
-(instance SimpleActionValueJudgmentToVirtueSentenceFn PartialValuedRelation)
+(instance SimpleActionValueJudgmentToVirtueSentenceFn TotalValuedRelation)
 (instance SimpleActionValueJudgmentToVirtueSentenceFn UnaryFunction)
 
 ;; So, leaving off anything about situations,
@@ -2026,7 +2049,13 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
         (forall (?VIRTUE)
           (=>
             (and
-              (instance ?VIRTUE MoralVirtueAttribute)
+              (or
+                (and 
+                  (equal ?MORALATTRIBUTE MorallyGood)
+                  (instance ?VIRTUE VirtueAttribute))
+                (and
+                  (equal ?MORALATTRIBUTE MorallyBad)
+                  (instance ?VIRTUE ViceAttribute)))
               (refers ?VIRTUE ?FORMULA))
             (modalAttribute
               (attribute ?AGENT ?VIRTUE) Likely)))))))
@@ -2036,7 +2065,13 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (equal
       (SimpleValueJudgmentToVirtueSentenceFn ?SAVJ) ?VES)
     (equal ?SAVJ
-      (modalAttribute ?FORMULA ?MORALATTRIBUTE)))
+      (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (subclass ?VIRTUETYPE VirtueAttribute))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (subclass ?VIRTUETYPE VirtueAttribute)))
   (equal ?VES
     (forall (?AGENT ?PROC)
       (=>
@@ -2051,7 +2086,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
         (forall (?VIRTUE)
           (=>
             (and
-              (instance ?VIRTUE MoralVirtueAttribute)
+              (instance ?VIRTUE ?VIRTUETYPE)
               (refers ?VIRTUE ?FORMULA))
             (modalAttribute
               (attribute ?AGENT ?VIRTUE) Likely)))))))
@@ -2149,6 +2184,13 @@ based on whether it maximizes the good over the bad, which is typically determin
             (and
               (containsInformation ?S ?P)
               (subProposition ?P ?MP))))))))
+              
+(=>
+  (instance ?MT UtilitarianTheory)
+  (exists (?MP)
+    (and 
+      (instance ?MP Utilitarianism)
+      (containsInformation (ListAndFn (SetToListFn ?MT)) ?MP))))
 
 (documentation UtilityAssignmentToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
 (domain UtilityAssignmentToValueJudgmentSentence 1 UtilityAssignmentSentence)
@@ -2177,6 +2219,33 @@ based on whether it maximizes the good over the bad, which is typically determin
     (=>
       (equal ?VALUE 0)
       (equal ?VJS 
+        (modalAttribute ?FORMULA MorallyNeutral)))))
+        
+;; As a demonstration of arbitrariness.
+(=>
+  (and
+    (equal
+      (UtilityAssignmentToValueJudgmentSentence ?UAS) ?VJS)
+    (equal ?UAS
+      (equal
+        (AssignmentFn ?UF ?FORMULA) ?VALUE))
+    (instance ?UF UtilityFormulaFn)
+    (instance ?FORMULA Formula)
+    (instance ?VALUE Number))
+  (and
+    (=>
+      (greaterThanOrEqualTo ?VALUE 10)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyGood)))
+    (=>
+      (lessThanOrEqualTo ?VALUE -10)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyBad)))
+    (=>
+      (and
+        (lessThan ?VALUE 10)
+        (greaterThan ?VALUE -10))
+      (equal ?VJS
         (modalAttribute ?FORMULA MorallyNeutral)))))
 
 (documentation ValueJudgmentToUtilityAssignmentSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
@@ -2218,7 +2287,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 ;; And we can do this sort of translation (over which moral judgments may pass.)
 (=> 
   (and 
-    (equal (ValueJudgmentToUtilityAssignmentSentence ?VJS) ?UAS)
+    (equal (ValueJudgmentToUtilityAssignmentLikelihoodSentence ?VJS) ?UAS)
     (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
     (instance ?FORMULA Formula)
     (instance ?MORALATTRIBUTE MoralAttribute)
@@ -2277,7 +2346,7 @@ based on whether it maximizes the good over the bad, which is typically determin
             (=> 
               (exists (?AGENT ?CP)
                 (and
-                  (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+                  (capableInSituation ?CP agent ?AGENT ?SITUATION)
                   (realizesFormulaSubclass ?CP ?F)))
               (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
     (=>
@@ -2286,7 +2355,7 @@ based on whether it maximizes the good over the bad, which is typically determin
         (modalAttribute 
           (exists (?F ?AGENT ?CP)
             (and 
-              (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+              (capableInSituation ?CP agent ?AGENT ?SITUATION)
               (realizesFormulaSubclass ?CP ?F)
               (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
     (=>
@@ -2340,7 +2409,7 @@ based on whether it maximizes the good over the bad, which is typically determin
           (=> 
             (exists (?AGENT ?CP)
               (and
-                (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+                (capableInSituation ?CP agent ?AGENT ?SITUATION)
                 (realizesFormulaSubclass ?CP ?F)))
             (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))))))
   (equal VJS (modalAttribute ?FORMULA MorallyGood)))
@@ -2354,7 +2423,7 @@ based on whether it maximizes the good over the bad, which is typically determin
         (equal ?SITUATION (SituationFormulaFn ?FORMULA))
         (exists (?F ?AGENT ?CP)
           (and
-            (CapableInSituation ?CP agent ?AGENT ?SITUATION)
+            (capableInSituation ?CP agent ?AGENT ?SITUATION)
             (realizesFormulaSubclass ?CP ?F)
             (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))))))
   (equal VJS (modalAttribute ?FORMULA MorallyBad)))
@@ -2365,16 +2434,24 @@ based on whether it maximizes the good over the bad, which is typically determin
 that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
 (subclass HedonisticUtilitarianism Utilitarianism)
 
-(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
-which is described.  Typically, the formula should refer to an action.")
-(subclass UtilityFormulaFn TotalValuedRelation)
-(subclass UtilityFormulaFn UnaryFunction)
+(documentation HedonisticUtilitarianTheory EnglishLanguage "A set of hedonistic utilitarian sentences.")
+(subclass HedonisticUtilitarianTheory UtilitarianTheory)
 
+;; Gee, I think this can be modularized into some generic Proposition <-> Theory correspondence where I give it two arguments.
 (=>
-    (instance ?UF UtilityFormulaFn)
+  (instance ?MP HedonisticUtilitarianism)
+  (exists (?MT ?MTS)
     (and
-        (domain ?UF 1 Formula)
-        (range ?UF RealNumber)))
+      (instance ?MT HedonisticUtilitarianTheory)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT)))
+      (containsInformation ?MTS ?MP))))
+      
+(=>
+  (instance ?MT HedonisticUtilitarianTheory)
+  (exists (?MP)
+    (and 
+      (instance ?MP HedonisticUtilitarianism)
+      (containsInformation (ListAndFn (SetToListFn ?MT)) ?MP))))
 
 (documentation HedonisticUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
 of that which is described where utility measures the pain and pleasure exhibited in the situation.")
@@ -2417,7 +2494,7 @@ of that which is described where utility measures the pain and pleasure exhibite
 
 ;; Hedonistic Utilitarianism is that where all utility functions are hedonistic utility functions!
 (=> 
-  (instance ?HUT HedonisticUtilitarianism)
+  (instance ?HUT HedonisticUtilitarianTheory)
   (forall (?S)
     (=> 
       (element ?S ?HUT)
@@ -2438,6 +2515,77 @@ that 'whether an act is morally right depends only on consequences (as opposed t
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
 (subclass Consequentialism Utilitarianism)    
 
+(documentation ConsequentialistTheory EnglishLanguage "A set of consequentialist sentences.")
+(subclass ConsequentialistTheory UtilitarianTheory)
+
+(=>
+  (instance ?MP Consequentialism)
+  (exists (?MT ?MTS)
+    (and
+      (instance ?MT ConsequentialistTheory)
+      (equal ?MTS (ListAndFn (SetToListFn ?MT)))
+      (containsInformation ?MTS ?MP))))
+      
+(=>
+  (instance ?MT ConsequentialistTheory)
+  (exists (?MP)
+    (and 
+      (instance ?MP Consequentialism)
+      (containsInformation (ListAndFn (SetToListFn ?MT)) ?MP))))
+     
+(documentation theoryPhilosophyPair EnglishLanguage "This predicate denotes that a (moral) theory and 
+a (moral) philosophy as a proposition are paired in the natural manner.") 
+(domainSubclass theoryPhilosophyPair 1 Ethics)
+(domainSubclass theoryPhilosophyPair 2 MoralTheory)
+(relatedInternalConcept theoryPhilosophyPair abstractCounterpart)
+
+;; Let's have fun: if a class of propositions and theories are paired, 
+;; Then for each instance of the propositional class, there is a paired instance of the theory class
+;; And vice versa.  And we can generally use abstract counterpart for fun.
+;; That is, I could generalize the notion to be one over classe of Abstract and classes of Physical ;- ).
+(=>
+  (theoryPhilosophyPair ?P ?T)
+  (and 
+    (forall (?IP)
+        (=> 
+          (instance ?IP ?P)
+          (exists (?IT)
+            (and 
+              (instance ?IT ?T)
+              (abstractCounterpart ?IP ?IT)))))
+    (forall (?IT)
+        (=> 
+          (instance ?IT ?T)
+          (exists (?IP)
+            (and 
+              (instance ?IP ?P)
+              (abstractCounterpart ?IP ?IT)))))))
+
+(<=>
+  (theoryPhilosophyPair ?MP ?MT)
+  (and
+    (forall (?IMP)
+      (=>
+        (instance ?IMP ?MP)
+        (exists (?IMT)
+          (and
+            (instance ?IMT ?MT)
+            (containsInformation (ListAndFn (SetToListFn ?IMT)) ?IMP)))))
+    (forall (?IMT)
+      (=>
+        (instance ?IMT ?MT)
+        (exists (?IMP)
+          (and
+            (instance ?IMP ?MP)
+            (containsInformation (ListAndFn (SetToListFn ?IMT)) ?IMP)))))))
+            
+;; Now we can simply assert:
+(theoryPhilosophyPair Consequentialism ConsequentialistTheory)
+(theoryPhilosophyPair HedonisticUtilitarianism HedonisticUtilitarianTheory)
+(theoryPhilosophyPair Utilitarianism UtilitarianTheory)
+(theoryPhilosophyPair Deontology DeontologicalTheory)
+(theoryPhilosophyPair VirtueEthics ValueJudgmentTheory)
+              
 (documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
 of that which is described where the utility measurement only depends on the consequences of an action.")
 (subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)
@@ -2479,7 +2627,7 @@ of that which is described where the utility measurement only depends on the con
 
 ;; Can we just port this over?
 (=> 
-  (instance ?CUT ConsequentialistUtilityFormulaFn)
+  (instance ?CUT ConsequentialistTheory)
   (forall (?S)
     (=> 
       (element ?S ?CUT)
