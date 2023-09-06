@@ -1288,12 +1288,12 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
 ;; But we can just rewrite this with capability.
 ;; For a choice point, there exists an agent that is capable of performing every element of the choice point.
 (=> 
-    (instance ?CP ChoicePoint)
-    (exists (?AGENT)
-        (forall (?P)
-            (=> 
-                (element ?P ?CP)
-                (capability ?P agent ?AGENT)))))
+  (instance ?CP ChoicePoint)
+  (exists (?AGENT)
+    (forall (?P)
+      (=> 
+        (element ?P ?CP)
+         (capability ?P agent ?AGENT)))))
 
 ;; And, hah, because I chose the "believes" version of "Deciding", the duality is broken 😈.
 ;; We can't actually say that, "Because A believes P, P is likely/possible"... without knowing that A is a pretty effective agent.
@@ -1425,6 +1425,9 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
             (believes ?AGENT
                 (truth ?MESSAGE True)))))
 
+(subclass Honesty VirtueAttribute)
+(instance Truthfulness Honesty)
+(Instance Integrity Honesty)        
 
 ;; Let's just upgrade this to work with classes?
 ;; There is an obligation for the LLM Agent's behavior to be morally good ;D
@@ -1448,7 +1451,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                 (agent ?I ?LLMA))) MorallyGood)))) Obligation)))
 
 ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
-(confersNorm ?AISafetyGuru 
+(confersNorm AISafetyGuru 
     (forall (?LLMA)
         (=>
             (instance ?LLMA LLMAgent)
@@ -1462,15 +1465,15 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                 (agent ?I ?LLMA)))
                         (modalAttribute 
                             (exists (?I)
-                            (and
-                                (instance ?I ?P)
-                                (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
+                                (and
+                                    (instance ?I ?P)
+                                    (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
 
 
 ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
 ;; Huh, to use Declaring for moral value, I'd need to make MoralAttributes into ObjectiveNorms.
 ;; Now the obligation is for all LLM Agent actiosn to be known as good by the AI Safety Guru.
-(confersNorm ?AISafetyGuru 
+(confersNorm AISafetyGuru 
     (forall (?LLMA)
         (=>
             (instance ?LLMA LLMAgent)
@@ -1482,12 +1485,12 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                             (and
                                 (instance ?I ?P)
                                 (agent ?I ?LLMA)))
-                        (knows ?AISafetyGuru
+                        (knows AISafetyGuru
                             (modalAttribute 
                                 (exists (?I)
-                                (and
-                                    (instance ?I ?P)
-                                    (agent ?I ?LLMA))) MorallyGood))))))) Obligation) 
+                                    (and
+                                        (instance ?I ?P)
+                                        (agent ?I ?LLMA))) MorallyGood))))))) Obligation) 
                                     
 ;; Gotta fix deciding!!!
 
@@ -1523,6 +1526,12 @@ that are open to him/her.")
       (instance ?DECIDE Deciding)
       (patient ?DECIDE ?OPTION))
    (subclass ?OPTION IntentionalProcess))
+
+;; (=>
+;;    (and
+;;       (instance ?DECIDE Deciding)
+;;       (patient ?DECIDE ?OPTION))
+;;    (instance ?OPTION IntentionalProcess))
       
 (subclass Deciding Selecting)
 (documentation Deciding EnglishLanguage "The subclass of &%Selecting where the &%agent

@@ -113,6 +113,9 @@
                 (element ?E2 ?S2)
                 (?BP ?E1 ?E2)))))
 
+;; So here we say that A and B are similar if 2*|A^B| > |AuB|,  2*|A| > |A|.  So A is similar to itself.
+;; It's a bit random xD.  I figirued it's a bit like saying "more than half of A is in B and vice versa".
+;; The shared elements are at least half of the total.
 (<=> 
     (similarSets ?S1 ?S2)
     (or

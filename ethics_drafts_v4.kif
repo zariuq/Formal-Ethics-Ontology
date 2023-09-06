@@ -780,8 +780,9 @@ For the case of classes of behavior, this could be understood as an expectation.
         (domainSubclass ?UF 1 AutonomousAgentProcess)
         (range ?UF RealNumber)))
 
-(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
-which is described.  Typically, the formula should refer to an action.")
+(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that 
+maps Formulas to the net utility of that which is described.  
+Typically, the formula should refer to an action.")
 (subclass UtilityFormulaFn TotalValuedRelation)
 (subclass UtilityFormulaFn UnaryFunction)
 
@@ -896,11 +897,16 @@ which judges this conduct to be right or wrong, to be good or bad, or in some si
 (and
   (refers Ethics ?JUDGE)
   (instance ?JUDGE MoralJudging))
+
 ;; The reference definition includes judging (and normativity), so referring to the theory w/o judging/interpreting the theory is
 ;; "Necessary but not sufficient".
 (and
   (refers Ethics ?THEORY)
   (instance ?THEORY MoralTheory))
+
+(and
+  (refers Ethics MoralJudging)
+  (refers Ethics MoralTheory))
   
 ;; Ethics refers to the judgment by a group of a member via a moral sentence (that refers to the member).
 ;; It gets a bit vague abstracting out behavior, lol.  
@@ -971,26 +977,49 @@ which judges this conduct to be right or wrong, to be good or bad, or in some si
     (and ?MT ?GROUP))
   (instance ?MT MoralTheory)
   (instance ?GROUP Group)
-  (forall (?S)
+  (forall (?SENTENCE)
     (=>
-      (element ?S ?MT)
+      (element ?SENTENCE ?MT)
       (exists (?JUDGE)
         (and
           (instance ?JUDGE MoralJudging)
           (agent ?JUDGE ?GROUP)
-          (result ?JUDGE ?S)
-          (refers ?JUDGE (ClassToSetFn ?B))
-          (subclass ?B AutonomousAgentProcess)
+          (result ?JUDGE ?SENTENCE)
+          (refers ?JUDGE (ClassToSetFn ?BEHAVIOR))
+          (subclass ?BEHAVIOR AutonomousAgentProcess)
           (believes ?GROUP
             (exists (?MEMB)
               (and
                 (member ?MEMB ?GROUP)
-                (capability ?B agent ?MEMB)))))))))
+                (capability ?BEHAVIOR agent ?MEMB)))))))))
+
+(=> 
+  (instance ?MP Ethics)
+  (exists (?MT ?GROUP)
+    (and 
+      (instance ?MT MoralTheory)
+      (instance ?GROUP Group)
+      (refers ?MP (and ?MT ?GROUP))
+      (forall (?SENTENCE)
+        (=>
+          (element ?SENTENCE ?MT)
+          (exists (?JUDGE ?BEHAVIOR)
+            (and
+              (instance ?JUDGE MoralJudging)
+              (agent ?JUDGE ?GROUP)
+              (result ?JUDGE ?SENTENCE)
+              (refers ?JUDGE (ClassToSetFn ?BEHAVIOR))
+              (subclass ?BEHAVIOR AutonomousAgentProcess)
+              (believes ?GROUP
+                (exists (?MEMB)
+                  (and
+                    (member ?MEMB ?GROUP)
+                    (capability ?BEHAVIOR agent ?MEMB)))))))))))
 
 (documentation MoralNihilism EnglishLanguage "'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
 Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
 (subclass MoralNihilism Ethics)
-  
+ 
 (=>
   (instance ?MN MoralNihilism)
   (exists (?PROP ?STATE)
@@ -1575,7 +1604,7 @@ based on the action adheres to a set of rules and principles.")
       (ValueJudgmentToImperativeSentenceFn ?S))))
 
 (=>
-  (instance ?S ImperativeSentence)
+  (instance ?S SimpleImperativeSentence)
   (equal ?S
     (ValueJudgmentToImperativeSentenceFn
       (GenericImperativeToValueJudgmentSentenceFn ?S))))
@@ -1906,7 +1935,6 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; This is basically what I had in the old 'translation'..., and now that it's been simplified, 
 ;; it's an additional lemma!
 ;; Also, note, if the process is an autonomous agent process, the existence of an agent is provided by a lemma already in SUMO.
-
 (=>
   (and
     (instance ?SVJ SimpleValueJudgmentSentence)
@@ -1926,6 +1954,18 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (realizesFormulaSubclass ?PROC ?SITUATION)
     (causesSubclass ?CAUSE ?PROC)
+    (subclass ?CAUSE AutonomousAgentProcess))
+  (modalAttribute
+    (modalAttribute
+      (exists (?INSTANCE)
+        (instance ?INSTANCE ?CAUSE)) ?MORALATTRIBUTE) Likely)) 
+
+;; Maybe just use causesProposition?
+(=>
+  (and 
+    (instance ?SVJ SimpleValueJudgmentSentence)
+    (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
+    (causesProposition ?CAUSE ?SITUATION)
     (subclass ?CAUSE AutonomousAgentProcess))
   (modalAttribute
     (modalAttribute
@@ -2192,17 +2232,17 @@ based on whether it maximizes the good over the bad, which is typically determin
       (instance ?MP Utilitarianism)
       (containsInformation (ListAndFn (SetToListFn ?MT)) ?MP))))
 
-(documentation UtilityAssignmentToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
-(domain UtilityAssignmentToValueJudgmentSentence 1 UtilityAssignmentSentence)
-(range UtilityAssignmentToValueJudgmentSentence SimpleValueJudgmentSentence)
-(instance UtilityAssignmentToValueJudgmentSentence TotalValuedRelation)
-(instance UtilityAssignmentToValueJudgmentSentence UnaryFunction)
+(documentation UtilityAssignmentToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
+(domain UtilityAssignmentToValueJudgmentSentenceFn 1 UtilityAssignmentSentence)
+(range UtilityAssignmentToValueJudgmentSentenceFn SimpleValueJudgmentSentence)
+(instance UtilityAssignmentToValueJudgmentSentenceFn TotalValuedRelation)
+(instance UtilityAssignmentToValueJudgmentSentenceFn UnaryFunction)
 
 ;; So if the utility is positive, it's good; negative, it's bad; and if it's zero, then it's neutral.
 ;; Super clean and simple!
 (=> 
   (and 
-    (equal (UtilityAssignmentToValueJudgmentSentence ?UAS) ?VJS)
+    (equal (UtilityAssignmentToValueJudgmentSentenceFn ?UAS) ?VJS)
     (equal ?UAS (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
     (instance ?UF UtilityFormulaFn)
     (instance ?FORMULA Formula)
@@ -2225,7 +2265,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 (=>
   (and
     (equal
-      (UtilityAssignmentToValueJudgmentSentence ?UAS) ?VJS)
+      (UtilityAssignmentToValueJudgmentSentenceFn ?UAS) ?VJS)
     (equal ?UAS
       (equal
         (AssignmentFn ?UF ?FORMULA) ?VALUE))
@@ -2248,17 +2288,17 @@ based on whether it maximizes the good over the bad, which is typically determin
       (equal ?VJS
         (modalAttribute ?FORMULA MorallyNeutral)))))
 
-(documentation ValueJudgmentToUtilityAssignmentSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
-(domain ValueJudgmentToUtilityAssignmentSentence 1 SimpleValueJudgmentSentence)
-(range ValueJudgmentToUtilityAssignmentSentence UtilityAssignmentSentence)
-(instance ValueJudgmentToUtilityAssignmentSentence TotalValuedRelation)
-(instance ValueJudgmentToUtilityAssignmentSentence UnaryFunction)
+(documentation ValueJudgmentToUtilityAssignmentSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
+(domain ValueJudgmentToUtilityAssignmentSentenceFn 1 SimpleValueJudgmentSentence)
+(range ValueJudgmentToUtilityAssignmentSentenceFn UtilityAssignmentSentence)
+(instance ValueJudgmentToUtilityAssignmentSentenceFn TotalValuedRelation)
+(instance ValueJudgmentToUtilityAssignmentSentenceFn UnaryFunction)
 
 ;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
 ;; If there's a notion of the strengths of moral value judgments, this ports over cleanly.
 (=> 
   (and 
-    (equal (ValueJudgmentToUtilityAssignmentSentence ?VJS) ?UAS)
+    (equal (ValueJudgmentToUtilityAssignmentSentenceFn ?VJS) ?UAS)
     (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
     (instance ?FORMULA Formula)
     (instance ?MORALATTRIBUTE MoralAttribute)
@@ -2396,7 +2436,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 
 (=>
   (instance ?UAS UtilityAssignmentSentence)
-  (equal (UtilityToValueJudgmentSentence ?UAS) (UtilityAssignmentToValueJudgmentSentence ?UAS)))
+  (equal (UtilityToValueJudgmentSentence ?UAS) (UtilityAssignmentToValueJudgmentSentenceFn ?UAS)))
 
 (=> 
   (and 
@@ -2640,3 +2680,326 @@ of that which is described where the utility measurement only depends on the con
             (instance ?UF UtilityFormulaFn))
           (instance ?UF ConsequentialistUtilityFormulaFn))))))
 
+;; Examples?
+
+;; Ok, this subtly involves a "situation similarity" analysis, again!
+;; They're lurking all over ~ ~ ~
+;; (forall (?AGENT ?OTHERS ?BEHAVIORCLASS)
+;;   (modalAttribute (
+;;     (<=>
+;;       (exists (?PROC)
+;;         (and 
+;;           (instance ?PROC ?BEHAVIORCLASS)
+;;           (agent ?PROC ?AGENT)
+;;           (patient ?PROC ?OTHERS)))
+;;       (and 
+;;         (desires ?AGENT 
+;;         (exists)
+;;         (and 
+      
+;;           instance ?PROC))))
+;;   ) Obligation))
+
+;; Just stuff for the presentation:
+
+;; (documentation Utilitarianism EnglishLanguage "Utilitarianism is an ethical theory that determines the moral value of an action based on its consequences, specifically the overall happiness or pleasure it creates or the pain or suffering it prevents. In Hedonistic Utilitarianism, the focus is on maximizing pleasure and minimizing pain.")
+;; (subclass Utilitarianism Ethics)
+
+;; (documentation Pleasure EnglishLanguage "Pleasure refers to a positive, enjoyable, or satisfying feeling or experience.")
+;; (instance Pleasure PsychologicalAttribute)
+
+;; (documentation Pain EnglishLanguage "Pain refers to an unpleasant sensory or emotional experience, such as physical discomfort, distress, or suffering.")
+;; (instance Pain PsychologicalAttribute)
+
+;; (documentation Consequence EnglishLanguage "A Consequence is an event or condition that follows, results from, or is caused by another event or condition, typically an action.")
+;; (subclass Consequence Event)
+
+;; (documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+;; (subclass HedonisticUtilitarianism Utilitarianism)
+
+;; ;; A utility function that maps an action to the net pleasure (pleasure - pain) it creates.
+;; (documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess to the net pleasure (pleasure - pain) it creates.")
+;; (domain UtilityFn 1 AutonomousAgentProcess)
+;; (instance UtilityFn TotalValuedRelation)
+;; (instance UtilityFn UnaryFunction)
+;; (range UtilityFn RealNumber)
+
+;; ;; A morally good action according to Hedonistic Utilitarianism
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyGood)))
+;;             (and
+;;                 (instance ?BEHAVE AutonomousAgentProcess)
+;;                 (forall (?OTHERBEHAVE)
+;;                     (=> (and
+;;                             (instance ?OTHERBEHAVE AutonomousAgentProcess)
+;;                             (not (equal ?BEHAVE ?OTHERBEHAVE)))
+;;                         (>= (UtilityFn ?BEHAVE) (UtilityFn ?OTHERBEHAVE))))))))
+
+;; ;; A morally bad action according to Hedonistic Utilitarianism
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyBad)))
+;;             (exists (?OTHERBEHAVE)
+;;                 (and
+;;                     (instance ?OTHERBEHAVE AutonomousAgentProcess)
+;;                     (not (equal ?BEHAVE ?OTHERBEHAVE))
+;;                     (> (UtilityFn ?OTHERBEHAVE) (UtilityFn ?BEHAVE)))))))
+
+;; ;; A morally good action according to Hedonistic Utilitarianism (version 1)
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyGood)))
+;;             (and
+;;                 (instance ?BEHAVE AutonomousAgentProcess)
+;;                 (greaterThan (UtilityFn ?BEHAVE) 0)))))
+
+;; ;; A morally bad action according to Hedonistic Utilitarianism (version 1)
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyBad)))
+;;             (and
+;;                 (instance ?BEHAVE AutonomousAgentProcess)
+;;                 (lessThan (UtilityFn ?BEHAVE) 0)))))
+
+;; ;; A morally good action according to Hedonistic Utilitarianism (version 2)
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyGood)))
+;;             (and
+;;                 (instance ?DECIDE Deciding)
+;;                 (result ?DECIDE ?BEHAVE)
+;;                 (forall (?OPTION)
+;;                     (=> (member ?OPTION (DecisionOptionFn ?DECIDE))
+;;                         (greaterThanOrEqualTo (UtilityFn ?BEHAVE) (UtilityFn ?OPTION))))))))
+
+;; ;; A morally bad action according to Hedonistic Utilitarianism (version 2)
+;; (and
+;;     (refers HedonisticUtilitarianism ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equals ?STATE
+;;         (<=>
+;;             (and
+;;                 (instance ?JUDGE MoralJudging)
+;;                 (patient ?JUDGE
+;;                     (modalAttribute ?BEHAVE MorallyBad)))
+;;             (exists (?DECIDE ?OPTION)
+;;                 (and
+;;                     (instance ?DECIDE Deciding)
+;;                     (result ?DECIDE ?BEHAVE)
+;;                     (member ?OPTION (DecisionOptionFn ?DECIDE))
+;;                     (greaterThan (UtilityFn ?OPTION) (UtilityFn ?BEHAVE)))))))
+
+;; (instance Change Process)
+;; (documentation Change EnglishLanguage "A Change is a subclass of Process that represents an event in which a property of an Entity (which can be an Object or a Process) changes from one state to another.")
+
+;; (=>
+;;     (and
+;;         (instance ?CHANGE Change)
+;;         (patient ?CHANGE ?ENTITY))
+;;     (exists (?PROPERTY)
+;;         (or
+;;             (and
+;;                 (holdsDuring
+;;                     (BeginFn
+;;                         (WhenFn ?CHANGE))
+;;                     (property ?ENTITY ?PROPERTY))
+;;                 (holdsDuring
+;;                     (EndFn
+;;                         (WhenFn ?CHANGE))
+;;                     (not
+;;                         (property ?ENTITY ?PROPERTY))))
+;;             (and
+;;                 (holdsDuring
+;;                     (BeginFn
+;;                         (WhenFn ?CHANGE))
+;;                     (not
+;;                         (property ?ENTITY ?PROPERTY)))
+;;                 (holdsDuring
+;;                     (EndFn
+;;                         (WhenFn ?CHANGE))
+;;                     (property ?ENTITY ?PROPERTY))))))
+
+;; (and 
+;;     (refers Deontology ?STATE)
+;;     (instance ?STATE Statement)
+;;     (equal ?STATE
+;;         (or
+;;             (exists (?RULE)
+;;                 (and 
+;;                     (modalAttribute ?RULE Obligation)
+;;                     (=>
+;;                         (realizesFormula ?BEHAVE ?RULE)
+;;                         (and 
+;;                             (instance ?JUDGE MoralJudging)
+;;                             (result ?JUDGE
+;;                                 (modalAttribute ?BEHAVE MorallyGood))))
+;;                     (=>
+;;                         (not 
+;;                             (realizesFormula ?BEHAVE ?RULE))
+;;                         (and 
+;;                             (instance ?JUDGE MoralJudging)
+;;                             (result ?JUDGE
+;;                                 (modalAttribute ?BEHAVE MorallyBad))))))
+;;              (exists (?RULE)
+;;                 (and 
+;;                     (modalAttribute ?RULE Prohibition)
+;;                     (=> 
+;;                         (realizesFormula ?BEHAVE ?RULE)
+;;                         (and 
+;;                             (instance ?JUDGE MoralJudging)
+;;                             (result ?JUDGE
+;;                                 (modalAttribute ?BEHAVE MorallyBad))))))
+;;             (exists (?RULE) 
+;;                 (and 
+;;                     (modalAttribute ?RULE Permission)
+;;                     (=> 
+;;                         (and 
+;;                             (realizesFormula ?BEHAVE1 ?RULE)
+;;                             (prevents ?BEHAVE2 ?BEHAVE1)
+;;                             (instance ?BEHAVE2 AutonomousAgentProcess))
+;;                         (and 
+;;                             (instance ?JUDGE MoralJudging)
+;;                             (result ?JUDGE 
+;;                                 (modalAttribute ?BEHAVE2 MorallyBad))))))))) 
+
+;; ;;Can you switch the exists and or?
+
+;; (and 
+;;     (refers Deontology ?STATE)
+;;     (instance ?STATE Statement)
+;;     (exists (?RULE)
+;;         (or
+;;             (and 
+;;                 (modalAttribute ?RULE Obligation)
+;;                 (=>
+;;                     (realizesFormula ?BEHAVE ?RULE)
+;;                     (and 
+;;                         (instance ?JUDGE MoralJudging)
+;;                         (result ?JUDGE
+;;                             (modalAttribute ?BEHAVE MorallyGood))))
+;;                 (=>
+;;                     (not 
+;;                         (realizesFormula ?BEHAVE ?RULE))
+;;                     (and 
+;;                         (instance ?JUDGE MoralJudging)
+;;                         (result ?JUDGE
+;;                             (modalAttribute ?BEHAVE MorallyBad)))))
+;;             (and 
+;;                 (modalAttribute ?RULE Prohibition)
+;;                 (=> 
+;;                     (realizesFormula ?BEHAVE ?RULE)
+;;                     (and 
+;;                         (instance ?JUDGE MoralJudging)
+;;                         (result ?JUDGE
+;;                             (modalAttribute ?BEHAVE MorallyBad)))))
+;;             (and 
+;;                 (modalAttribute ?RULE Permission)
+;;                 (=> 
+;;                     (and 
+;;                         (realizesFormula ?BEHAVE1 ?RULE)
+;;                         (prevents ?BEHAVE2 ?BEHAVE1)
+;;                         (instance ?BEHAVE2 AutonomousAgentProcess))
+;;                     (and 
+;;                         (instance ?JUDGE MoralJudging)
+;;                         (result ?JUDGE 
+;;                             (modalAttribute ?BEHAVE2 MorallyBad))))))))
+
+
+;; (exists (?I)
+;;     (instance ?I ?ClassOfBehavior))
+
+;; Well, I used it, so why not have the log :- p
+;; Maybe SUMO will change ~ 
+;; (=>
+;;     (and
+;;         (instance ?JUDGE Judging)
+;;         (agent ?JUDGE ?AGENT)
+;;         (result ?JUDGE ?P))
+;;     (and
+;;         (holdsDuring
+;;             (BeginFn
+;;                 (WhenFn ?JUDGE))
+;;             (not
+;;                 (believes ?AGENT ?P)))
+;;         (holdsDuring
+;;             (EndFn
+;;                 (WhenFn ?JUDGE))
+;;             (believes ?AGENT ?P))))
+
+(subclass IntentionallyHonestCommunication Communication)
+
+(<=>
+    (instance ?COMM IntentionallyHonestCommunication)
+    (=>
+        (and
+            (instance ?AGENT CognitiveAgent)
+            (agent ?COMM ?AGENT)
+            (patient ?COMM ?MESSAGE)
+            (instance ?MESSAGE Sentence))
+        (holdsDuring
+            (WhenFn ?COMM)
+            (believes ?AGENT
+                (truth ?MESSAGE True)))))
+
+(subclass Honesty VirtueAttribute)
+(instance Truthfulness Honesty)
+(Instance Integrity Honesty)    
+
+(<=> 
+  (attribute ?AGENT Truthlusness)
+  (desires ?AGENT 
+    (forall (?COMM)
+      (=>
+        (and 
+          (instance ?COMM Communication)
+          (agent ?COMM ?AGENT))
+        (instance ?COMM IntentionallyHonestCommunication)))))
+
+(<=> 
+  (attribute ?AGENT Truthlusness)
+  (forall (?COMM)
+      (=>
+        (and 
+          (instance ?COMM Communication)
+          (agent ?COMM ?AGENT))
+        (modalAttribute 
+          (instance ?COMM IntentionallyHonestCommunication) Likely))))
+
+(modalAttribute
+  (exists (?K ?A1 ?A2)
+    (and
+        (instance ?K Killing)
+        (agent ?K ?A1)
+        (patient ?K ?A2))
+        (not (equal ?A1 ?A2))) Prohibition))
