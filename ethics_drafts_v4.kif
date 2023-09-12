@@ -224,13 +224,14 @@ means that ?OBJECT has the ability to play the CaseRole ?ROLE in Processes of ?T
 (<=>
   (and
     (capableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
+    (instance ?TIME ?TIMEINT)
     (equal ?TIME
       (WhenFn ?SITUATION))
     (equal ?LOCATION
       (WhereFn ?SITUATION
         (BeginFn ?TIME))))
   (and
-    (capabilityDuring ?TYPE ?ROLE ?OBJECT ?TIME)
+    (capabilityDuring ?TYPE ?ROLE ?OBJECT ?TIMEINT)
     (capabilityAtLocation ?TYPE ?ROLE ?OBJECT ?LOCATION)))
 
 ;; Now maybe I want a SituationFn that given some physical entity returns the situation?
@@ -341,21 +342,21 @@ because situations have one enduring region whereas a process could cover multip
 (=>
   (and
     (equal ?SITUATION (SituationFormulaFn ?FORMULA))
-    (realizesFormula ?PROCESS ?FORMURA))
+    (realizesFormula ?PROCESS ?FORMULA))
   (equal ?SITUATION (SituationFn ?PROCESS)))
 
 ;; The same for Objects and conforms.
 (=>
   (and
     (equal ?SITUATION (SituationFormulaFn ?FORMULA))
-    (conformsFormula ?OBJECT ?FORMURA))
+    (conformsFormula ?OBJECT ?FORMULA))
   (equal ?SITUATION (SituationFn ?OBJECT)))
 
 ;; And let's say the same for represents in general
 (=>
   (and
     (equal ?SITUATION (SituationFormulaFn ?FORMULA))
-    (represents ?PHYSICAL ?FORMURA)
+    (represents ?PHYSICAL ?FORMULA)
     (instance ?PHYSICAL Physical))
   (equal ?SITUATION (SituationFn ?PHYSICAL)))
 
@@ -367,7 +368,7 @@ because situations have one enduring region whereas a process could cover multip
     (equal ?SITUATION (SituationFn ?PHYSICAL))
     (represents ?PHYSICAL ?FORMULA)
     (instance ?PHYSICAL Physical)
-    (instance ?FROMULA Formula))
+    (instance ?FORMULA Formula))
   (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
   
 ;; An alternative way to frame things:
@@ -825,7 +826,7 @@ two situations described by formulas.")
             (equal ?COMPARATOR greaterThanOrEqualTo)
             (equal ?COMPARATOR lessThanOrEqualTo)
             (equal ?COMPARATOR equal))
-      (equal ?SENTENCE (?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2))))))
+      (equal ?SENTENCE (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2))))))
 
 (<=>
   (instance ?SENTENCE SimpleUtilitarianSentence)
@@ -863,12 +864,12 @@ two situations described by formulas.")
           (or
             (equal ?S
               (
-                (?C
-                  (AssignmentFn ?UF ?CBEHAVE) ?N)))
+                (AssignmentFn?C
+                  (AssignmentFn ?UF (ClassToSetFn ?CBEHAVE)) ?N)))
             (equal ?S
-              (?C
-                (AssignmentFn ?UF ?CBEHAVE)
-                (AssignmentFn ?UF ?CBEHAVE2))))
+              (AssignmentFn ?C
+                (AssignmentFn ?UF (ClassToSetFn ?CBEHAVE))
+                (AssignmentFn ?UF (ClassToSetFn ?CBEHAVE2)))))
           (instance ?N Number)
           (or
             (equal ?C greaterThan)
@@ -1966,11 +1967,12 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (instance ?SVJ SimpleValueJudgmentSentence)
     (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (causesProposition ?CAUSE ?SITUATION)
-    (subclass ?CAUSE AutonomousAgentProcess))
+    (realizesFormulaSubclass ?CAUSALPROCESS ?CAUSE)
+    (subclass ?CAUSALPROCESS AutonomousAgentProcess))
   (modalAttribute
     (modalAttribute
       (exists (?INSTANCE)
-        (instance ?INSTANCE ?CAUSE)) ?MORALATTRIBUTE) Likely)) 
+        (instance ?INSTANCE ?CAUSALPROCESS)) ?MORALATTRIBUTE) Likely)) 
 
 ;; Probably I just need this Lemma to rule out perverse situations such as, "it's good for 1+1=2".
 ;; For every moral value judgment, there exists a behavior such that either,
@@ -1983,7 +1985,8 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
   (and 
     (instance ?SVJ SimpleValueJudgmentSentence)
     (equal ?SVJ (modalAttribute ?SITUATION ?MORALATTRIBUTE))
-    (instance ?SITUATION Formula))
+    (instance ?SITUATION Formula)
+    (instance ?MORALATTRIBUTE MoralVirtueAttribute))
   (exists (?PROC)
     (and 
       (subclass ?PROC AutonomousAgentProcess)
@@ -2417,9 +2420,15 @@ based on whether it maximizes the good over the bad, which is typically determin
     (equal ?UCS (?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
     (instance ?FORMULA1 Formula)
     (instance ?FORMULA2 Formula)
-    (instance ?UF UtilityFormulaFn))
+    (instance ?UF UtilityFormulaFn)
+    (or
+        (equal ?COMPARATOR greaterThan)
+        (equal ?COMPARATOR lessThan)
+        (equal ?COMPARATOR greaterThanOrEqualTo)
+        (equal ?COMPARATOR lessThanOrEqualTo)
+        (equal ?COMPARATOR equal)))
   (equal ?VJS 
-        (?COMPARATOR 
+        (AssignmentFn ?COMPARATOR 
           (probabilityFn (modalAttribute ?FORMULA1 MorallyGood)) 
           (probabilityFn (modalAttribute ?FORMULA2 MorallyGood)))))
 
@@ -2625,7 +2634,8 @@ a (moral) philosophy as a proposition are paired in the natural manner.")
 (theoryPhilosophyPair Utilitarianism UtilitarianTheory)
 (theoryPhilosophyPair Deontology DeontologicalTheory)
 (theoryPhilosophyPair VirtueEthics ValueJudgmentTheory)
-              
+
+;; change name to indicate that it's a class              
 (documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
 of that which is described where the utility measurement only depends on the consequences of an action.")
 (subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)
@@ -2643,7 +2653,7 @@ of that which is described where the utility measurement only depends on the con
     (subclass ?CPROC AutonomousAgentProcess))
   (forall (?X)
     (=> 
-      (influences ?X (ConsequentialistUtilityFormulaFn ?FORMULA))
+      (influences ?X (AssignmentFn ?UF ?FORMULA))
       (and 
         (instance ?X Outcome)
         (modalAttribute
@@ -2659,7 +2669,7 @@ of that which is described where the utility measurement only depends on the con
     (instance ?IPROC AutonomousAgentProcess))
   (forall (?X)
     (=> 
-      (influences ?X (ConsequentialistUtilityFormulaFn ?FORMULA))
+      (influences ?X (AssignmentFn ?UF ?FORMULA))
       (and 
         (instance ?X Outcome)
         (modalAttribute
@@ -2960,17 +2970,18 @@ of that which is described where the utility measurement only depends on the con
 (subclass IntentionallyHonestCommunication Communication)
 
 (<=>
-    (instance ?COMM IntentionallyHonestCommunication)
+  (instance ?COMM IntentionallyHonestCommunication)
+  (exists (?AGENT ?MESSAGE)
     (=>
-        (and
-            (instance ?AGENT CognitiveAgent)
-            (agent ?COMM ?AGENT)
-            (patient ?COMM ?MESSAGE)
-            (instance ?MESSAGE Sentence))
-        (holdsDuring
-            (WhenFn ?COMM)
-            (believes ?AGENT
-                (truth ?MESSAGE True)))))
+      (and
+        (instance ?AGENT CognitiveAgent)
+        (agent ?COMM ?AGENT)
+        (patient ?COMM ?MESSAGE)
+        (instance ?MESSAGE Sentence))
+      (holdsDuring
+        (WhenFn ?COMM)
+        (believes ?AGENT
+          (truth ?MESSAGE True))))))
 
 (subclass Honesty VirtueAttribute)
 (instance Truthfulness Honesty)
@@ -3001,5 +3012,5 @@ of that which is described where the utility measurement only depends on the con
     (and
         (instance ?K Killing)
         (agent ?K ?A1)
-        (patient ?K ?A2))
-        (not (equal ?A1 ?A2))) Prohibition))
+        (patient ?K ?A2)
+        (not (equal ?A1 ?A2)))) Prohibition)
