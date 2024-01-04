@@ -659,7 +659,7 @@ because situations have one enduring region whereas a process could cover multip
       (part ?IT ?SENTENCE))))
 
 (documentation ValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
-(subclass ValueJudgmentTheory DeontologicalTheory)
+(subclass ValueJudgmentTheory MoralTheory)
 
 ;; A deontological theory is one where for every sentence, there exists a formula and moral attribute 
 ;; such that the sentence assigns this  moral attribute to the formula.
@@ -703,7 +703,7 @@ because situations have one enduring region whereas a process could cover multip
       (element ?S ?D)
       (instance ?S ValueJudgmentSentence))))
             
-(documentation DeontologicalImperativeTheory EnglishLanguage "A set of sentences containing moral imperatives.")
+(documentation DeontologicalImperativeTheory EnglishLanguage "A set of sentences containing deontic attributes.")
 (subclass DeontologicalImperativeTheory DeontologicalTheory)
 
 (=> 
@@ -1097,8 +1097,8 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
           (instance ?IPROCESS ?CPROCESS)
           (realization ?IPROCESS ?PROP))))))
 
-(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges the morality of an action 
-based on the action adheres to a set of rules and principles.")
+(documentation Deontology EnglishLanguage "Deontology is the ethical paradigm that judges 
+the morality of an action based on the action's adherence to a set of rules and principles.")
 (subclass Deontology Ethics)
 
 ;; Hmm, how to do this is tricky.  Why say that the process is something YOU do?  It's just good for there to be some process realizing obligations, right?
@@ -2417,7 +2417,7 @@ based on whether it maximizes the good over the bad, which is typically determin
 (=> 
   (and 
     (equal (UtilityComparisonToValueJudgmentSentence ?UCS) ?VJS)
-    (equal ?UCS (?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
+    (equal ?UCS (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
     (instance ?FORMULA1 Formula)
     (instance ?FORMULA2 Formula)
     (instance ?UF UtilityFormulaFn)
@@ -2988,7 +2988,7 @@ of that which is described where the utility measurement only depends on the con
 (Instance Integrity Honesty)    
 
 (<=> 
-  (attribute ?AGENT Truthlusness)
+  (attribute ?AGENT Truthfulness)
   (desires ?AGENT 
     (forall (?COMM)
       (=>
@@ -2998,7 +2998,7 @@ of that which is described where the utility measurement only depends on the con
         (instance ?COMM IntentionallyHonestCommunication)))))
 
 (<=> 
-  (attribute ?AGENT Truthlusness)
+  (attribute ?AGENT Truthfulness)
   (forall (?COMM)
       (=>
         (and 
