@@ -1,4 +1,5 @@
 ;; I'll start with the latest version of Deciding
+;; Note that this is a philosophical draft, #4
 
 ;; It seems helpful to have a wrapper for classes that allows them to be treated as instances.
 ;; Sort of an inverse of the KappaFn?  -- I think for the reverse direction, KappaFn should be used.
@@ -1612,7 +1613,7 @@ the morality of an action based on the action's adherence to a set of rules and 
 
 (documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
-'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in caharacter) 
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in character) 
 do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subclass VirtueEthics Ethics)
 
@@ -2070,7 +2071,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Ok, another stab at a more general variety:
 ;; Oh, maybe I could say that if ?S is morally good, then if an agent takes an action that makes ?S more likely, 
 ;; then ?S is likely virtuous in all virtues relevant to ?S!!!  Ahahaha, what a good idea!  
-;; IncreasesLikeliHood and CausesProposition both... exist ;- D.
+;; IncreasesLikeliHood and causesProposition both... exist ;- D.
 
 (=>
   (and
@@ -2085,7 +2086,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
           (instance ?AGENT AutonomousAgent)
           (subclass ?PROC AutonomousAgentProcess)
           (exists (?INSTANCE)
-            (CausesProposition
+            (causesProposition
               (and
                 (agent ?INSTANCE ?AGENT)
                 (instance ?INSTANCE ?PROC)) ?FORMULA)))
@@ -2513,11 +2514,11 @@ of that which is described where utility measures the pain and pleasure exhibite
     (greaterThan (AssignmentFn ?UF ?FORMULA) 0))
   (modalAttribute 
     (exists (?AGENT)
-      (CausesProposition ?FORMULA (attribute ?AGENT Pleasure))) Possibility))
+      (causesProposition ?FORMULA (attribute ?AGENT Pleasure))) Possibility))
 
 (=> 
   (exists (?AGENT)
-      (CausesProposition ?FORMULA (attribute ?AGENT Pleasure)))
+      (causesProposition ?FORMULA (attribute ?AGENT Pleasure)))
   (modalAttribute 
     (exists (?UF)
       (and
@@ -2530,11 +2531,11 @@ of that which is described where utility measures the pain and pleasure exhibite
     (lessThan (AssignmentFn ?UF ?FORMULA) 0))
   (modalAttribute 
     (exists (?AGENT)
-      (CausesProposition ?FORMULA (attribute ?AGENT Pain))) Possibility))
+      (causesProposition ?FORMULA (attribute ?AGENT Pain))) Possibility))
 
 (=> 
   (exists (?AGENT)
-      (CausesProposition ?FORMULA (attribute ?AGENT Pain)))
+      (causesProposition ?FORMULA (attribute ?AGENT Pain)))
   (modalAttribute 
     (exists (?UF)
       (and

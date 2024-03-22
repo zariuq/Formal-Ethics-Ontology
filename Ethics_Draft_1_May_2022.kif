@@ -1,4 +1,5 @@
 ;; Sketch of definitions of ethics
+;; Note that this is a philosophical draft, #1
 
 (documentation Ethics EnglishLanguage "Ethics is the normative science of the conduct of human beings living in society, which judges this conduct to be right or wrong, to be good or bad, or in some similar way")
 

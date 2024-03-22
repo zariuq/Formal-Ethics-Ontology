@@ -1,4 +1,5 @@
 
+;; Draft of some transplant scenario
 
 (instance Hospital HospitalBuilding)
 (instance Surgeon0 Human)
