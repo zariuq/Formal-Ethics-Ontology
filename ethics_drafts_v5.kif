@@ -497,6 +497,19 @@ Consequentialist utilitarianism combines both: what is good or bad depends on th
 of that which is described where the utility measurement only depends on the consequences of an action.")
 (subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)
 
+(=> 
+  (instance ?CUT ConsequentialistUtilitarianTheory)
+  (forall (?S)
+    (=> 
+      (element ?S ?CUT)
+      (forall (?P ?UF ?FORMULA)
+        (=> 
+          (and 
+            (part ?P ?S)
+            (equal ?P (AssignmentFn ?UF ?FORMULA))
+            (instance ?FORMULA Formula)
+            (instance ?UF UtilityFormulaFn))
+          (instance ?UF ConsequentialistUtilityFormulaFn))))))
 
 (=>
   (and
@@ -528,6 +541,57 @@ of that which is described where the utility measurement only depends on the con
 (=>
   (instance ?UF ConsequentialistUtilityFormulaFn)
   (domain ?UF 1 ActionFormula))
+
+
+;; General Terms
+
+;; So I had conjectures in Draft 1.
+;; (domain 1 conjectures CognitiveAgent)
+;; (domain 2 conjectures Formula)
+;; (instance conjectures BinaryPredicate)
+;; (instance conjectures PropositionalAttitude)
+;; (=>
+;;     (conjectures ?AGENT ?FORMULA)
+;;     (and
+;;         (not
+;;             (knows ?AGENT ?FORMULA))
+;;         (believes ?AGENT
+;;             (modalAttribute ?FORMULA Likely))))
+;;         ;(considers ?AGENT ?FORMULA)
+
+;; (instance conjecture Predicate)
+;; (domain 1 conjecture Formula)
+;; (valence conjecture 1)
+;; (=> 
+;;     (conjecture ?FORMULA)
+;;     (exists (?AGENT)
+;;         (conjectures ?AGENT ?FORMULA)))
+
+(documentation Conjecturing EnglishLanguage "An instance of this class conjectures that some sentence may be true.  
+Usually there's some reason to believe the conjecture is interesting.")
+(subclass Conjecturing LinguisticCommunication)
+
+(documentation Conjecture EnglishLanguage "A sentence that is conjectured to be true, 
+or, at least, whose truth value is unknown and of interest to ascertain.")
+(subclass Conjecture Sentence)
+
+(=> 
+  (and 
+    (instance ?CONJECTURE Conjecturing)
+    (result ?CONJECTURE ?SENTENCE)
+    (instance ?SENTENCE Sentence))
+  (instance ?SENTENCE Conjecture))
+
+(=> 
+  (and
+    (instance ?CONJECTURING Conjecture)
+    (result ?CONJECTURING ?CONJECTURE)
+    (instance ?CONJECTURE Conjecture))
+  (exists (?AGENT)
+    (and 
+      (instance ?AGENT CognitiveAgent)
+      (believes ?AGENT 
+        (modalAttribute ?CONJECTURE Possibility)))))
 
 
 ;; ETHICS benchmark examples
