@@ -273,6 +273,25 @@ a (moral) philosophy as a proposition are paired in the natural manner.")
       (element ?S ?T)
       (instance ?S Sentence))))
 
+(documentation JustifiedTheory EnglishLanguage "A justified theory is a theory where each 
+sentence has a justification (an argument).")
+(subclass JustifiedTheory Theory)
+
+;; A theory is a justified theory if and only if for every sentence of the theory, 
+;; there exists an argument with a conclusion that contains the information of the sentence.
+(<=>
+  (instance ?T JustifiedTheory)
+  (and
+    (instance ?T Theory)
+    (forall (?S)
+      (=>
+        (element ?S ?T)
+        (exists (?A ?C)
+          (and 
+            (instance ?A Argument)
+            (conclusion ?A ?C)
+            (containsInformation ?S ?C)))))))
+
 (documentation MoralSentence EnglishLanguage "A sentence of a moral theory")
 (subclass MoralSentence Sentence)
 
@@ -298,7 +317,7 @@ a (moral) philosophy as a proposition are paired in the natural manner.")
   (exists (?J)
     (and
       (instance ?J Judging)
-      (part (instance ?J )))))
+      (result ?J ?S))))
 
 (documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is 
 a moral sentence from a moral theory (in a given paradigm).")
@@ -592,6 +611,8 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
       (instance ?AGENT CognitiveAgent)
       (believes ?AGENT 
         (modalAttribute ?CONJECTURE Possibility)))))
+
+(subclass JustifiedTheory Th)
 
 
 ;; ETHICS benchmark examples
