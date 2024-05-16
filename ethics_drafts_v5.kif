@@ -630,6 +630,23 @@ by reference to the consequences of some action.")
               ;;     (element ?C ?CS)
               ;;     (refers ?P ?C))))))))))
 
+;; A consequentialist theory is a moral theory that is justified where 
+;; ... every sentence is the conclusion of a consequentialist argument.
+;; (Arguably this holds however we define consequentialist argument!)
+(<=> 
+  (instance ?CT ConsequentialistTheory)
+  (and 
+    (instance ?CT MoralTheory)
+    (instance ?CT JustifiedTheory)
+    (forall (?S)
+      (=> 
+        (element ?S ?CT)
+        (exists (?A ?C)
+          (and
+            (instance ?A ConsequentialistArgument)
+            (conclusion ?A ?C)
+            (containsInformation ?S ?C)))))))
+
 (documentation ConsequentialistUtilitarianism EnglishLanguage "Consequentialism is a moral theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).
