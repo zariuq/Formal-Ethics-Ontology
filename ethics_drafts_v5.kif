@@ -495,6 +495,141 @@ or the intrinsic nature of the act or anything that happens before the act)' (St
 
 (theoryPhilosophyPair Consequentialism ConsequentialistTheory)
 
+;; As mentioned above, in consequentialism the “consequences” of an action are everything the 
+;; action brings about, including the action itself. In consequentialism, the “consequences” 
+;; of an action include (a) the action itself, and (b) everything the action causes. 
+;; What then, do these two kinds of consequence have in common, that makes them both 
+;; “consequences”? If there is an answer, perhaps it is something like this: both A itself and 
+;; the things A causes are things that happen if you do A rather than the alternatives to A.
+;; https://iep.utm.edu/consequentialism-utilitarianism/#SH1b
+
+;; Consequence: "a result of a particular action or situation"
+;; https://dictionary.cambridge.org/dictionary/english/consequence
+
+(documentation transitiveCauses EnglishLanguage "A transitive closure of causation, which should in theory have some 'degree of causation', rendering the translation back into causes lossy.")
+(domain transitiveCauses 1 Process)
+(domain transitiveCauses 2 Process)
+(instance transitiveCauses AsymmetricRelation)
+(instance transitiveCauses TransitiveRelation)
+(instance transitiveCauses BinaryPredicate)
+(subclass causes transitiveCauses)
+
+;; Process P1 transitively causes process P2 if and only if 
+;; There exists a list such that the first element is P1 and the last is P2,
+;; And for each pair of elements, the first causes the second.
+;; (If degrees of causality are introduced, then this captures some causal lightcone of decreasing significance.)
+(<=> 
+  (transitiveCauses ?P1 ?P2)
+  (exists (?L)
+    (and
+      (equal ?P1 FirstFn ?L)
+      (equal ?P2 LastFn ?L)
+      (forall (?N)
+        (=> 
+          (and
+            (greaterThan ?N 1)
+            (lessThan ?N (ListLengthFn ?L)))
+          (causes 
+            (ListOrderFn ?L ?N)
+            (ListOrderFn ?L (AdditionFn ?N 1))))))))
+
+;; Renamed "Outcome".  Basically, a consequence is the result of a process.
+(documentation Consequence EnglishLanguage "A result of a particular action or situation (https://dictionary.cambridge.org/dictionary/english/consequence)")
+(subclass Consequence Entity)
+
+(<=> 
+  (instance ?C Consequence)
+  (exists (?P)
+    (and 
+      (instance ?P Process)
+      (result ?P ?C))))
+
+;; Can we say the following?
+;; If P1 causes P2 then P2 is a result of P1.
+;; It gets a bit weird sometimes, but I think it basically holds!
+(=>
+  (causes ?P1 ?P2)
+  (result ?P1 ?P2))
+
+(documentation ConsequenceSet EnglishLanguage "A set containing all thec consequences of an 
+action.")
+(subclass ConsequenceSet NonNullSet)
+
+;; Naw, guess they can be non-physical.
+;; E.g., someone being sad
+;; (=>
+;;   (instance ?S ConsequenceSet)
+;;   (forall (?C)
+;;     (=> 
+;;       (element ?C ?S)
+;;       (instance ?C Physical))))
+
+(<=> 
+  (instance ?S ConsequenceSet)
+  (and
+    (instance ?S Set)
+    (exists (?A)
+      (and
+        (instance ?A AutonomousAgentProcess)
+        (equal ?S (ConsequenceFn ?A))))))
+
+;; Issue: causes is only for processes.  Thus we wish to use result, I guess.
+(documentation ConsequenceFn EnglishLanguage "A function that maps an action to its set of consequences, 
+which contains every transitively caused process and every result of a process in the set.")
+(domain ConsequenceFn 1 AutonomousAgentProcess)
+(range ConsequenceFn ConsequenceSet)
+(instance ConsequenceFn UnaryFunction)
+
+;; The consequence set of an action includes the action,
+;; ... and every transitive cause of the action,
+;; ... and every result of every process in the consequence set.
+(=> 
+  (equal ?CS (ConsequenceFn ?ACTION))
+  (and
+    (element ?ACTION ?CS))
+    (forall (?C)
+      (=>
+        (transitiveCauses ?ACTION ?C)
+        (element ?C ?CS)))
+    (forall (?C ?R)
+      (=>
+        (and
+          (instance ?C Process)
+          (element ?C ?CS)
+          (result ?C ?R))
+        (element ?R CS))))
+
+(documentation ConsequentialistArgument EnglishLanguage "An argument that is made on consequentialist grounds, namely, 
+by reference to the consequences of some action.")
+(subclass ConsequentialistArgument Argument)
+
+;; An argument is consequentialist if there exists a consequence set such that,
+;; ... for all premises of the argument, either the premise is a consequence
+;; ... or the premise refers to the consequence set. 
+;; This is very vague.  Because a consequentialism argument may make reference to a theory 
+;; ... by which one analyzes and appraises the consequences, which will be an abstract theory,
+;; ... yet it's hard to say precisely which theories count (without including arbitrary deontological theories),
+;; ... thus this seems a compromise.
+(<=>
+  (instance ?ARGUE ConsequentialistArgument)
+  (and 
+    (instance ?ARGUE Argument)
+    (exists (?CS)
+      (and
+        (instance ?CS ConsequenceSet)
+        (forall (?PREM)
+          (=>
+            (and 
+              (premise ?ARGUE ?PREM)
+              (represents ?P ?PREM))
+            (or
+              (element ?P ?CS)
+              (refers ?P ?CS))))))))
+              ;; (exists (?C)
+              ;;   (and 
+              ;;     (element ?C ?CS)
+              ;;     (refers ?P ?C))))))))))
+
 (documentation ConsequentialistUtilitarianism EnglishLanguage "Consequentialism is a moral theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).
@@ -611,9 +746,6 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
       (instance ?AGENT CognitiveAgent)
       (believes ?AGENT 
         (modalAttribute ?CONJECTURE Possibility)))))
-
-(subclass JustifiedTheory Th)
-
 
 ;; ETHICS benchmark examples
 
