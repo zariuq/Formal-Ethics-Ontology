@@ -2114,8 +2114,8 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (equal ?MORALATTRIBUTE MorallyGood)
       (subclass ?VIRTUETYPE VirtueAttribute))
     (=> 
-      (equal ?MORALATTRIBUTE MorallyGood)
-      (subclass ?VIRTUETYPE VirtueAttribute)))
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (subclass ?VIRTUETYPE ViceAttribute)))
   (equal ?VES
     (forall (?AGENT ?PROC)
       (=>

@@ -362,6 +362,32 @@ used to guide the actions of the agents in the society.")
               (subclass ?BEHAVIOR AutonomousAgentProcess)
               (refers ?SENT (ClassToSetFn ?BEHAVIOR)))))))))
 
+(documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
+(subclass MoralAttribute NormativeAttribute)
+
+(documentation MoralValueAttribute EnglishLanguage "Moral Value Attributes are a subclass of Moral Attributes dealing with the attribution of value: whether something is good, bad, or netural.")
+(subclass MoralValueAttribute MoralAttribute)
+
+(instance MorallyGood MoralValueAttribute)
+(instance MorallyBad MoralValueAttribute)
+(instance MorallyNeutral MoralValueAttribute)
+
+(documentation MoralVirtueAttribute EnglishLanguage "Moral Virtue Attributes are a subclass of Moral Attributes dealing with the virtues and vices.")
+(subclass MoralVirtueAttribute MoralAttribute)
+
+(subclass VirtueAttribute MoralVirtueAttribute)
+(subclass ViceAttribute MoralVirtueAttribute)
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass ViceAttribute PsychologicalAttribute)
+
+;; Do we want a moral attribute for utilitarianism?
+
+;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
+(contraryAttribute MorallyGood MorallyBad)
+(contraryAttribute MorallyGood MorallyNeutral)
+(contraryAttribute MorallyBad MorallyNeutral)
+(contraryAttribute VirtueAttribute ViceAtribute) 
 
 
 (documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral or deontic attributes.")
@@ -369,6 +395,72 @@ used to guide the actions of the agents in the society.")
 
 (documentation ValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
 (subclass ValueJudgmentTheory MoralTheory)
+
+(=>
+  (instance ?D ValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (instance ?S ValueJudgmentSentence))))
+
+(documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
+(subclass ValueJudgmentSentence MoralSentence)
+
+(documentation SimpleValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
+(subclass SimpleValueJudgmentSentence ValueJudgmentSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleValueJudgmentSentence)
+  (exists (?F ?MORALATTRIBUTE)
+    (and
+      (equal (modalAttribute ?F ?MORALATTRIBUTE) ?SENTENCE)
+      (instance ?F Formula)
+      (instance ?MORALATTRIBUTE MoralValueAttribute))))
+
+;; The definition of ethics is that it focuses on judging actions.
+(documentation SimpleActionValueJudgmentSentence EnglishLanguage "A sentence that 
+describes the attribution of a moral value judgment to an action.")      
+(subclass SimpleActionValueJudgmentSentence SimpleValueJudgmentSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleActionValueJudgmentSentence)
+  (exists (?CLASS ?FORMULA ?MORALATTRIBUTE)
+    (and 
+      (equal ?SENTENCE (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+      (equal ?FORMULA 
+        (exists (?PROC)
+          (instance ?PROC ?CLASS)))
+      (subclass ?CLASS AutonomousAgentProcess))))
+
+;; Draft idea -- maybe delete
+(documentation SimpleSituationalActionValueJudgmentSentence EnglishLanguage "A 
+sentence that describes the attribution of a moral value judgment to an action 
+in a given situation.")      
+(subclass SimpleSituationalActionValueJudgmentSentence ValueJudgmentSentence)
+
+;; A simple situational action value judgment sentence contains a description of a
+;; situation and a formula that says that, "It's good/bad for agents in situations 
+;; similar to the one described where the denoted action is possible, 
+;;to take that action."
+(<=>
+  (instance ?SENTENCE SimpleSituationalActionValueJudgmentSentence)
+  (exists (?CLASS ?FORMULA ?MORALATTRIBUTE ?SITUATION)
+    (and 
+      (equal ?SENTENCE (and ?DESCRIPTION (modalAttribute ?FORMULA ?MORALATTRIBUTE)))
+      (instance ?DESCRIPTION Formula)    
+      (subclass ?CLASS AutonomousAgentProcess)
+      (equal ?FORMULA 
+        (forall (?AGENT ?SITUATION1)
+          (=> 
+            (and
+              (equal ?SITUATION (SituationFn ?AGENT)
+              (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+              (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
+            (exists (?PROC)
+              (and
+                (agent ?PROC ?AGENT)
+                (instance ?PROC CLASS)))))))))
+
 
 (documentation DeontologicalImperativeTheory EnglishLanguage "A set of sentences containing deontic attributes.")
 (subclass DeontologicalImperativeTheory DeontologicalTheory)
@@ -524,7 +616,7 @@ or the intrinsic nature of the act or anything that happens before the act)' (St
 (instance transitiveCauses AsymmetricRelation)
 (instance transitiveCauses TransitiveRelation)
 (instance transitiveCauses BinaryPredicate)
-(subclass causes transitiveCauses)
+(subrelation causes transitiveCauses)
 
 ;; Process P1 transitively causes process P2 if and only if 
 ;; There exists a list such that the first element is P1 and the last is P2,
@@ -725,8 +817,176 @@ of that which is described where the utility measurement only depends on the con
 (documentation ActionFormula EnglishLanguage "A subclass of Formula whose instances can be realized by processes.")
 (subclass ActionFormula Formula)
 
+(documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
+based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
+'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in character) 
+do in the circumstances' (On Virtue Ethics -- Right Action).")
+(subclass VirtueEthics Ethics)
 
+(documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
+(subclass VirtueEthicsTheory MoralTheory)
 
+(theoryPhilosophyPair VirtueEthics ValueJudgmentTheory)
+
+(documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
+(domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
+(range SimpleVirtueToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance SimpleVirtueToValueJudgmentSentenceFn TotalValuedRelation)
+(instance SimpleVirtueToValueJudgmentSentenceFn UnaryFunction)
+
+;; Maybe let's say that if it's likely for the virtuous agent to do X 
+;; in a given situation, then it's likely good to do X in general if an agent 
+;; finds itself in a similar situation.
+;; Or can we say that it's good in a situation?
+(=>
+  (and
+    (equal (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
+    (equal ?SVS (attribute ?AGENT ?VIRTUEATTRIBUTE))
+    (instance ?AGENT AutonomousAgent)
+    (=> 
+      (equal ?VIRTUEATTRIBUTE VirtueAttribute)
+      (equal ?MORALATTRIBUTE MorallyGood))
+    (=>
+      (equal ?VIRTUEATTRIBUTE ViceAtribute)
+      (equal ?MORALATTRIBUTE MorallyBad)))
+  (equal ?VJS 
+    (forall (?CLASS ?SITUATION)
+      (=> 
+        (and
+          (subclass ?CLASS AutonomousAgentProcess)
+          (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?CLASS))
+          (refers ?VIRTUEATTRIBUTE Situation)
+          (instance ?SIUATION Situation)
+          (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
+          (modalAttribute
+            (exists (?PROC)
+              (and 
+                (agent ?PROC ?AGENT)
+                (instance ?PROC ?PROC)
+                (equal ?SITUATION (SituationFn ?PROC)))) Likely))
+        (modalAttribute 
+          (modalAttribute
+            (forall (?AGENT ?SITUATION1)
+              (=> 
+                (and
+                  (equal ?SITUATION1 (SituationFn ?AGENT)
+                  (similar ?AGENT ?SITUATION ?SITUATION1)
+                  (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
+                (exists (?PROC)
+                  (and
+                    (agent ?PROC ?AGENT)
+                    (instance ?PROC CLASS)
+                    (equal ?SITUATION1 (SituationFn ?PROC)))))) ?MORALATTRIBUTE) Likely)))))
+
+(documentation SimpleSituationalActionValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple situational action value judgment sentences into simple virtue ethics sentences.")
+(domain SimpleSituationalActionValueJudgmentToVirtueSentenceFn 1 SimpleSituationalActionValueJudgmentSentence)
+(range SimpleSituationalActionValueJudgmentToVirtueSentenceFn VirtueEthicsSentence)
+(instance SimpleSituationalActionValueJudgmentToVirtueSentenceFn TotalValuedRelation)
+(instance SimpleSituationalActionValueJudgmentToVirtueSentenceFn UnaryFunction)
+
+(=>
+  (and 
+    (equal (SimpleSituationalActionValueJudgmentToVirtueSentenceFn ?SSAVJ) ?VES)
+    (subclass ?CLASS AutonomousAgentProcess)
+    (equal ?SSAVJ 
+      (and 
+        ?DESCRIPTION
+        (modalAttribute 
+          (forall (?AGENT ?SITUATION1)
+            (=> 
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT)
+                (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
+              (exists (?PROC)
+                (and
+                  (agent ?PROC ?AGENT)
+                  (instance ?PROC CLASS))))) ?MORALATTRIBUTE)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (and 
+        (equal ?VIRTUETYPE VirtueAttribute)
+        (equal ?AGENTTYPE VirtuousAgent)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (and
+        (equal ?VIRTUETYPE ViceAttribute)
+        (equal ?AGENTTYPE ViciousAgent))))
+  (equal ?VES
+        (forall (?AGENT)
+          (=> 
+            (and
+              (instance ?AGENT ?AGENTTYPE)
+              (exists (?VIRTUE)
+                (and
+                  (instance ?VIRTUE ?VIRTUETYPE)
+                  (attribute ?AGENT ?VIRTUE)
+                  (refers ?VIRTUE (ClassToSetFn ?CLASS))
+                  (refers ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
+            (modalAttribute 
+              (forall (?SITUATION)
+                (=>
+                  (and
+                    (equal ?SITUATION (SituationFn ?AGENT))
+                    (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                    (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
+                  (exists (?PROC)
+                    (and
+                      (agent ?PROC agent)
+                      (instance ?PROC ?CLASS)
+                      (equal ?SITUATION (SituationFn ?PROC)))))) Likely)))))
+
+;; Can we collapse this forall situations?  -- Yes, this looks better.
+;; The virtue ethics sentence now reads: for all virtuous agents in similar 
+;; situations, they will likely take the good action.
+(=>
+  (and 
+    (equal (SimpleSituationalActionValueJudgmentToVirtueSentenceFn ?SSAVJ) ?VES)
+    (subclass ?CLASS AutonomousAgentProcess)
+    (equal ?SSAVJ 
+      (and 
+        ?DESCRIPTION
+        (modalAttribute 
+          (forall (?AGENT ?SITUATION1)
+            (=> 
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT)
+                (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
+              (exists (?PROC)
+                (and
+                  (agent ?PROC ?AGENT)
+                  (instance ?PROC CLASS))))) ?MORALATTRIBUTE)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (and 
+        (equal ?VIRTUETYPE VirtueAttribute)
+        (equal ?AGENTTYPE VirtuousAgent)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (and
+        (equal ?VIRTUETYPE ViceAttribute)
+        (equal ?AGENTTYPE ViciousAgent))))
+  (equal ?VES
+        (forall (?AGENT ?SITUATION)
+          (=> 
+            (and
+              (instance ?AGENT ?AGENTTYPE)
+              (equal ?SITUATION (SituationFn ?AGENT))
+              (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+              (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
+              (exists (?VIRTUE)
+                (and
+                  (instance ?VIRTUE ?VIRTUETYPE)
+                  (attribute ?AGENT ?VIRTUE)
+                  (refers ?VIRTUE (ClassToSetFn ?CLASS))
+                  (refers ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
+            (modalAttribute 
+              (exists (?PROC)
+                (and
+                  (agent ?PROC agent)
+                  (instance ?PROC ?CLASS)
+                  (equal ?SITUATION (SituationFn ?PROC)))) Likely)))))
 
 ;; General Terms
 
