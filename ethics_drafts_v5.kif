@@ -492,15 +492,15 @@ in a given situation.")
       (equal ?VJS 
         (modalAttribute ?RULE MorallyNeutral)))))
 
-(documentation GenericImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
-(domain GenericImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
-(range GenericImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
-(instance GenericImperativeToValueJudgmentSentenceFn TotalValuedRelation)
-(instance GenericImperativeToValueJudgmentSentenceFn UnaryFunction)
+(documentation SimpleImperativeToValueJudgmentSentenceV2Fn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
+(domain SimpleImperativeToValueJudgmentSentenceV2Fn 1 SimpleImperativeSentence)
+(range SimpleImperativeToValueJudgmentSentenceV2Fn ValueJudgmentSentence)
+(instance SimpleImperativeToValueJudgmentSentenceV2Fn TotalValuedRelation)
+(instance SimpleImperativeToValueJudgmentSentenceV2Fn UnaryFunction)
 
 (=> 
   (and 
-    (equal (GenericImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+    (equal (SimpleImperativeToValueJudgmentSentenceV2Fn ?ITS) ?VJS)
     (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
     (instance ?RULE Formula)
     (instance ?DEONTIC DeonticAttribute))
@@ -546,36 +546,22 @@ in a given situation.")
       (equal ?ITS
         (modalAttribute ?SITUATION Permission)))))
 
-
 (=>
   (equal ?DEONTIC Permission)
   (equal ?VJS 
     (not
       (modalAttribute ?RULE MorallyBad))))
 
-(documentation UtilityComparisonToValueJudgmentSentence2 EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
-(domain UtilityComparisonToValueJudgmentSentence2 1 UtilityComparisonSentence)
-(range UtilityComparisonToValueJudgmentSentence2 ValueJudgmentSentence)
-(instance UtilityComparisonToValueJudgmentSentence2 PartialValuedRelation)
-(instance UtilityComparisonToValueJudgmentSentence2 UnaryFunction)
-
-;; Let's be super simple and just say that the comparison translates over to the likelihood that each formula is good.
+;; The inverse relation:
 (=> 
-  (and 
-    (equal (UtilityComparisonToValueJudgmentSentence2 ?UCS) ?VJS)
-    (equal ?UCS (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
-    (instance ?FORMULA1 Formula)
-    (instance ?FORMULA2 Formula)
-    (instance ?UF UtilityFormulaFn)
-    (or
-        (equal ?COMPARATOR greaterThan)
-        (equal ?COMPARATOR greaterThanOrEqualTo)
-        (equal ?COMPARATOR equal)))
-  (equal ?VJS 
-          (=>
-            (modalAttribute ?FORMULA2 MorallyGood)) 
-            (modalAttribute ?FORMULA1 MorallyGood)))
+  (instance ?S SimpleValueJudgmentSentence)
+  (equal ?S 
+    (SimpleImperativeToValueJudgmentSentenceFn (ValueJudgmentToImperativeSentenceFn ?S))))
 
+(=> 
+  (instance ?S SimpleImperativeSentence)
+  (equal ?S
+    (ValueJudgmentToImperativeSentenceFn (SimpleImperativeToValueJudgmentSentenceFn ?S))))
 
 (documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that 
 maps Formulas to the net utility of that which is described.  
@@ -588,6 +574,216 @@ Typically, the formula should refer to an action.")
     (and
         (domain ?UF 1 Formula)
         (range ?UF RealNumber)))
+
+(documentation UtilityComparisonToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
+(domain UtilityComparisonToValueJudgmentSentence 1 UtilityComparisonSentence)
+(range UtilityComparisonToValueJudgmentSentence ValueJudgmentSentence)
+(instance UtilityComparisonToValueJudgmentSentence TotalValuedRelation)
+(instance UtilityComparisonToValueJudgmentSentence UnaryFunction)
+
+;; Let's be super simple and just say that the comparison translates over to the likelihood that each formula is good.
+(=> 
+  (and 
+    (equal (UtilityComparisonToValueJudgmentSentence ?UCS) ?VJS)
+    (equal ?UCS (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
+    (instance ?FORMULA1 Formula)
+    (instance ?FORMULA2 Formula)
+    (instance ?UF UtilityFormulaFn)
+    (or
+        (equal ?COMPARATOR greaterThan)
+        (equal ?COMPARATOR lessThan)
+        (equal ?COMPARATOR greaterThanOrEqualTo)
+        (equal ?COMPARATOR lessThanOrEqualTo)
+        (equal ?COMPARATOR equal)))
+  (equal ?VJS 
+        (?COMPARATOR 
+          (probabilityFn (modalAttribute ?FORMULA1 MorallyGood)) 
+          (probabilityFn (modalAttribute ?FORMULA2 MorallyGood)))))
+
+(documentation UtilityComparisonToValueJudgmentSentence2 EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
+(domain UtilityComparisonToValueJudgmentSentence2 1 UtilityComparisonSentence)
+(range UtilityComparisonToValueJudgmentSentence2 ValueJudgmentSentence)
+(instance UtilityComparisonToValueJudgmentSentence2 PartialValuedRelation)
+(instance UtilityComparisonToValueJudgmentSentence2 UnaryFunction)
+
+;; Another idea is to say that there's some threshold of utility where formulas 
+;; transition from bad to good.  If u(F1) > u(F2), then if u(F2) passes this 
+;; threshold and is good, then F1 must be good, too!
+(=> 
+  (and 
+    (equal (UtilityComparisonToValueJudgmentSentence2 ?UCS) ?VJS)
+    (equal ?UCS (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2)))
+    (instance ?FORMULA1 Formula)
+    (instance ?FORMULA2 Formula)
+    (instance ?UF UtilityFormulaFn)
+    (or
+      (equal ?COMPARATOR greaterThan)
+      (equal ?COMPARATOR greaterThanOrEqualTo)
+      (equal ?COMPARATOR equal)))
+  (equal ?VJS 
+    (=>
+      (modalAttribute ?FORMULA2 MorallyGood)) 
+      (modalAttribute ?FORMULA1 MorallyGood)))
+
+(documentation UtilityAssignmentToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps utility assignment sentences into simple value judgment sentences.")
+(domain UtilityAssignmentToValueJudgmentSentenceFn 1 UtilityAssignmentSentence)
+(range UtilityAssignmentToValueJudgmentSentenceFn SimpleValueJudgmentSentence)
+(instance UtilityAssignmentToValueJudgmentSentenceFn TotalValuedRelation)
+(instance UtilityAssignmentToValueJudgmentSentenceFn UnaryFunction)
+
+;; So if the utility is positive, it's good; negative, it's bad; and if it's zero, then it's neutral.
+;; Super clean and simple!
+(=> 
+  (and 
+    (equal (UtilityAssignmentToValueJudgmentSentenceFn ?UAS) ?VJS)
+    (equal ?UAS (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
+    (instance ?UF UtilityFormulaFn)
+    (instance ?FORMULA Formula)
+    (instance ?VALUE Number))
+  (and
+    (=>
+      (greaterThan ?VALUE 0)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyGood)))
+    (=>
+      (lessThan ?VALUE 0)
+      (equal ?VJS
+        (modalAttribute ?FORMULA MorallyBad)))
+    (=>
+      (equal ?VALUE 0)
+      (equal ?VJS 
+        (modalAttribute ?FORMULA MorallyNeutral)))))
+
+(documentation SimpleValueJudgmentToUtilityAssignmentSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
+(domain SimpleValueJudgmentToUtilityAssignmentSentenceFn 1 SimpleValueJudgmentSentence)
+(range SimpleValueJudgmentToUtilityAssignmentSentenceFn UtilityAssignmentSentence)
+(instance SimpleValueJudgmentToUtilityAssignmentSentenceFn TotalValuedRelation)
+(instance SimpleValueJudgmentToUtilityAssignmentSentenceFn UnaryFunction)
+
+;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
+;; If there's a notion of the strengths of moral value judgments, this ports over cleanly.
+(=> 
+  (and 
+    (equal (SimpleValueJudgmentToUtilityAssignmentSentenceFn ?VJS) ?UAS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (instance ?UF UtilityFormulaFn))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?UAS 
+        (equal (AssignmentFn ?UF ?FORMULA) 1)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?UAS
+        (equal (AssignmentFn ?UF ?FORMULA) -1)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?UAS
+        (equal (AssignmentFn ?UF ?FORMULA) 0)))))   
+
+;; Insert the isomorphism!
+(=>
+ (instance ?S SimpleValueJudgmentSentence)
+ (equal ?S 
+    (UtilityAssignmentToValueJudgmentSentenceFn (SimpleValueJudgmentToUtilityAssignmentSentenceFn ?S))))
+
+(documentation UtilityFlatteningFn EnglishLanguage "A function that squashes utility values into three values: 1, 0, -1.")
+(subclass UtilityFlatteningFn TotalValuedRelation)
+(subclass UtilityFlatteningFn UnaryFunction)
+(domain UtilityFlatteningFn RealNumber)
+(range UtilityFlatteningFn RealNumber)
+
+;; The need to squash the value shows how the utilitarian language is more expressive.
+;; A precedence scheme over utilities could get translated into different utility values easily.
+(=> 
+  (instance ?S UtilityAssignmentSentence)
+  (equal (UtilityFlatteningFn ?S)
+    (SimpleValueJudgmentToUtilityAssignmentSentenceFn (UtilityAssignmentToValueJudgmentSentenceFn ?S ))))
+
+;; So now we can map between obligations and utility values via value judgments :D.
+(=> 
+  (instance ?S SimpleImperativeSentence)
+  (equal ?S
+    (ValueJudgmentToImperativeSentenceFn 
+      (UtilityAssignmentToValueJudgmentSentenceFn 
+        (SimpleValueJudgmentToUtilityAssignmentSentenceFn
+          (SimpleImperativeToValueJudgmentSentenceFn ?S))))))
+
+
+(documentation SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment likelihood sentences.")
+(domain SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence 1 SimpleValueJudgmentSentence)
+(range SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence UtilitarianSentence)
+(instance SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence TotalValuedRelation)
+(instance SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence UnaryFunction)
+
+;; What I said in draft 3 is that if something is morally good, then its utility is likely greater than zero.
+;; And we can do this sort of translation (over which moral judgments may pass.)
+(=> 
+  (and 
+    (equal (SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence ?VJS) ?UAS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (instance ?UF UtilityFormulaFn))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?UAS
+        (modalAttribute 
+          (greaterThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?UAS
+        (modalAttribute 
+          (lessThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?UAS
+        (modalAttribute 
+          (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))
+
+(documentation SimpleValueJudgmentToUtilityComparisonSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility comparison sentences.")
+(domain SimpleValueJudgmentToUtilityComparisonSentence 1 SimpleValueJudgmentSentence)
+(range SimpleValueJudgmentToUtilityComparisonSentence UtilitarianSentence)
+(instance SimpleValueJudgmentToUtilityComparisonSentence TotalValuedRelation)
+(instance SimpleValueJudgmentToUtilityComparisonSentence UnaryFunction)
+
+(=> 
+  (and 
+    (equal (SimpleValueJudgmentToUtilityComparisonSentence ?VJS) ?UCS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (instance ?UF UtilityFormulaFn)
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
+  (and
+    (=>
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (equal ?UCS
+        (modalAttribute
+          (forall (?F)
+            (=> 
+              (exists (?AGENT ?CP)
+                (and
+                  (capableInSituation ?CP agent ?AGENT ?SITUATION)
+                  (realizesFormulaSubclass ?CP ?F)))
+              (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (equal ?UCS
+        (modalAttribute 
+          (exists (?F ?AGENT ?CP)
+            (and 
+              (capableInSituation ?CP agent ?AGENT ?SITUATION)
+              (realizesFormulaSubclass ?CP ?F)
+              (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
+    (=>
+      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?UCS
+        (modalAttribute 
+          (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
 
 (documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
@@ -932,7 +1128,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                     (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
                   (exists (?PROC)
                     (and
-                      (agent ?PROC agent)
+                      (agent ?PROC ?AGENT)
                       (instance ?PROC ?CLASS)
                       (equal ?SITUATION (SituationFn ?PROC)))))) Likely)))))
 
@@ -984,9 +1180,49 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
             (modalAttribute 
               (exists (?PROC)
                 (and
-                  (agent ?PROC agent)
+                  (agent ?PROC ?AGENT)
                   (instance ?PROC ?CLASS)
                   (equal ?SITUATION (SituationFn ?PROC)))) Likely)))))
+
+;; Paradigm Equivalence
+
+(forall (?VT)
+  (=> 
+    (instance ?VT ValueJudgmentTheory)
+    (exists (?IT) 
+      (and 
+        (instance ?IT DeontologicalImperativeTheory)
+        (equal (transmMagicFn ?IT) ?VT)))))
+
+(=> 
+  (instance ?AGENT AutonomousAgent)
+  (modalAttribute (attribute ?AGENT VirtuousAgent) Obligation))
+
+(=> 
+  (instance ?AGENT AutonomousAgent)
+  (holdsObligation (attribute ?AGENT VirtuousAgent) ?AGENT))
+
+(instance Pietas VirtueAttribute)
+
+;; Idealized Pietas as the 'mean' we strive toward.
+(=> 
+  (attribute ?AGENT Pietas)
+  (forall (?DUTY)
+    (=> 
+      (holdsObligation ?DUTY ?AGENT)
+      (exists (?PROC)
+        (and 
+          (realizesFormula ?PROC ?DUTY)
+          (agent ?PROC ?AGENT))))))
+
+;; Intentional Pietas as practically realizable!
+(=> 
+  (attribute ?AGENT Pietas)
+  (forall (?DUTY)
+    (=> 
+      (holdsObligation ?DUTY ?AGENT)
+      (desires ?AGENT ?DUTY))))
+
 
 ;; General Terms
 
@@ -1037,6 +1273,47 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
       (instance ?AGENT CognitiveAgent)
       (believes ?AGENT 
         (modalAttribute ?CONJECTURE Possibility)))))
+
+;; Moral Theories
+
+;; Greatest Utility/Happiness Principle
+
+(documentation bestActionByUtilityInSituation EnglishLanguage "This predicate is true if the class of actions is the 
+best in the situation according to the given utility function.")
+
+(domainSubclass bestActionByUtilityInSituation 1 AutonomousAgentProcess)
+(domain bestActionByUtilityInSituation 2 UtilityFormulaFn)
+(domain bestActionByUtilityInSituation 3 Situation)
+(instance bestActionByUtilityInSituation TernaryPredicate)
+
+(<=>
+  (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION)
+  (and
+    (exists (?AGENT)
+      (capableInSituation ?CRPOC agent ?AGENT ?SITUATION)))
+    forall (?AGENT ?CPROC2)
+      (=>
+        (and 
+          (capableInSituation ?CRPOC2 agent ?AGENT ?SITUATION)
+          (realizesFormulaSubclass ?CPROC ?F1)
+          (realizesFormulaSubclass ?CPROC2 ?F2))
+        (greaterThanOrEqualTo (AssignmentFn ?UF ?F1) (AssignmentFn ?UF ?F2))))
+
+;; All agents have an obligation to do that which is the best in all situations
+;; according to utility functions they believe represent happiness.
+(holdsObligation (
+  (forall (?SITUATION ?CPROC ?UF)
+    (=>
+      (and
+        (believes ?AGENT (represents ?UF Happiness))
+        (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION))
+      (exists (?IPROC)
+        (and 
+          (agent ?IRPOC ?AGENT)
+          (instance ?IPROC ?CPROC)
+          (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
+
+
 
 ;; ETHICS benchmark examples
 
