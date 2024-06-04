@@ -374,10 +374,24 @@ because situations have one enduring region whereas a process could cover multip
   
 ;; An alternative way to frame things:
 
-(forall (?PROCESS ?FORMULA)
-  (=>
-    (realizesFormula ?PROCESS ?FORMULA)
-    (equal (SituationFn ?PROCESS) (SituationFormulaFn ?FORMULA))))
+(=>
+  (realizesFormula ?PROCESS ?FORMULA)
+  (equal (SituationFn ?PROCESS) (SituationFormulaFn ?FORMULA)))
+
+(=>
+  (conformsFormula ?OBJ ?FORMULA)
+  (equal (SituationFn ?OBJ) (SituationFormulaFn ?FORMULA)))
+
+;; lol, if this rule is 'it', then this is a dummy.
+(documentation describesSituation EnglishLanguage "(describesSituation ?SIT ?FORMULA) describes how ?SIT manifests the ideas outliden by the proposition represented by ?FORMULA.")
+(domain describesSituation 1 Situation)
+(domain  describesSituation 2 Formula)
+(instance describesSituation BinaryPredicate)
+(subrelation describesSituation represents)
+
+(<=> 
+  (describesSituation ?SIT ?FORMULA)
+  (equal ?SIT (SituationFormulaFn ?FORMULA)))
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
@@ -1061,7 +1075,7 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
   (exists (?PROP)
     (and
       (containsInformation ?FORMULA ?PROP)
-      (conforrms ?OBJ ?PROP))))
+      (conforms ?OBJ ?PROP))))
                        
 (documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
@@ -2429,7 +2443,7 @@ based on whether it maximizes the good over the bad, which is typically determin
         (equal ?COMPARATOR lessThanOrEqualTo)
         (equal ?COMPARATOR equal)))
   (equal ?VJS 
-        (AssignmentFn ?COMPARATOR 
+        (?COMPARATOR 
           (probabilityFn (modalAttribute ?FORMULA1 MorallyGood)) 
           (probabilityFn (modalAttribute ?FORMULA2 MorallyGood)))))
 

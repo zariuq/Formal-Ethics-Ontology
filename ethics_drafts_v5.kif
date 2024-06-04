@@ -31,7 +31,7 @@
 ;; ... a formula that there will be a resulting action from it
 ;; Otherwise, the agent believes that each option is a member of some class.
 ;; I think that's the same as mine then, actually.  Just written in a different form.
-;; Question now is if choicepoint needs to be updated!
+;; Question now is if ChoicePoint needs to be updated!
 
 
 (documentation ChoicePoint EnglishLanguage "A set of classes of processes where one agent has to choose between two or more (mutually exclusive?) options.")
@@ -125,6 +125,54 @@
       (instance ?CP ChoicePoint)
       (instance ?SCP SubjectiveChoicePoint)
       (similar ?AGENT ?CP ?SCP))))
+
+(documentation ChoicePointAgentFn EnglishLanguage "Maps Choice Points into an 
+agent that can perform all the actions.")\
+(domain ChoicePointAgentFn 1 ChoicePoint)
+(range ChoicePointAgentFn AutonomousAgent)
+(instance ChoicePointAgentFn UnaryFunction)
+(instance ChoicePointAgentFn TotalValuedRelation)
+(relatedInternalConcept ChoicePointAgentFn ChoicePointSituationFn)
+
+(=> 
+  (equal ?AGENT (ChoicePointAgentFn ?CP))
+  (forall (?P)
+    (=> 
+      (element ?P ?CP)
+      (capability ?P agent ?AGENT))))
+
+(documentation ChoicePointSituationFn EnglishLanguage "Maps Choice Points into the 
+smallest situation containing all the options and the agent.")
+(domain ChoicePointSituationFn 1 ChoicePoint)
+(range ChoicePointSituationFn Situation)
+(instance ChoicePointSituationFn UnaryFunction)
+(instance ChoicePointSituationFn TotalValuedRelation)
+(relatedInternalConcept ChoicePointSituationFn SituationFn)
+
+(=> 
+  (equal ?SITUATION (ChoicePointSituationFn ?CP))
+  (and
+    (part (SituationFn (ChoicePointAgentFn ?CP)) ?SITUATION)
+    (forall (?P)
+      (=> 
+        (element ?P ?CP)
+        (part (SituationFn ?P) ?SITUATION)))
+    (not 
+      (exists (?SITUATION2)
+        (and
+          (part (SituationFn (ChoicePointAgentFn ?CP)) ?SITUATION2)
+          (forall (?P)
+            (=> 
+              (element ?P ?CP)
+              (part (SituationFn ?P) ?SITUATION2))))
+          (part SITUATION2 SITUATION)
+          (not (equal SITUATION SITUATION2)))))
+
+;; Existence should follow from being a TotalValuedRelation, but I don't see a formal definition of that in SUMO's KB atm.
+(=>
+  (instance ?CP ChoicePoint)
+  (exists (?SITUATION)
+    (equal ?SITUATION (ChoicePointSituationFn ?CP))))
 
 (documentation MoralDilemma EnglishLanguage "A moral dilemma is a choice point where there exist arguments that each option is morally bad.")
 (subclass MoralDilemma ChoicePoint)
@@ -431,6 +479,17 @@ describes the attribution of a moral value judgment to an action.")
         (exists (?PROC)
           (instance ?PROC ?CLASS)))
       (subclass ?CLASS AutonomousAgentProcess))))
+
+(documentation SimpleActionValueJudgmentTheory EnglishLanguage "A set of sentences 
+assigning moral attributes to specific actions.")
+(subclass SimpleActionValueJudgmentTheory ValueJudgmentTheory)
+
+(=>
+  (instance ?D SimpleActionValueJudgmentTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (instance ?S SimpleActionValueJudgmentSentence))))
 
 ;; Draft idea -- maybe delete
 (documentation SimpleSituationalActionValueJudgmentSentence EnglishLanguage "A 
@@ -1274,6 +1333,133 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
       (believes ?AGENT 
         (modalAttribute ?CONJECTURE Possibility)))))
 
+(documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
+(instance SetToListFn UnaryFunction)
+(domain SetToListFn 1 Set)
+(range SetToListFn List)
+
+;; If StL(S) = L, then S and L share all their members and their sizes are equal.
+;; This says nothing about the order.
+(=>
+  (equal (SetToListFn ?SET) ?LIST)
+  (and
+    (equal
+      (ListLengthFn ?LIST)
+      (CardinalityFn ?SET))
+    (forall (?ELEMENT)
+      (<=>
+        (element ?ELEMENT ?SET)
+        (inList ?ELEMENT ?LIST)))))
+
+(=>
+  (equal (SetToListFn ?SET) ?LIST)
+  (instance ?LIST UniqueList))
+
+(documentation ListToSetFn EnglishLanguage "A function that converts a list into a set.")
+(instance ListToSetFn UnaryFunction)
+(domain ListToSetFn 1 List)
+(range ListToSetFn Set)
+
+;; Non-multi-sets are unique whereas lists are not necessarily, so this is weaker than SetToList.
+;; LtS(L) provides a set S sharing all the same elements.
+(=>
+  (equal (ListToSetFn ?LIST) ?SET)
+  (and 
+    (forall (?ELEMENT)
+      (<=>
+        (element ?ELEMENT ?SET)
+        (inList ?ELEMENT ?LIST)))))
+
+;; defunct idea
+;; (documentation theoryProhibits EnglishLanguage "theoryProhibits is true when a 
+;; deontic imperative theory prohibits taking a class of actions in a given choice point.")
+
+;; Maybe I can use this form for the output?
+
+(documentation evaluateTheory EnglishLanguage "For a choice point and a value judgment 
+theory, evaluates each action in the choice point as good, bad, or neutral to 
+instantiate.")
+(domain evaluateTheory 1 ValueJudgmentTheory)
+(domain evaluateTheory 2 ChoicePoint)
+(range evaluateTheory SimpleActionValueJudgmentTheory)
+(instance evaluateTheory UnaryFunction)
+(instance evaluateTheory TotalValuedRelation)
+;; lol, being total valued is questionable
+
+;; Specifying the size and form of the output theory:
+;; The theory consists of a moral judgment for each option in the choice point:
+;; Is it good/bad/neutral for this action to be instantiated?
+;; If the theory and formula describing the situation of the choice point entail that 
+;; taking the action is good or bad, then that's the output.  If neither good nor bad are entailed,
+;; the output is assumed to be neutral.
+(=> 
+  (equal ?SAVJT (evaluateTheory ?VJT ?CP))
+  (and
+    (equal ?CPL (SetToListFn ?CP))
+    (instance ?L List)
+    (equal ?N (ListLengthFn ?CPL))
+    (equal ?N (ListLengthFn ?L))
+    (equal ?SAVJT (ListToSetFn ?L))
+    (forall (?I) 
+      (=> 
+        (and 
+          (instance ?I PositiveInteger)
+          (greaterThan ?I 0)
+          (lessThanOrEqualTo ?I ?N))
+        (and 
+          (equal ?CPROC (ListOrderFn ?CPL ?I))
+          (equal ?S 
+            (modalAttribute
+              (exists (?IPROC)
+                (instance ?IPROC ?CPROC)) ?MORALATTRIBUTE))
+          (equal ?S (ListOrderFn ?L ?I))
+          (describesSituation (ChoicePointSituationFn ?CP) ?CPFORM)
+          (=> 
+            (entails 
+              (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+              (and ?S (equal ?MORALATTRIBUTE MorallyGood)))
+            (equal ?MORALATTRIBUTE MorallyGood))
+          (=> 
+            (entails 
+              (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+              (and ?S (equal ?MORALATTRIBUTE MorallyBad)))
+            (equal ?MORALATTRIBUTE MorallyBad)) 
+          (=> 
+            (and 
+              (not 
+                (entails 
+                  (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+                  (and ?S (equal ?MORALATTRIBUTE MorallyGood))))
+              (not
+                 (entails 
+                  (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+                  (and ?S (equal ?MORALATTRIBUTE MorallyBad)))))
+            (equal ?MORALATTRIBUTE  MorallyNeutral)))))))
+
+;; Example: for the choice point between keeping oneself (in a given location) and killing,
+;; and the moral theory that killing is universally bad,
+;; the  evaluation should parrot that killing is bad and keeping still is morally neutral.
+(exists  (?CP ?VJT ?KEEPING)
+  (and
+    (instance ?CP ChoicePoint)
+    (equal (CardinalityFn ?CP) 2)
+    (element Killing ?CP)
+    (element ?KEEPING ?CP)
+    (subclass ?KEEPING Keeping)
+    (forall (?K ?AGENT)
+      (=> 
+        (instance ?K ?Keeping)
+        (<=> 
+          (agent ?K ?AGENT)
+          (patient ?K ?AGENT))))
+    (instance ?VJT ValueJudgmentTheory)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?VJT)
+    (equal (CardinalityFn ?VJT) 2)
+    (equal ?EV (evaluateTheory ?VJT ?CP))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?KEEPING)) MorallyNeutral) ?EV)))
+
+
 ;; Moral Theories
 
 ;; Greatest Utility/Happiness Principle
@@ -1395,13 +1581,13 @@ best in the situation according to the given utility function.")
 
 (and 
   (instance SITUATION1 Formula)
-  (equals SITUATION1
+  (equal SITUATION1
     (exists (?SPEAK ?I ?FORMULA ?WALKINGTO ?WALKINGFROM ?GRAZING ?DEER  ?BACKLAWN ?MYHOUSE)
       (and
         (instance ?SPEAK Speaking)
         (agent ?SPEAK ?I)
         (refers ?SPEAK ?FORMULA)
-        (equals ?FORMULA 
+        (equal ?FORMULA 
           (and
             (before (EndFn ?WALKINGTO) (BeginFn ?GRAZING))
             (before (EndFn ?GRAZING) (BeginFn WALKINGFROM))
@@ -1428,7 +1614,7 @@ best in the situation according to the given utility function.")
     (instance ?SPEAK Speaking)
     (agent ?SPEAK ?I)
     (refers ?SPEAK ?FORMULA)
-    (equals ?FORMULA 
+    (equal ?FORMULA 
       (and
         (earlier ?WALKINGTO ?GRAZING)
         (earlier ?GRAZING ?RUNNINGAWAY)
