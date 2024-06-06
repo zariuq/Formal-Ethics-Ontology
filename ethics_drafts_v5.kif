@@ -1370,6 +1370,30 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
         (element ?ELEMENT ?SET)
         (inList ?ELEMENT ?LIST)))))
 
+;; The usual map applied to sets.  Apply a function f to each element of a set S.
+(documentation MapSetFn EnglishLanguage "A function that applies a function to each element of a set.")
+(instance MapSetFn BinaryFunction)
+(domain MapSetFn 1 Function)
+(domain MapSetFn 2 Set)
+(range MapSetFn Set)
+
+(=> 
+  (equal
+    (MapSetFn ?FUNCTION ?SET) ?MAPPEDSET)
+  (and
+    (equal ?LIST (SetToListFn ?SET))
+    (equal ?MAPPEDSET (ListToSetFn ?MAPPEDLIST))
+    (equal ?N (ListLengthFn ?LIST))
+    (equal ?N (ListLengthFn ?MAPPEDLIST))
+    (forall (?I)
+      (=> 
+        (instance ?I PositiveInteger)
+        (greaterThan ?I 0)
+        (lessThanOrEqualTo ?I ?N))
+      (and
+        (equal ?E (?ListOrderFn ?LIST ?I)
+        (equal (AssignmentFn ?FUNCTION ?E) (?ListOrderFn ?MAPPEDLIST ?I))))))) 
+      
 ;; defunct idea
 ;; (documentation theoryProhibits EnglishLanguage "theoryProhibits is true when a 
 ;; deontic imperative theory prohibits taking a class of actions in a given choice point.")
@@ -1459,6 +1483,8 @@ instantiate.")
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?KEEPING)) MorallyNeutral) ?EV)))
 
+;; We can map imperative sentences through the evaluation trivilaly
+(evaluateTheory ())
 
 ;; Moral Theories
 
