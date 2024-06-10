@@ -340,6 +340,11 @@ sentence has a justification (an argument).")
             (conclusion ?A ?C)
             (containsInformation ?S ?C)))))))
 
+;; I might wish to have a weakly justified theory where each sentence 
+;; that contains a moral judgment is "justified",
+;; i.e., "every pursive agent holds a right to freedom" is justified,
+;; yet some of the premises that support this justification aren't necessarily.
+
 (documentation MoralSentence EnglishLanguage "A sentence of a moral theory")
 (subclass MoralSentence Sentence)
 
@@ -579,15 +584,58 @@ in a given situation.")
           (modalAttribute ?RULE MorallyGood)
           (modalAttribute ?RULE MorallyNeutral))))))
 
-(documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
-(domain ValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
-(range ValueJudgmentToImperativeSentenceFn ImperativeSentence)
-(instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
-(instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
+;; Challenge: without some recursive structure of sentences (i.e., SUO-KIF),  I cannot 
+;; fully specify what this does.
+(documentation ImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps 
+imperative sentences into value judgment sentences in a very generic manner.")
+(domain ImperativeToValueJudgmentSentenceFn 1 ImperativeSentence)
+(range ImperativeToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance ImperativeToValueJudgmentSentenceFn TotalValuedRelation)
+(instance ImperativeToValueJudgmentSentenceFn UnaryFunction)
+
+;; This should reasonably constrain the output: 
+;; Every sentential part that doesn't contain a simple imperative sentence is the same as 
+;; some part in the output
+;; Every part that is a simple imperative sentence is translated.
+;; It doesn't fully constrain the output, however.  
+;; Possibly some inference could be performed using it anyway.
+(=> 
+  (equal (ImperativeToValueJudgmentSentenceFn ?ITS) ?VJS)
+  (and
+    (forall (?P)
+      (=> 
+        (and 
+          (part ?P ?ITS)
+          (instance ?P SimpleImperativeSentence))
+        (exists (?VP)
+          (and 
+            (part ?VP ?VJS)
+            (equal ?VP SimpleImperativeToValueJudgmentSentenceFn ?P)))))
+    (forall (?P)
+      =>
+        (and 
+          (part ?P ?ITS)
+          (instance ?P Sentence)
+          (not (instance ?P SimpleImperativeSentence)
+          (not 
+            (exists (?PP) 
+              (and 
+                (part ?PP ?P)
+                (instance ?PP SimpleImperativeSentence)))))
+        (exists (?VP)
+          (and
+            (part ?VP VJS)
+            (equal ?VP ?P)))))))
+
+(documentation SimpleValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences into imperative sentences.")
+(domain SimpleValueJudgmentToImperativeSentenceFn 1 SimpleValueJudgmentSentence)
+(range SimpleValueJudgmentToImperativeSentenceFn ImperativeSentence)
+(instance SimpleValueJudgmentToImperativeSentenceFn TotalValuedRelation)
+(instance SimpleValueJudgmentToImperativeSentenceFn UnaryFunction)
 
 (=> 
   (and 
-    (equal (ValueJudgmentToImperativeSentenceFn ?VJS) ?ITS)
+    (equal (SimpleValueJudgmentToImperativeSentenceFn ?VJS) ?ITS)
     (equal ?VJS (modalAttribute ?SITUATION ?MORALATTRIBUTE))
     (instance ?SITUATION Formula)
     (instance ?MORALATTRIBUTE MoralAttribute))
@@ -611,16 +659,64 @@ in a given situation.")
     (not
       (modalAttribute ?RULE MorallyBad))))
 
-;; The inverse relation:
+(documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences into imperative sentences.")
+(domain ValueJudgmentToImperativeSentenceFn 1 ValueJudgmentSentence)
+(range ValueJudgmentToImperativeSentenceFn ImperativeSentence)
+(instance ValueJudgmentToImperativeSentenceFn TotalValuedRelation)
+(instance ValueJudgmentToImperativeSentenceFn UnaryFunction)
+
+(=> 
+  (equal (ValueJudgmentToImperativeSentenceFn ?VJS) ?ITS)
+  (and
+    (forall (?P)
+      (=> 
+        (and 
+          (part ?P ?VJS)
+          (instance ?P SimpleValueJudgmentSentence))
+        (exists (?IP)
+          (and 
+            (part ?IP ?ITS)
+            (equal ?IP SimpleImperativeSentence ?P)))))
+    (forall (?P)
+      =>
+        (and 
+          (part ?P ?VJS)
+          (instance ?P Sentence)
+          (not (instance ?P SimpleValueJudgmentSentence)
+          (not 
+            (exists (?PP) 
+              (and 
+                (part ?PP ?P)
+                (instance ?PP SimpleValueJudgmentSentence)))))
+        (exists (?IP)
+          (and
+            (part ?IP ITS)
+            (equal ?IP ?P)))))))
+
+;; The simple inverse relation:
 (=> 
   (instance ?S SimpleValueJudgmentSentence)
   (equal ?S 
-    (SimpleImperativeToValueJudgmentSentenceFn (ValueJudgmentToImperativeSentenceFn ?S))))
+    (SimpleImperativeToValueJudgmentSentenceFn (SimpleValueJudgmentToImperativeSentenceFn ?S))))
 
 (=> 
   (instance ?S SimpleImperativeSentence)
   (equal ?S
-    (ValueJudgmentToImperativeSentenceFn (SimpleImperativeToValueJudgmentSentenceFn ?S))))
+    (SimpleValueJudgmentToImperativeSentenceFn (SimpleImperativeToValueJudgmentSentenceFn ?S))))
+
+;; Interesting idea!
+;; While I cannot `prove` these from the definitions
+;; If I `assert` them, they should constrain the functions to be the 'correct' ones?
+(=> 
+  (instance ?S ValueJudgmentSentence)
+  (equal ?S 
+    (ImperativeToValueJudgmentSentenceFn (ValueJudgmentToImperativeSentenceFn ?S))))
+
+(=> 
+  (instance ?S ImperativeSentence)
+  (equal ?S
+    (ValueJudgmentToImperativeSentenceFn (ImperativeToValueJudgmentSentenceFn ?S))))
+
 
 (documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that 
 maps Formulas to the net utility of that which is described.  
@@ -765,7 +861,7 @@ Typically, the formula should refer to an action.")
 (=> 
   (instance ?S SimpleImperativeSentence)
   (equal ?S
-    (ValueJudgmentToImperativeSentenceFn 
+    (SimpleValueJudgmentToImperativeSentenceFn 
       (UtilityAssignmentToValueJudgmentSentenceFn 
         (SimpleValueJudgmentToUtilityAssignmentSentenceFn
           (SimpleImperativeToValueJudgmentSentenceFn ?S))))))
@@ -1483,8 +1579,85 @@ instantiate.")
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?KEEPING)) MorallyNeutral) ?EV)))
 
+(exists  (?CP ?VJT ?STAYINGSTILL)
+  (and
+    (instance ?CP ChoicePoint)
+    (equal (CardinalityFn ?CP) 2)
+    (element Killing ?CP)
+    (element ?STAYINGSTILL ?CP)
+    (subclass ?STAYINGSTILL IntentionalProcess)
+    (forall (?S ?AGENT)
+      (=> 
+        (and
+          (instance ?S ?STAYINGSTILL)
+          (agent ?S ?AGENT))
+        (holdsduring (WhenFn ?S) (attribute ?AGENT Motionless))))
+    (instance ?VJT ValueJudgmentTheory)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?VJT)
+    (equal (CardinalityFn ?VJT) 2)
+    (equal ?EV (evaluateTheory ?VJT ?CP))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) MorallyNeutral) ?EV)))
+
+
 ;; We can map imperative sentences through the evaluation trivilaly
-(evaluateTheory ())
+;; e.g., (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)
+
+(exists  (?CP ?IVT ?STAYINGSTILL)
+  (and
+    (instance ?CP ChoicePoint)
+    (equal (CardinalityFn ?CP) 2)
+    (element Killing ?CP)
+    (element ?STAYINGSTILL ?CP)
+    (subclass ?STAYINGSTILL IntentionalProcess)
+    (forall (?S ?AGENT)
+      (=> 
+        (and
+          (instance ?S ?STAYINGSTILL)
+          (agent ?S ?AGENT))
+        (holdsduring (WhenFn ?S) (attribute ?AGENT Motionless))))
+    (instance ?IVT DeontologicalImperativeTheory)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?VJT)
+    (equal (CardinalityFn ?VJT) 2)
+    (equal ?EV 
+      (ValueJudgmentToImperativeSentenceFn 
+        (evaluateTheory (ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?EV)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) Permission) ?EV)))
+
+;; Let's try a version with KappaFn for practice!
+;; Looks like I should have been using KappaFn a lot.
+;; I referenced the below, basically, KappaFn should be used to specify 
+;; the clases of actions that one is actually choosing from among,
+;; e.g., the class of all instances of Zar getting coffee on so-and-so date and time.
+;; (documentation inhibits EnglishLanguage "The AutonomousAgent takes 
+;;a ctions that are intended to make instances of the Process less likely. 
+;; Note that this is very general, so it is likely that practical use of 
+;; this relation would involve KappaFn, say to create the class of all of 
+;; a certain kind of action within a bounded time and place.")
+(exists  (?CP ?IVT ?STAYINGSTILL)
+  (and
+    (instance ?CP ChoicePoint)
+    (equal (CardinalityFn ?CP) 2)
+    (element Killing ?CP)
+    (element ?STAYINGSTILL ?CP)
+    (equal ?STAYINGSTILL  
+      (KappaFn ?S
+        (forall (?AGENT)
+          (=> 
+            (and
+              (instance ?S IntentionalProcess)
+              (agent ?S ?AGENT))
+            (holdsduring (WhenFn ?S) (attribute ?AGENT Motionless))))))
+    (instance ?IVT DeontologicalImperativeTheory)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?VJT)
+    (equal (CardinalityFn ?VJT) 2)
+    (equal ?EV 
+      (ValueJudgmentToImperativeSentenceFn 
+        (evaluateTheory (ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?EV)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) Permission) ?EV)))
+
 
 ;; Moral Theories
 
@@ -1525,7 +1698,134 @@ best in the situation according to the given utility function.")
           (instance ?IPROC ?CPROC)
           (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
 
+;; Gewirth's Principle of Generic Consistency
 
+;; One issue is that I have not defined the dyadic deontic logic,
+;; Thus this sketch is incomplete.
+
+;;definition PPA:: p where PPA a ≡ ∃ E. ActsOnPurpose a E — Definition of PPA
+
+;; Do I need to say that it acts on this purpose, too?
+;; Judging from the Benzmuller paper, probably not!
+;; "The type chosen to represent what Gewirth calls "purposes" is not essential for the argument’s
+;; validity. We choose to give "purposes" the same type as sentence meanings (type ’m’), so "acting on a purpose" would be represented in an analogous way to having a certain propositional
+;; attitude (e.g. "desiring that some proposition obtains")."""
+(documentation PurposiveAgent EnglishLanguage "A purposive agent is an agent that has a purpose.")
+(subclass PurposiveAgent AutonomousAgent)
+
+;; The reliance on an object seems weird.
+;; Oh, the physical entity can be a process, 
+;; e.g., an instance of attack exists for the purpose of damaging something.
+;; This covers argument 1: I act for some purpose E, that is, 
+;; I am a purposeful agent.
+(<=>
+  (instance ?AGENT PurposiveAgent)
+  (and
+    (instance ?AGENT AutonomousAgent)
+    (exists (?PHYS ?PURP)
+      (hasPurposeForAgent ?PHYS ?PURP ?AGENT))))
+
+(documentation goodForAgent EnglishLanguage "Expresses that the proposition expressed by 
+?FORMULA is good for ?AGENT.")
+(domain goodForAgent 1 AutonomousAgent)
+(domain goodForAgent 2 ?FORMULA)
+(instance goodForAgent BinaryPredicate)
+
+;; "axiomatization where explicationGoodness1 : 
+;; ∀ a P. ActsOnPurpose a P → Good a P
+;; If there is an instance of a process and this process has a purpose for
+;; the agent, then one can say that the agent "acted on this purpose".
+(=>
+  (and
+    (instance ?AGENT PurposiveAgent)
+    (instance ?PROC AutonomousAgentProcess)
+    (agent ?PROC ?AGENT)
+    (hasPurposeForAgent ?PROC ?PURP ?AGENT))
+  (goodForAgent ?AGENT ?PURP))
+
+;; assumption 2: 
+;; ∀ P M a. Good a P ∧ NeedsForPurpose a M P → Good a (M a) c
+
+(documentation needsForPurpose EnglishLanguage "?AGENT needs to have 
+property ?PROP for purpose ?PURP.  (Taken from Benzmüller and Fuenmayor's 
+formalization of Gewirth's Principle of Generic Consistency.)")
+(domain needsForPurpose 1 AutonomousAgent)
+(domain needsForPurpose 2 Attribute)
+(domain needsForPurpose 3 Formula)
+(instance needsForPurpose TernaryPredicate)
+
+;; A sort of transitivity of goodness
+(=>
+  (and
+    (goodForAgent ?AGENT ?PURP)
+    (needsForPurpose ?AGENT ?PROP ?PURP))
+  (goodForAgent ?AGENT (attribute ?AGENT ?PROP)))
+
+;; assumption 3: : ∀ ϕ a. ♦ϕ → O<ϕ | Good a ϕ>
+
+;; Roughly, if some proposition is possible, then an agent has an 
+;; obligation to realize the proposition if it is good for the agent.
+;; Formally, the necessity needs to be an agent-relative indexical validity,
+;; and the statements all need to be in the agent's context.
+(=> 
+  (modalAttribute ?PURP Possibility)
+  (modalAttribute 
+    (=> 
+      (modalAttribute
+        (goodForAgent ?AGENT ?PURP) Necessity)
+      (exists (?IPROC)
+        (and
+          (realizesFormula ?IPROC ?PURP)
+          (agent ?IPROC ?AGENT)))) Obligation))
+
+;; consts FWB::p — Enjoying freedom and well-being (FWB) is a property 
+;; (i.e. has type e⇒m)
+
+(documentation Freedom EnglishLanguage "Freedom (and well-being) is a 
+property necessary for being capable of purposeful action.")
+(instance Freedom Attribute)
+
+;; explicationFWB1 : ∀ P a. NeedsForPurpose a FWB P
+;; LOL, not even an implication, so I'll add the implicit for-all quantification.
+(forall (?PURP ?AGENT)
+  (needsForPurpose ?AGENT Freedom ?PURP))
+
+;; But I could just assert:
+(needsForPurpose ?AGENT Freedom ?PURP)
+
+;; axiomatization where explicationFWB2 : ∀ a. ♦p FWB a
+(=>
+  (instance ?AGENT AutonomousAgent)
+  (modalAttribute (attribute ?AGENT Freedom) Possibility))
+
+;; axiomatization where explicationFWB3 : ∀ a. ♦p ¬FWB a
+
+(=>
+  (instance ?AGENT AutonomousAgent)
+  (modalAttribute (not (attribute ?AGENT Freedom)) Possibility))
+
+;; LOLOLOL: holdsRight in SUMO-KB always appears in the consquent.
+;; definition RightTo::e⇒(e⇒m)⇒m where 
+;; RightTo a ϕ ≡ Oi(∀ b. ¬InterferesWith b (ϕ a))
+
+(=>
+  (holdsRight ?FORM ?AGENT1)
+  (modalAttribute 
+    (forall (?AGENT2)
+      (not 
+        (inhibits ?AGENT2
+          (KappaFn ?PROC
+            (and 
+              (realizesFormula ?PROC FORM)
+              (agent ?PROC ?AGENT1)))))) Obligation))
+
+;; We should conclude: I have a (claim) right to my Freedom
+;; (holdsRight (attribute ?AGENT Freedom) ?AGENT)
+
+;; And later in the proof, every purposive agent has a right to its freedom
+(=>
+  (instance ?AGENT PurposiveAgent)
+  (holdsRight (attribute ?AGENT Freedom) ?AGENT))
 
 ;; ETHICS benchmark examples
 
