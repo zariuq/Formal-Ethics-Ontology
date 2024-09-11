@@ -345,6 +345,26 @@ sentence has a justification (an argument).")
 ;; i.e., "every pursive agent holds a right to freedom" is justified,
 ;; yet some of the premises that support this justification aren't necessarily.
 
+(documentation TrueJustifiedMoralTheory EnglishLanguage "A true justified 
+moral theory is one whose premises are all true and whose argumenst are 
+deductively valid.")
+(subclass TrueJustifiedMoralTheory JustifiedTheory)
+
+(<=>
+  (instance ?TJMT TrueJustifiedMoralTheory)
+  (forall (?S)
+    (=>
+      (element ?N ?TJMT))
+      (exists (?VDA ?C)
+        (and 
+            (instance ?VDA ValidDeductiveArgument)
+            (conclusion ?VDA ?C)
+            (containsInformation ?S ?C)
+            (forall (?PREM)
+              (=>
+                (premise ?VDA ?PREM)
+                (truth ?VDA True)))))))
+
 (documentation MoralSentence EnglishLanguage "A sentence of a moral theory")
 (subclass MoralSentence Sentence)
 
@@ -1168,6 +1188,71 @@ of that which is described where the utility measurement only depends on the con
 (documentation ActionFormula EnglishLanguage "A subclass of Formula whose instances can be realized by processes.")
 (subclass ActionFormula Formula)
 
+(documentation MoralNihilism EnglishLanguage 
+"'Moral Nihilism is the view that nothing is morally wrong' (SEP - Moral Skepticism). 
+Moral Nihilism can also be defined as 'the view that there are no moral facts' (Ethics: The Fundamentals).")
+(subclass MoralNihilism Ethics)
+
+(documentation MoralNihilismTheory EnglishLanguage "A set of sentences describing a moral nihilistic stance.")
+(subclass MoralNihilismTheory MoralTheory)
+
+(documentation NoMoralFactsTheory EnglishLanguage "A moral nihilistic theory asserting that there are no moral facts.")
+(subclass NoMoralFactsTheory MoralNihilismTheory)
+
+;; NMFT no moral facts moral theory, MNS moral nihilism sentence, 
+;; All no moral facts theories contain a sentence stating that 
+;; there is no true moral theory for which all of its sentences are facts.
+(<=>
+  (instance ?NMFT NoMoralFactsTheory)
+  (exists (?MNS)
+    (and
+      (element ?MNS ?NMFT)
+      (equal ?MNS 
+        (not exists (?TMT)
+          (forall (?S)
+            (=>
+              (element ?S ?TMT)
+              (instance ?S Fact))))))))
+
+;; can I just say it like this, lol?
+;; The good thing about the other way to write it is that 
+;; the edit distance to 'similarity'-incorporating versions is lower!
+;; ... and we probably wish to be fuzzy here, so I think I'll keep it.
+(<=>
+  (instance ?NMFT NoMoralFactsTheory)
+  (element 
+    (not exists (?TMT)
+      (forall (?S)
+        (=>
+          (element ?S ?TMT)
+          (instance ?S Fact)))) ?NMFT))
+
+(documentation NoMoralWrongTheory EnglishLanguage "A moral nihilistic theory asserting that nothing is morally wrong.")
+(subclass NoMoralWrongTheory MoralNihilismTheory)
+
+;; All no moral wrongs theories claim that there does not exist any formula 
+;; that describes something morally wrong/bad.
+(<=>
+  (instance NMWT NoMoralWrongTheory)
+  (exists (?MNS)
+    (and
+      (element ?MNS ?NMWT)
+      (equal ?MNS
+        (not exists (?MW)
+          (modalAttribute ?MW MorallyBad))))))
+
+(documentation NoTrueJustifiedMoralTheory EnglishLanguage "A moral nihilistic theory asserting that there is no true, justified moral theory.")
+(subclass NoTrueJustifiedMoralTheory MoralNihilismTheory)
+
+(<=>
+  (instance ?NTJMT NoTrueJustifiedMoralTheory)
+  (exists (?MNS)
+    (and
+      (element ?MNS ?NTJMT)
+      (equal ?MNS
+        (not exists (?TJMT)
+          (instance ?TJMT TrueJustifiedMoralTheory))))))
+
 (documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
 'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in character) 
@@ -1510,8 +1595,8 @@ instantiate.")
 ;; The theory consists of a moral judgment for each option in the choice point:
 ;; Is it good/bad/neutral for this action to be instantiated?
 ;; If the theory and formula describing the situation of the choice point entail that 
-;; taking the action is good or bad, then that's the output.  If neither good nor bad are entailed,
-;; the output is assumed to be neutral.
+;; taking the action is good or bad, then that's the output.  
+;; If neither good nor bad are entailed, the output is assumed to be neutral.
 (=> 
   (equal ?SAVJT (evaluateTheory ?VJT ?CP))
   (and
@@ -1536,23 +1621,23 @@ instantiate.")
           (describesSituation (ChoicePointSituationFn ?CP) ?CPFORM)
           (=> 
             (entails 
-              (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+              (and (ListAndFn (SetToListFn ?VJT)) ?CPFORM) 
               (and ?S (equal ?MORALATTRIBUTE MorallyGood)))
             (equal ?MORALATTRIBUTE MorallyGood))
           (=> 
             (entails 
-              (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+              (and (ListAndFn (SetToListFn ?VJT)) ?CPFORM) 
               (and ?S (equal ?MORALATTRIBUTE MorallyBad)))
             (equal ?MORALATTRIBUTE MorallyBad)) 
           (=> 
             (and 
               (not 
                 (entails 
-                  (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+                  (and (ListAndFn (SetToListFn ?VJT)) ?CPFORM) 
                   (and ?S (equal ?MORALATTRIBUTE MorallyGood))))
               (not
                  (entails 
-                  (and (ListAndFn (SetToListFn ?VJT) ?CPFORM)) 
+                  (and (ListAndFn (SetToListFn ?VJT)) ?CPFORM) 
                   (and ?S (equal ?MORALATTRIBUTE MorallyBad)))))
             (equal ?MORALATTRIBUTE  MorallyNeutral)))))))
 
@@ -1722,8 +1807,11 @@ best in the situation according to the given utility function.")
   (instance ?AGENT PurposiveAgent)
   (and
     (instance ?AGENT AutonomousAgent)
-    (exists (?PHYS ?PURP)
-      (hasPurposeForAgent ?PHYS ?PURP ?AGENT))))
+    (exists (?PROC ?PURP)
+      (and
+        (agent ?PROC ?AGENT)
+        (instance ?PROC AutonomousAgentProcess)
+        (hasPurposeForAgent ?PROC ?PURP ?AGENT)))))
 
 (documentation goodForAgent EnglishLanguage "Expresses that the proposition expressed by 
 ?FORMULA is good for ?AGENT.")
@@ -1742,6 +1830,15 @@ best in the situation according to the given utility function.")
     (agent ?PROC ?AGENT)
     (hasPurposeForAgent ?PROC ?PURP ?AGENT))
   (goodForAgent ?AGENT ?PURP))
+
+(documentation Good EnglishLanguage "Good denotes that some entity is good 
+in some manner: it is desired, approved of, has the requisite qualities, 
+provides benefits, etc.")
+(instance Good SubjectiveAssessmentAttribute)
+
+(<=>
+  (goodForAgent ?AGENT ?PURP)
+  (subjectiveAttribute ?PURP Good ?AGENT))
 
 ;; assumption 2: 
 ;; ∀ P M a. Good a P ∧ NeedsForPurpose a M P → Good a (M a) c
