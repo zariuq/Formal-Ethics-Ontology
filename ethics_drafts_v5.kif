@@ -350,16 +350,16 @@ sentence has a justification (an argument).")
 ;; yet some of the premises that support this justification aren't necessarily.
 ;; -- Ok, there being an argument doesn't mean it is true and valid, as in the below >:D.
 
-(documentation TrueJustifiedTheory EnglishLanguage "A true, justified 
+(documentation JustifiedTrueTheory EnglishLanguage "A justified true 
 theory is one whose premises are all true and whose argumenst are 
 deductively valid.")
-(subclass TrueJustifiedTheory JustifiedTheory)
+(subclass JustifiedTrueTheory JustifiedTheory)
 
 (<=>
-  (instance ?TJMT TrueJustifiedTheory)
+  (instance ?JTMT JustifiedTrueTheory)
   (forall (?S)
     (=>
-      (element ?N ?TJMT))
+      (element ?N ?JTMT))
       (exists (?VDA ?C)
         (and 
             (instance ?VDA ValidDeductiveArgument)
@@ -371,11 +371,11 @@ deductively valid.")
                 (truth ?VDA True)))))))
 
 ;; We could add this if it's used a lot!
-(documentation TrueJustifiedEthicalTheory EnglishLanguage "A true, justified 
+(documentation JustifiedTrueEthicalTheory EnglishLanguage "A justified true 
 theory is one whose premises are all true and whose argumenst are 
 deductively valid.")
-(subclass TrueJustifiedEthicalTheory JustifiedTheory)
-(subclass TrueJustifiedEthicalTheory EthicalTheory)             
+(subclass JustifiedTrueEthicalTheory JustifiedTheory)
+(subclass JustifiedTrueEthicalTheory EthicalTheory)             
 
 (documentation EthicalSentence EnglishLanguage "A sentence of an ethical theory.")
 (subclass EthicalSentence Sentence)
@@ -431,11 +431,11 @@ self-referentiality.")
 (subclass MetaEthics Philosophy)
 (relatedInternalConcept MetaEthics Ethics)
 
+(theoryFieldPairSubclass MetaEthics MetaEthicalTheory)
+
 (=>
   (instance ?ME MetaEthics)
   (refers ?ME Ethics))
-
-(theoryFieldPairSubclass MetaEthics MetaEthicalTheory)
 
 (documentation Ethics EnglishLanguage "Ethics is the philosophy of the judgments of the conduct, character, or circumstances of 
 agential beings living in a society, which judges them to be right or wrong, to be good or bad, or in some similar way, and is 
@@ -997,7 +997,7 @@ Typically, the formula should refer to an action.")
 (documentation ConsequentialismMetaEthics EnglishLanguage "Consequentialism is an ethical theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
-(subclass ConsequentialismMetaEthics MetaEEthics)    
+(subclass ConsequentialismMetaEthics MetaEthics)    
 
 (documentation ConsequentialistMetaTheory EnglishLanguage "A set of consequentialist sentences.")
 (subclass ConsequentialistMetaTheory MetaEthicalTheory)
@@ -1324,19 +1324,19 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
 ;; Let's just have fun with it!
 ;; Now that MetaEthicalTheory is a thing, I think it's safe, lol?
 
-(documentation NoTrueJustifiedEthicalTheory EnglishLanguage "A moral nihilistic theory asserting that there is no true, justified ethical theory.")
-(subclass NoTrueJustifiedEthicalTheory MoralNihilismTheory)
+(documentation NoJustifiedTrueEthicalTheory EnglishLanguage "A moral nihilistic theory asserting that there is no justified true ethical theory.")
+(subclass NoJustifiedTrueEthicalTheory MoralNihilismTheory)
 
 (<=>
-  (instance ?NTJMT NoTrueJustifiedEthicalTheory)
+  (instance ?NJTMT NoJustifiedTrueEthicalTheory)
   (exists (?MNS)
     (and
-      (element ?MNS ?NTJMT)
+      (element ?MNS ?NJTMT)
       (equal ?MNS
-        (not exists (?TJMT)
+        (not exists (?NJTMT)
           (and
-            (instance ?TJMT EthicalTheory)
-            (instance ?TJMT TrueJustifiedTheory)))))))
+            (instance ?JTMT EthicalTheory)
+            (instance ?JTMT JustifiedTrueTheory)))))))
 
 (documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
@@ -1868,6 +1868,63 @@ best in the situation according to the given utility function.")
           (instance ?IPROC ?CPROC)
           (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
 
+
+(documentation NumHappyPeopleOnEarthUtilityFn EnglishLanguage "A utility function that returns the number of happy people on Earth from the beginning of the 
+situation to the end of time.")
+(instance NumHappyPeopleOnEarthUtilityFn UtilityFormulaFn)
+
+(equal 
+  (NumHappyPeopleOnEarthUtilityFn ?F)
+  (CardinalityFn 
+    (KappaFn ?HUMAN
+      (exists (?T)
+        (and
+          (before (BeginFn (WhenFn (SituationFormulaFn ?F))) ?T)
+          (holdsDuring ?T 
+            (and 
+              (located ?HUMAN PlanetEarth)
+              (attribute ?HUMAN Happiness))))))))
+
+(documentation NumHappyPeopleUtilityFn EnglishLanguage "A utility function that returns the number of happy people from the beginning of the 
+situation to the end of time.")
+(instance NumHappyPeopleUtilityFn UtilityFormulaFn)
+
+(equal 
+  (NumHappyPeopleUtilityFn ?F)
+  (CardinalityFn 
+    (KappaFn ?HUMAN
+      (exists (?T)
+        (and
+          (before (BeginFn (WhenFn (SituationFormulaFn ?F))) ?T)
+          (holdsDuring ?T (attribute ?HUMAN Happiness)))))))
+
+(documentation NumHappyPeopleRelevanceUtilityFn EnglishLanguage "A utility function that returns the number of happy people relevant to the situation.")
+(instance NumHappyPeopleRelevanceUtilityFn UtilityFormulaFn)
+
+(equal 
+  (NumHappyPeopleRelevanceUtilityFn ?F)
+  (CardinalityFn 
+    (KappaFn ?HUMAN
+      (and
+        (relevant ?HUMAN ?F)
+        (attribute ?HUMAN Happiness)))))
+
+(=>
+    (instance ?UF UtilityFormulaFn)
+    (and
+        (domain ?UF 1 Formula)
+        (range ?UF RealNumber)))
+
+          (holdsDuring
+            (WhenFn ?ASO)
+            (located ?TARGET ?LOCATION)))
+
+(CardinalityFn 
+  (KappaFn ?HUMAN
+    (and
+      (attribute ?HUMAN Happiness)
+      (located ?HUMAN PlanetEarth))))
+
 ;; Gewirth's Principle of Generic Consistency
 
 ;; One issue is that I have not defined the dyadic deontic logic,
@@ -2008,6 +2065,10 @@ property necessary for being capable of purposeful action.")
 (=>
   (instance ?AGENT PurposiveAgent)
   (holdsRight (attribute ?AGENT Freedom) ?AGENT))
+
+;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 ;; ETHICS benchmark examples
 
