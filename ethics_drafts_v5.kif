@@ -50,11 +50,13 @@
 ;; For a choice point, there exists an agent that is capable of performing every element of the choice point.
 (=> 
   (instance ?CP ChoicePoint)
-  (exists (?AGENT)
-    (forall (?P)
-      (=> 
-        (element ?P ?CP)
-        (capability ?P agent ?AGENT)))))
+  (and
+    (instance ?CP NonNullSet)
+    (exists (?AGENT)
+      (forall (?P)
+        (=> 
+          (element ?P ?CP)
+          (capability ?P agent ?AGENT))))))
 
 ;; And, hah, because I chose the "believes" version of "Deciding", the duality is broken 😈.
 ;; We can't actually say that, "Because A believes P, P is likely/possible"... without knowing that A is a pretty effective agent.
@@ -193,7 +195,7 @@ smallest situation containing all the options and the agent.")
       (modalAttribute 
         (exists (?JUDGE)
           (and 
-            (instance ?JUDGE MoralJudging)
+            (instance ?JUDGE EthicalJudging)
             (agent ?JUDGE ?AGENT)
             (result ?JUDGE 
               (modalAttribute 
@@ -215,7 +217,7 @@ smallest situation containing all the options and the agent.")
             (element ?BEHAVE ?MD)
             (exists (?JUDGE)
                 (and 
-                  (instance ?JUDGE MoralJudging)
+                  (instance ?JUDGE EthicalJudging)
                   (agent ?JUDGE ?AGENT)
                   (result ?JUDGE 
                     (modalAttribute 
@@ -262,48 +264,50 @@ smallest situation containing all the options and the agent.")
         (entails (ListAndFn (SetToListFn ?MT)) ?OBL1)
         (entails (ListAndFn (SetToListFn ?MT)) ?OBL2)))))
 
-(documentation theoryPhilosophyPair EnglishLanguage "This predicate denotes that a (moral) theory and 
-a (moral) philosophy as a proposition are paired in the natural manner.") 
-(domain theoryPhilosophyPair 1 Ethics)
-(domain theoryPhilosophyPair 2 MoralTheory)
-(relatedInternalConcept theoryPhilosophyPair abstractCounterpart)
+(documentation theoryFieldPair EnglishLanguage "This predicate denotes that a field of study considered as a proposition 
+and a theory are paired in the natural manner.") 
+(domain theoryFieldPair 1 FieldOfStudy)
+(domain theoryFieldPair 2 Theory)
+(relatedInternalConcept theoryFieldPair abstractCounterpart)
 
-;; A moral philosophy is the abstract counterpart to a moral theory.
+;; An ethical philosophy is the abstract counterpart to an ethical theory.
+;; Likewise for any field of study and its theory
 (=> 
-  (theoryPhilosophyPair ?P ?T)
-  (abstractCounterpart ?P ?T))
+  (theoryFieldPair ?F ?T)
+  (abstractCounterpart ?F ?T))
 
 ;; ?P and ?T are a theory-philosophy pair if and only if 
 ;; the concatenation of sentences in ?T contains the information of ?P
 (<=> 
-  (theoryPhilosophyPair ?P ?T)
-  (containsInformation (ListAndFn (SetToListFn ?T)) ?P))
+  (theoryFieldPair ?F ?T)
+  (containsInformation (ListAndFn (SetToListFn ?T)) ?F))
 
-(documentation theoryPhilosophyPairSubclass EnglishLanguage "This predicate denotes that a (moral) theory and 
-a (moral) philosophy as a proposition are paired in the natural manner.") 
-(domainSubclass theoryPhilosophyPairSubclass 1 Ethics)
-(domainSubclass theoryPhilosophyPairSubclass 2 MoralTheory)
-(relatedInternalConcept theoryPhilosophyPairSubclass abstractCounterpart)
+(documentation theoryFieldPairSubclass EnglishLanguage "This predicate denotes that a subclass of a field of study considered as a proposition 
+and a subclass of theories are paired in the natural manner: each instance of the field of study is paired with an instance of the theory (and vice versa).") 
+(domainSubclass theoryFieldPairSubclass 1 FieldOfStudy)
+(domainSubclass theoryFieldPairSubclass 2 Theory)
+(relatedInternalConcept theoryFieldPairSubclass theoryFieldPair)
+(relatedInternalConcept theoryFieldPairSubclass abstractCounterpart)
 
-;; ?MP and ?MT are paired clasess of theories and philosophies if and only if
-;; Every instance of ?MP is paired with an instance of ?MT and vice versa.
+;; ?FClass and ?TClass are paired classes of fields and theories if and only if
+;; Every instance of ?FClass is paired with an instance of ?TClass and vice versa.
 (<=>
-  (theoryPhilosophyPairSubclass ?MP ?MT)
+  (theoryFieldPairSubclass ?FClass ?TClass)
   (and
-    (forall (?IMP)
+    (forall (?FInst)
       (=>
-        (instance ?IMP ?MP)
-        (exists (?IMT)
+        (instance ?FInst ?FClass)
+        (exists (?TInst)
           (and 
-            (instance ?IMT ?MT)
-            (theoryPhilosophyPair ?IMP ?IMT)))))
-    (forall (?IMT)
+            (instance ?TInst ?TClass)
+            (theoryFieldPair ?FInst ?TInst)))))
+    (forall (?TInst)
       (=>
-        (instance ?IMT ?MT)
-        (exists (?IMP)
+        (instance ?TInst ?TClass)
+        (exists (?FInst)
           (and 
-            (instance ?IMP ?MP)
-            (theoryPhilosophyPair ?IMP ?IMT)))))))
+            (instance ?FInst ?FClass)
+            (theoryFieldPair ?FInst ?TInst)))))))
 
 ;; Reminder, sentences are well-formed!
 ;; (documentation Sentence EnglishLanguage "A syntactically well-formed formula 
@@ -341,17 +345,18 @@ sentence has a justification (an argument).")
             (containsInformation ?S ?C)))))))
 
 ;; I might wish to have a weakly justified theory where each sentence 
-;; that contains a moral judgment is "justified",
-;; i.e., "every pursive agent holds a right to freedom" is justified,
+;; that contains an ethical judgment is "justified",
+;; i.e., "every purposive agent holds a right to freedom" is justified,
 ;; yet some of the premises that support this justification aren't necessarily.
+;; -- Ok, there being an argument doesn't mean it is true and valid, as in the below >:D.
 
-(documentation TrueJustifiedMoralTheory EnglishLanguage "A true justified 
-moral theory is one whose premises are all true and whose argumenst are 
+(documentation TrueJustifiedTheory EnglishLanguage "A true, justified 
+theory is one whose premises are all true and whose argumenst are 
 deductively valid.")
-(subclass TrueJustifiedMoralTheory JustifiedTheory)
+(subclass TrueJustifiedTheory JustifiedTheory)
 
 (<=>
-  (instance ?TJMT TrueJustifiedMoralTheory)
+  (instance ?TJMT TrueJustifiedTheory)
   (forall (?S)
     (=>
       (element ?N ?TJMT))
@@ -365,57 +370,86 @@ deductively valid.")
                 (premise ?VDA ?PREM)
                 (truth ?VDA True)))))))
 
-(documentation MoralSentence EnglishLanguage "A sentence of a moral theory")
-(subclass MoralSentence Sentence)
+;; We could add this if it's used a lot!
+(documentation TrueJustifiedEthicalTheory EnglishLanguage "A true, justified 
+theory is one whose premises are all true and whose argumenst are 
+deductively valid.")
+(subclass TrueJustifiedEthicalTheory JustifiedTheory)
+(subclass TrueJustifiedEthicalTheory EthicalTheory)             
+
+(documentation EthicalSentence EnglishLanguage "A sentence of an ethical theory.")
+(subclass EthicalSentence Sentence)
+
+(documentation EthicalTheory EnglishLanguage "A set of sentences in an ethical theory")
+(subclass EthicalTheory Theory)
 
 (<=>
-  (instance ?SENTENCE MoralSentence)
+  (instance ?SENTENCE EthicalSentence)
   (exists (?THEORY)
     (and
-      (instance ?THEORY MoralTheory)
+      (instance ?THEORY EthicalTheory)
       (element ?SENTENCE ?THEORY))))
 
-(documentation MoralTheory EnglishLanguage "A set of sentences in a moral theory")
-(subclass MoralTheory Theory)
-
+;; This is implied by the above.
 (<=> 
-  (instance ?MT MoralTheory)
+  (instance ?MT EthicalTheory)
   (forall (?SENTENCE)
     (=>
       (element ?SENTENCE ?MT) 
-      (instance ?SENTENCE MoralSentence))))
+      (instance ?SENTENCE EthicalSentence))))
 
 (=>
-  (instance ?S MoralSentence)
+  (instance ?S EthicalSentence)
   (exists (?J)
     (and
       (instance ?J Judging)
       (result ?J ?S))))
 
-(documentation MoralJudging EnglishLanguage "A subclass of Judging where the proposition believed is 
-a moral sentence from a moral theory (in a given paradigm).")
-(subclass MoralJudging Judging)
+(documentation EthicalJudging EnglishLanguage "A subclass of Judging where the proposition believed is 
+an ethical sentence from an ethical theory (in a given paradigm).")
+(subclass EthicalJudging Judging)
 
 (=>
-  (instance ?JUDGE MoralJudging)
+  (instance ?JUDGE EthicalJudging)
   (exists (?SENTENCE)
     (and
-      (instance ?SENTENCE MoralSentence)
+      (instance ?SENTENCE EthicalSentence)
       (result ?JUDGE ?SENTENCE))))
+
+(documentation MetaEthicalTheory EnglishLanguage "A theory about ethical theories that is itself not technically a ethical theory.")
+(subclass MetaEthicalTheory Theory)
+;; I think it's safe to make ethical theories a subclass xD
+;; Actually, I don't wish to.
+;; Because one may wish to have a consequentialist theory that doesn't make the 
+;; meta-ethical consequentialist claim about all ethical theories.
+;; (subclass EthicalTheory MetaEthicalTheory)
+
+(documentation MetaEthics Philosophy EnglishLanguage "Meta-ethics is a domain 
+of philosophy concerned with the nature of Ethics.  Some of these theories 
+may make claims about Ethics as a whole, so this class exists to side-step 
+self-referentiality.")
+(subclass MetaEthics Philosophy)
+(relatedInternalConcept MetaEthics Ethics)
+
+(=>
+  (instance ?ME MetaEthics)
+  (refers ?ME Ethics))
+
+(theoryFieldPairSubclass MetaEthics MetaEthicalTheory)
 
 (documentation Ethics EnglishLanguage "Ethics is the philosophy of the judgments of the conduct, character, or circumstances of 
 agential beings living in a society, which judges them to be right or wrong, to be good or bad, or in some similar way, and is 
 used to guide the actions of the agents in the society.")
 (subclass Ethics Philosophy)
 
-;; Every instance of ethics is paired with an instance of a moral theory; and vice versa.
-(theoryPhilosophyPairSubclass Ethics MoralTheory)
+;; Every instance of ethics is paired with an instance of an ethical theory; and vice versa.
+(theoryFieldPairSubclass Ethics EthicalTheory)
 
 (=> 
   (and 
     (instance ?MP Ethics)
-    (instance ?MT MoralTheory)
-    (theoryPhilosophyPair ?MP ?MT))
+    (instance ?MT EthicalTheory)
+    (theoryFieldPair ?MP ?MT))
   (exists (?GROUP)
     (and
       (instance ?GROUP Group)
@@ -428,7 +462,7 @@ used to guide the actions of the agents in the society.")
           (element ?SENT ?MT)
           (exists (?JUDGE ?BEHAVIOR ?JUDGER)
             (and 
-              (instance ?JUDGE MoralJudging)
+              (instance ?JUDGE EthicalJudging)
               (result ?JUDGE ?SENT)
               (subCollection ?JUDGER ?GROUP)
               (agent ?JUDGE ?JUDGER)
@@ -460,14 +494,14 @@ used to guide the actions of the agents in the society.")
 (contraryAttribute MorallyGood MorallyBad)
 (contraryAttribute MorallyGood MorallyNeutral)
 (contraryAttribute MorallyBad MorallyNeutral)
-(contraryAttribute VirtueAttribute ViceAtribute) 
+(contraryAttribute VirtueAttribute ViceAttribute) 
 
 
 (documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral or deontic attributes.")
-(subclass DeontologicalTheory MoralTheory)
+(subclass DeontologicalTheory EthicalTheory)
 
 (documentation ValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
-(subclass ValueJudgmentTheory MoralTheory)
+(subclass ValueJudgmentTheory EthicalTheory)
 
 (=>
   (instance ?D ValueJudgmentTheory)
@@ -477,7 +511,7 @@ used to guide the actions of the agents in the society.")
       (instance ?S ValueJudgmentSentence))))
 
 (documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
-(subclass ValueJudgmentSentence MoralSentence)
+(subclass ValueJudgmentSentence EthicalSentence)
 
 (documentation SimpleValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
 (subclass SimpleValueJudgmentSentence ValueJudgmentSentence)
@@ -960,15 +994,50 @@ Typically, the formula should refer to an action.")
         (modalAttribute 
           (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
 
-(documentation Consequentialism EnglishLanguage "Consequentialism is a moral theory that holds 
+(documentation ConsequentialismMetaEthics EnglishLanguage "Consequentialism is an ethical theory that holds 
+that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
+or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
+(subclass ConsequentialismMetaEthics MetaEEthics)    
+
+(documentation ConsequentialistMetaTheory EnglishLanguage "A set of consequentialist sentences.")
+(subclass ConsequentialistMetaTheory MetaEthicalTheory)
+
+(theoryFieldPairSubclass ConsequentialismMetaEthics ConsequentialistMetaTheory)
+
+(documentation SimpleActionValueJudgmentConsequentialistMetaTheory EnglishLanguage 
+"This form of consequentialism states that the truth of an ethical judgment of an 
+action is true if and only if there is a valid consequentialist argument for the 
+judgment.")
+(subclass SimpleActionValueJudgmentConsequentialistMetaTheory ConsequentialistMetaTheory)
+
+(<=>
+  (instance ?CMT ConsequentialistMetaTheory)
+  (exists (?CS)
+    (and
+      (element ?CS ?CMT)
+      (equal ?CS
+        (forall (?MS)
+          (=>
+            (insance ?MS SimpleActionValueJudgmentSentence)
+            (<=>
+              (truth ?MS True)
+              (and
+                (exists (?A)
+                  (and 
+                    (instance ?A ValidDeductiveArgument
+                    (instance ?A ConsequentialistArgument)
+                    (conclusion ?A ?MS))))))))))))
+
+
+(documentation Consequentialism EnglishLanguage "Consequentialism is an ethical theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).")
 (subclass Consequentialism Ethics)    
 
 (documentation ConsequentialistTheory EnglishLanguage "A set of consequentialist sentences.")
-(subclass ConsequentialistTheory MoralTheory)
+(subclass ConsequentialistTheory EthicalTheory)
 
-(theoryPhilosophyPair Consequentialism ConsequentialistTheory)
+(theoryFieldPairSubclass Consequentialism ConsequentialistTheory)
 
 ;; As mentioned above, in consequentialism the “consequences” of an action are everything the 
 ;; action brings about, including the action itself. In consequentialism, the “consequences” 
@@ -1105,13 +1174,13 @@ by reference to the consequences of some action.")
               ;;     (element ?C ?CS)
               ;;     (refers ?P ?C))))))))))
 
-;; A consequentialist theory is a moral theory that is justified where 
+;; A consequentialist theory is an ethical theory that is justified where 
 ;; ... every sentence is the conclusion of a consequentialist argument.
 ;; (Arguably this holds however we define consequentialist argument!)
 (<=> 
   (instance ?CT ConsequentialistTheory)
   (and 
-    (instance ?CT MoralTheory)
+    (instance ?CT EthicalTheory)
     (instance ?CT JustifiedTheory)
     (forall (?S)
       (=> 
@@ -1122,7 +1191,7 @@ by reference to the consequences of some action.")
             (conclusion ?A ?C)
             (containsInformation ?S ?C)))))))
 
-(documentation ConsequentialistUtilitarianism EnglishLanguage "Consequentialism is a moral theory that holds 
+(documentation ConsequentialistUtilitarianism EnglishLanguage "Consequentialism is an ethical theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).
 Utilitarianism is the ethical paradigm that judges the morality of an action based on whether it maximizes the 
@@ -1137,7 +1206,7 @@ Consequentialist utilitarianism combines both: what is good or bad depends on th
 (subclass ConsequentialistUtilitarianTheory UtilitarianTheoryTheory)
 
 
-(theoryPhilosophyPair ConsequentialistUtilitarianism ConsequentialistUtilitarianTheory)
+(theoryFieldPairSubclass ConsequentialistUtilitarianism ConsequentialistUtilitarianTheory)
 
 (documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
 of that which is described where the utility measurement only depends on the consequences of an action.")
@@ -1145,7 +1214,7 @@ of that which is described where the utility measurement only depends on the con
 
 ;; F is an action formula iff there exists a subclass of autonomous agent processes realizing F.
 (<=>
-  (instance ?FORMULA ActionFormula
+  (instance ?FORMULA ActionFormula)
   (exists (?CPROC)
     (and 
       (subclass ?CPROC AutonomousAgentProcess)
@@ -1194,38 +1263,10 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
 (subclass MoralNihilism Ethics)
 
 (documentation MoralNihilismTheory EnglishLanguage "A set of sentences describing a moral nihilistic stance.")
-(subclass MoralNihilismTheory MoralTheory)
+(subclass MoralNihilismTheory MetaEthicalTheory)
 
-(documentation NoMoralFactsTheory EnglishLanguage "A moral nihilistic theory asserting that there are no moral facts.")
-(subclass NoMoralFactsTheory MoralNihilismTheory)
-
-;; NMFT no moral facts moral theory, MNS moral nihilism sentence, 
-;; All no moral facts theories contain a sentence stating that 
-;; there is no true moral theory for which all of its sentences are facts.
-(<=>
-  (instance ?NMFT NoMoralFactsTheory)
-  (exists (?MNS)
-    (and
-      (element ?MNS ?NMFT)
-      (equal ?MNS 
-        (not exists (?TMT)
-          (forall (?S)
-            (=>
-              (element ?S ?TMT)
-              (instance ?S Fact))))))))
-
-;; can I just say it like this, lol?
-;; The good thing about the other way to write it is that 
-;; the edit distance to 'similarity'-incorporating versions is lower!
-;; ... and we probably wish to be fuzzy here, so I think I'll keep it.
-(<=>
-  (instance ?NMFT NoMoralFactsTheory)
-  (element 
-    (not exists (?TMT)
-      (forall (?S)
-        (=>
-          (element ?S ?TMT)
-          (instance ?S Fact)))) ?NMFT))
+;; Just pretend the MetaEthicalTheory-lifted version is there.  Yawn.
+(theoryFieldPairSubclass MoralNihilism MoralNihilismTheory)
 
 (documentation NoMoralWrongTheory EnglishLanguage "A moral nihilistic theory asserting that nothing is morally wrong.")
 (subclass NoMoralWrongTheory MoralNihilismTheory)
@@ -1241,17 +1282,61 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
         (not exists (?MW)
           (modalAttribute ?MW MorallyBad))))))
 
-(documentation NoTrueJustifiedMoralTheory EnglishLanguage "A moral nihilistic theory asserting that there is no true, justified moral theory.")
-(subclass NoTrueJustifiedMoralTheory MoralNihilismTheory)
+(documentation NoMoralFactsTheory EnglishLanguage "A moral nihilistic theory asserting that there are no moral facts.")
+(subclass NoMoralFactsTheory MoralNihilismTheory)
+
+;; NMFT no moral facts moral theory, MNS moral nihilism sentence, 
+;; All no moral facts theories contain a sentence stating that 
+;; there is no true moral theory for which all of its sentences are facts.
+(<=>
+  (instance ?NMFT NoMoralFactsTheory)
+  (exists (?MNS)
+    (and
+      (element ?MNS ?NMFT)
+      (equal ?MNS 
+        (not exists (?TMT)
+          (and
+            (instance ?TMT EthicalTheory)
+            (forall (?S)
+              (=>
+                (element ?S ?TMT)
+                (instance ?S Fact)))))))))
+
+;; can I just say it like this, lol?
+;; The good thing about the other way to write it is that 
+;; the edit distance to 'similarity'-incorporating versions is lower!
+;; ... and we probably wish to be fuzzy here, so I think I'll keep it.
+(<=>
+  (instance ?NMFT NoMoralFactsTheory)
+  (element 
+    (not exists (?TMT)
+      (and
+        (instance ?TMT EthicalTheory)
+        (forall (?S)
+          (=>
+            (element ?S ?TMT)
+            (instance ?S Fact)))) ?NMFT)))
+
+;; The above is self-contradictory.  So, actually, I think what I already 
+;; formalized for moral theories contradicts this.
+;; A moral theory is used by an ethical group to judge their actions.
+;; So this is more of a meta-ethical theory.
+;; Let's just have fun with it!
+;; Now that MetaEthicalTheory is a thing, I think it's safe, lol?
+
+(documentation NoTrueJustifiedEthicalTheory EnglishLanguage "A moral nihilistic theory asserting that there is no true, justified ethical theory.")
+(subclass NoTrueJustifiedEthicalTheory MoralNihilismTheory)
 
 (<=>
-  (instance ?NTJMT NoTrueJustifiedMoralTheory)
+  (instance ?NTJMT NoTrueJustifiedEthicalTheory)
   (exists (?MNS)
     (and
       (element ?MNS ?NTJMT)
       (equal ?MNS
         (not exists (?TJMT)
-          (instance ?TJMT TrueJustifiedMoralTheory))))))
+          (and
+            (instance ?TJMT EthicalTheory)
+            (instance ?TJMT TrueJustifiedTheory)))))))
 
 (documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
@@ -1260,9 +1345,9 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (subclass VirtueEthics Ethics)
 
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
-(subclass VirtueEthicsTheory MoralTheory)
+(subclass VirtueEthicsTheory EthicalTheory)
 
-(theoryPhilosophyPair VirtueEthics ValueJudgmentTheory)
+(theoryFieldPairSubclass VirtueEthics ValueJudgmentTheory)
 
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
 (domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
@@ -1592,7 +1677,7 @@ instantiate.")
 ;; lol, being total valued is questionable
 
 ;; Specifying the size and form of the output theory:
-;; The theory consists of a moral judgment for each option in the choice point:
+;; The theory consists of an ethical judgment for each option in the choice point:
 ;; Is it good/bad/neutral for this action to be instantiated?
 ;; If the theory and formula describing the situation of the choice point entail that 
 ;; taking the action is good or bad, then that's the output.  
@@ -1642,7 +1727,7 @@ instantiate.")
             (equal ?MORALATTRIBUTE  MorallyNeutral)))))))
 
 ;; Example: for the choice point between keeping oneself (in a given location) and killing,
-;; and the moral theory that killing is universally bad,
+;; and the ethical theory that killing is universally bad,
 ;; the  evaluation should parrot that killing is bad and keeping still is morally neutral.
 (exists  (?CP ?VJT ?KEEPING)
   (and
@@ -2069,3 +2154,6 @@ property necessary for being capable of purposeful action.")
   (probabilityFn 
     (prefers ?NORMALPERSON SITUATION1 SITUATION2)
     0.5))
+
+;; Auxiliary functions.
+;; 
