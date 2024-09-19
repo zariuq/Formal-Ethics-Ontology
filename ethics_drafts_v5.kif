@@ -445,6 +445,66 @@ used to guide the actions of the agents in the society.")
 ;; Every instance of ethics is paired with an instance of an ethical theory; and vice versa.
 (theoryFieldPairSubclass Ethics EthicalTheory)
 
+;; I'm unsure about the instance-vs-class here.  Generally a group's ethical philosophy is not 100% worked out.
+;; OTOH, SUMO may simply not have the granularity to model this appropriately.
+(documentation hasEthicalPhilosophy EnglishLanguage "(hasEthicalPhilosophy ?GROUP ?ETHICS) denotes that the ?GROUP has the ethical philosophy ?ETHICS: 
+the sentences of the philosophy are the result of their ethical judgments and the philosophy influences their decisions (in some manner).")
+(domain hasEthicalPhilosophy 1 Group)
+(domain hasEthicalPhilosophy 2 Ethics)
+(instance hasEthicalPhilosophy BinaryPredicate)
+
+;; A group has an ethical philosophy/theory if and only if every sentence in the theory is the result of an (ethical) judgment by the group
+;; ... and there are some decisions by the group influenced by the philosophy.
+(<=>
+  (and
+    (hasEthicalPhilosophy ?GROUP ?EP)
+    (theoryFieldPair ?EP ?ET))
+  (and
+    (forall (?SENT)
+      (=> 
+        (element ?SENT ?ET)
+        (exists (?JUDGE ?BEHAVIOR ?JUDGER)
+          (and 
+            (instance ?JUDGE EthicalJudging)
+            (result ?JUDGE ?SENT)
+            (subCollection ?JUDGER ?GROUP)
+            (agent ?JUDGE ?JUDGER)
+            (subclass ?BEHAVIOR AutonomousAgentProcess)
+            (refers ?SENT (ClassToSetFn ?BEHAVIOR))))))
+    (exists (?DECIDE ?DECIDER)
+      (and
+        (instance ?DECIDE Deciding)
+        (subCollection ?DECIDER ?GROUP)
+        (agent ?DECIDE ?DECIDER)
+        (influences ?EP ?DECIDE)))))
+
+(<=>
+  (and
+    (hasEthicalPhilosophy ?GROUP ?EP)
+    (theoryFieldPair ?EP ?ET))
+  (and
+    (forall (?SENT)
+      (=> 
+        (element ?SENT ?ET)
+        (exists (?JUDGE ?BEHAVIOR ?JUDGER)
+          (and 
+            (instance ?JUDGE EthicalJudging)
+            (result ?JUDGE ?SENT)
+            (subCollection ?JUDGER ?GROUP)
+            (agent ?JUDGE ?JUDGER)
+            (subclass ?BEHAVIOR AutonomousAgentProcess)
+            (refers ?SENT (ClassToSetFn ?BEHAVIOR))))))
+    (forall (?DECIDE ?DECIDER)
+      (=>
+        (and
+          (instance ?DECIDE Deciding)
+          (subCollection ?DECIDER ?GROUP)
+          (agent ?DECIDE ?DECIDER)
+          (relevant ?EP ?DECIDE)))
+      (modalAttribute
+        (influences ?EP ?DECIDE) Likely)))
+
+;; version prior to introduction of hasEthicalPhilosophy
 (=> 
   (and 
     (instance ?MP Ethics)
@@ -468,6 +528,13 @@ used to guide the actions of the agents in the society.")
               (agent ?JUDGE ?JUDGER)
               (subclass ?BEHAVIOR AutonomousAgentProcess)
               (refers ?SENT (ClassToSetFn ?BEHAVIOR)))))))))
+
+;; Ok, well, this part of the definiton can be dropped.  Cuz it's background knowledge.
+;; (=>
+;;     (and
+;;         (instance ?GROUP Group)
+;;         (member ?MEMB ?GROUP))
+;;     (instance ?MEMB AutonomousAgent))
 
 (documentation MoralAttribute EnglishLanguage "Moral Attributes are a subclass of Normative Attributes intended to denote whether something is Good, Bad, Right, Wrong, Virtuous, Viceful, or other moral attributes.")
 (subclass MoralAttribute NormativeAttribute)
@@ -1845,26 +1912,26 @@ best in the situation according to the given utility function.")
   (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION)
   (and
     (exists (?AGENT)
-      (capableInSituation ?CRPOC agent ?AGENT ?SITUATION)))
+      (capableInSituation ?CPROC agent ?AGENT ?SITUATION)))
     forall (?AGENT ?CPROC2)
       (=>
         (and 
-          (capableInSituation ?CRPOC2 agent ?AGENT ?SITUATION)
+          (capableInSituation ?CPROC2 agent ?AGENT ?SITUATION)
           (realizesFormulaSubclass ?CPROC ?F1)
           (realizesFormulaSubclass ?CPROC2 ?F2))
         (greaterThanOrEqualTo (AssignmentFn ?UF ?F1) (AssignmentFn ?UF ?F2))))
 
 ;; All agents have an obligation to do that which is the best in all situations
 ;; according to utility functions they believe represent happiness.
-(holdsObligation (
-  (forall (?SITUATION ?CPROC ?UF)
+(holdsObligation 
+  ((forall (?SITUATION ?CPROC ?UF)
     (=>
       (and
         (believes ?AGENT (represents ?UF Happiness))
         (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION))
       (exists (?IPROC)
         (and 
-          (agent ?IRPOC ?AGENT)
+          (agent ?IPROC ?AGENT)
           (instance ?IPROC ?CPROC)
           (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
 
@@ -1909,21 +1976,18 @@ situation to the end of time.")
         (relevant ?HUMAN ?F)
         (attribute ?HUMAN Happiness)))))
 
-(=>
-    (instance ?UF UtilityFormulaFn)
-    (and
-        (domain ?UF 1 Formula)
-        (range ?UF RealNumber)))
-
-          (holdsDuring
-            (WhenFn ?ASO)
-            (located ?TARGET ?LOCATION)))
-
-(CardinalityFn 
-  (KappaFn ?HUMAN
-    (and
-      (attribute ?HUMAN Happiness)
-      (located ?HUMAN PlanetEarth))))
+;; Now we can specify this: every agent has the obligation to, in every situation, take the action that will bring about the highest number of happy people 
+;; in the extended lightcone of the situtaion (including its beginning, even if that's in the past).
+;; We could do the same for only making those relevant to the situation happy.
+(holdsObligation 
+  ((forall (?SITUATION ?CPROC)
+    (=>
+      (bestActionByUtilityInSituation ?CPROC NumHappyPeopleUtilityFn ?SITUATION)
+      (exists (?IPROC)
+        (and 
+          (agent ?IPROC ?AGENT)
+          (instance ?IPROC ?CPROC)
+          (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
 
 ;; Gewirth's Principle of Generic Consistency
 
