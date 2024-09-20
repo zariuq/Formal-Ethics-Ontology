@@ -1136,7 +1136,7 @@ the morality of an action based on the action's adherence to a set of rules and 
                 (exists (?PROCESS)
                   (realizesFormula ?PROCESS ?RULE)) MorallyGood))))))))
 
-;; All instances of deontology have subpropositions that contain moral sentences.
+;; All instances of deontology have subProposition that contain moral sentences.
 ;; These moral sentences are elements of a deontological theory.
 ;; I think this is good to say.  Clearly I want a "this sentence is a deontological sentence" shorthand".
 ;;                
@@ -1649,7 +1649,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Basically, the whole "moral sentence" thing is extraneous now :- ).
 ;; I feel as if we'd need greater precision to make the implication go both ways.  
 ;; We'd need to get more logical-implication level.
-;; Yeah, I'm not sure how to avoid the trivialization without quantifying over subPropositionos, which is tricky as P is a subProposition of ~P.
+;; Yeah, I'm not sure how to avoid the trivialization without quantifying over subProposition, which is tricky as P is a subProposition of ~P.
 (=>
   (instance ?MP VirtueEthics)
   (exists (?MT)
@@ -1672,7 +1672,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (containsInformation ?MTS ?MP)
       (instance ?MTS VirtueEthicsSentence))))
 
-;; Weirdly, quantifying over subPropositions seems too vague.
+;; Weirdly, quantifying over subProposition seems too vague.
 ;; So we go over sentences in both directions.
 (=>
   (instance ?MT VirtueEthicsTheory)

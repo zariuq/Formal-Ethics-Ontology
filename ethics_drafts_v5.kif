@@ -455,6 +455,8 @@ the sentences of the philosophy are the result of their ethical judgments and th
 
 ;; A group has an ethical philosophy/theory if and only if every sentence in the theory is the result of an (ethical) judgment by the group
 ;; ... and there are some decisions by the group influenced by the philosophy.
+;; Note: SUMO claims subCollection is a proper part but it's not logically defined.  A subrelation of subCollection, subOrganization, is claimed to be reflexive.
+;; I will assume subCollection is not 'proper', i.e., we can have a single-person group. :) 
 (<=>
   (and
     (hasEthicalPhilosophy ?GROUP ?EP)
@@ -555,6 +557,13 @@ the sentences of the philosophy are the result of their ethical judgments and th
 (subclass VirtueAttribute PsychologicalAttribute)
 (subclass ViceAttribute PsychologicalAttribute)
 
+(documentation DeonticAttribute EnglishLanguage "A Class containing all of the Attributes relating to the notions of permission, obligation, and prohibition.")	
+(subclass DeonticAttribute ObjectiveNorm)
+
+(instance Obligation DeonticAttribute)
+(instance Permission DeonticAttribute)
+(instance Prohibition DeonticAttribute)
+
 ;; Do we want a moral attribute for utilitarianism?
 
 ;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
@@ -650,6 +659,33 @@ in a given situation.")
 (documentation DeontologicalImperativeTheory EnglishLanguage "A set of sentences containing deontic attributes.")
 (subclass DeontologicalImperativeTheory DeontologicalTheory)
 
+(documentation ImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
+(subclass ImperativeSentence DeontologicalSentence)    
+
+(documentation SimpleImperativeSentence EnglishLanguage "A sentence that describes an imperative deontic operator.")      
+(subclass SimpleImperativeSentence ImperativeSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleImperativeSentence)
+  (exists (?F ?DEONTICATTRIBUTE)
+        (and
+          (equal (modalAttribute ?F ?DEONTICATTRIBUTE) ?SENTENCE)
+          (instance ?F Formula)
+          (instance ?DEONTICATTRIBUTE DeonticAttribute))))
+
+(<=>
+  (instance ?SENTENCE ImperativeSentence)
+  (exists (?IT)
+    (and
+      (instance ?IT SimpleImperativeSentence)
+      (part ?IT ?SENTENCE))))
+
+(<=>
+  (instance ?DIT DeontologicalImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?DIT)
+      (instance ?S ImperativeSentence))))
 
 (documentation SimpleImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
 (domain SimpleImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
@@ -1162,8 +1198,7 @@ or the intrinsic nature of the act or anything that happens before the act)' (St
   (causes ?P1 ?P2)
   (result ?P1 ?P2))
 
-(documentation ConsequenceSet EnglishLanguage "A set containing all thec consequences of an 
-action.")
+(documentation ConsequenceSet EnglishLanguage "A set containing all the consequences of an action.")
 (subclass ConsequenceSet NonNullSet)
 
 ;; Naw, guess they can be non-physical.
@@ -1258,6 +1293,34 @@ by reference to the consequences of some action.")
             (conclusion ?A ?C)
             (containsInformation ?S ?C)))))))
 
+(documentation ConsequentialistUtilitarianArgument EnglishLanguage "An argument that is made on consequentialist grounds, namely, 
+by reference to the consequences of some action.")
+(subclass ConsequentialistUtilitarianArgument ConsequentialistArgument)
+
+;; Ok, this is very sloppy.
+;; 1) I'm not sure how to apply a UtilityFormulaFn to a Consequence (instance)
+;; 2) I'm saying that for every consequence in the premises, the argument contains an assignment 
+;;    of value to that consequence by some utility function.
+;; 3) I should make a hasConsequenceSet predicate to pair it as a proper existential witness!
+;; Anyway, this is an MVP-PoC work.  Not perfection.
+(<=>
+  (instance ?ARGUE ConsequentialistUtilitarianArgument)
+  (and 
+    (instance ?ARGUE Argument)
+    (exists (?CS)
+      (and
+        (instance ?CS ConsequenceSet)
+        (forall (?PREM)
+          (=>
+            (and 
+              (premise ?ARGUE ?PREM)
+              (represents ?P ?PREM)
+              (element ?P ?CS))
+            (exists (?UF)
+              (and 
+                (subProposition ?PP Argument)
+                (represents ?PP (AssignmentFn ?UF (instance ?P Consequence)))))))))))
+
 (documentation ConsequentialistUtilitarianism EnglishLanguage "Consequentialism is an ethical theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
 or the intrinsic nature of the act or anything that happens before the act)' (Stanford Encyclopedia of Philosophy).
@@ -1270,7 +1333,7 @@ Consequentialist utilitarianism combines both: what is good or bad depends on th
 
 (documentation ConsequentialistUtilitarianTheory EnglishLanguage "A set of consequentialist sentences.")
 (subclass ConsequentialistUtilitarianTheory ConsequentialistTheory)
-(subclass ConsequentialistUtilitarianTheory UtilitarianTheoryTheory)
+(subclass ConsequentialistUtilitarianTheory UtilitarianTheory)
 
 
 (theoryFieldPairSubclass ConsequentialistUtilitarianism ConsequentialistUtilitarianTheory)
@@ -1980,14 +2043,173 @@ situation to the end of time.")
 ;; in the extended lightcone of the situtaion (including its beginning, even if that's in the past).
 ;; We could do the same for only making those relevant to the situation happy.
 (holdsObligation 
-  ((forall (?SITUATION ?CPROC)
+  (forall (?SITUATION ?CPROC)
     (=>
       (bestActionByUtilityInSituation ?CPROC NumHappyPeopleUtilityFn ?SITUATION)
       (exists (?IPROC)
         (and 
           (agent ?IPROC ?AGENT)
           (instance ?IPROC ?CPROC)
-          (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
+          (equal ?SITUATION (SITUATIONFn ?IPROC)))))) ?AGENT)
+
+;; Ok, the above ways of meausuring utility are crude.  They should by synthesized with the causal lightcone stuff from consequentialism!
+;; Homework for my AI descendents!
+(documentation GreatestHappinessPrincipleUtilitarianism EnglishLanguage "The Greatest Happiness principle stipulates that the best course of action is that which causes the greatest happiness.")
+(subclass GreatestHappinessPrincipleUtilitarianism Utilitarianism)
+
+(instance GreaestNumHappyPeopleUtilitarianism GreatestHappinessPrincipleUtilitarianism)
+
+;; While this dodges the obligatory-embedding, I believe you could institute a similar wrapper for anyone who holds a deontic theory!
+(<=>
+  (hasEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
+  (desires ?AGENT
+    (forall (?SITUATION ?CPROC)
+      (=>
+        (and
+          (capableInSituation ?CPROC agent ?AGENT ?SITUATION)
+          (bestActionByUtilityInSituation ?CPROC NumHappyPeopleUtilityFn ?SITUATION))
+        (exists (?IPROC)
+          (and 
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?CPROC)
+            (equal ?SITUATION (SITUATIONFn ?IPROC))))))))
+
+(subclass Benevolence VirtueAttribute)
+(instance UtilitarianGreatestNumHappyBenevolence Benevolence)
+
+(=>
+  (attribute ?AGENT UtilitarianGreatestNumHappyBenevolence)
+  (desires ?AGENT
+    (forall (?SITUATION ?CPROC)
+      (=>
+        (and
+          (capableInSituation ?CPROC agent ?AGENT ?SITUATION)
+          (bestActionByUtilityInSituation ?CPROC NumHappyPeopleUtilityFn ?SITUATION))
+        (exists (?IPROC)
+          (and 
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?CPROC)
+            (equal ?SITUATION (SITUATIONFn ?IPROC))))))))
+
+;; Honesty and Truthfulness (largely as virtues)
+
+;; (subclass IntentionallyHonestCommunication Communication)
+(documentation HonestCommunication EnglishLanguage "Communication is honest when the communicator believes the message to be true while communicating.")
+(subclass HonestCommunication Communication)
+
+;; ?COMM is honest communication when it is communication by a cognitive agent who believes the message to be true during the communication.
+(<=>
+  (instance ?COMM HonestCommunication)
+  (and
+    (instance ?COMM Communication)
+    (instance ?AGENT CognitiveAgent)
+    (agent ?COMM ?AGENT)
+    (patient ?COMM ?MESSAGE))
+    (holdsDuring (WhenFn ?COMM)
+      (believes ?AGENT
+        (truth ?MESSAGE True))))
+
+(documentation Honesty EnglishLanguage "Honesty is a virtue denoting the tendency of an agent to be honest.")
+(instance Honesty VirtueAttribute)
+(instance Truthfulness VirtueAttribute)
+
+;; Intentional honesty
+(<=> 
+  (attribute ?AGENT Honesty)
+  (desires ?AGENT 
+    (forall (?COMM)
+      (=>
+        (and 
+          (instance ?COMM Communication)
+          (agent ?COMM ?AGENT))
+        (instance ?COMM HonestCommunication)))))
+
+;; Factual honesty
+(<=> 
+  (attribute ?AGENT Honesty)
+  (forall (?COMM)
+      (=>
+        (and 
+          (instance ?COMM Communication)
+          (agent ?COMM ?AGENT))
+        (modalAttribute 
+          (instance ?COMM HonestCommunication) Likely))))
+
+(documentation TrueCommunication EnglishLanguage "Communication is true when the message is true during communication.")
+(subclass TrueCommunication Communication)
+
+(<=>
+  (instance ?COMM TrueCommunication)
+  (and
+    (instance ?COMM Communication)
+    (patient ?COMM ?MESSAGE))
+    (holdsDuring (WhenFn ?COMM)
+      (truth ?MESSAGE True)))
+
+(documentation Truthfulness EnglishLanguage "Truthfulness is a virtue denoting the tendency of an agent's communication to be truthful.")
+(instance Truthfulness VirtueAttribute)
+
+;; Factual truthfulness
+(<=> 
+  (attribute ?AGENT Truthfulness)
+  (forall (?COMM)
+      (=>
+        (and 
+          (instance ?COMM Communication)
+          (agent ?COMM ?AGENT))
+        (modalAttribute 
+          (instance ?COMM TrueCommunication) Likely))))
+
+;; The Deontic Versions (?)
+;; (1) Obligation to tell the truth (intentionally)
+;; (2) Prohibition on lying
+
+;; (1)
+;; Could also use TrueCommunication :> 
+(holdsObligation 
+  (forall (?COMM)
+    (=>
+      (and 
+        (instance ?COMM Communication)
+        (agent ?COMM ?AGENT))
+      (instance ?COMM HonestCommunication))) ?AGENT)
+
+(documentation holdsProhibition EnglishLanguage "Expresses a relationship between a Formula and a CognitiveAgent whereby 
+the CognitiveAgent is prohibited from bringing it about that the Formula is true.")
+(domain holdsProhibition 1 Formula)
+(domain holdsProhibition 2 CognitiveAgent)
+(instance holdsProhibition AsymmetricRelation)
+(instance holdsProhibition BinaryPredicate)
+(relatedInternalConcept holdsProhibition holdsObligation)
+
+(holdsProhibition
+  (exists (?COMM ?MESSAGE)
+    (and
+      (instance ?COMM Communication)
+      (agent ?COMM ?AGENT)
+      (patient ?COMM ?MESSAGE)
+      (holdsDuring (WhenFn ?COMM)
+        (knows ?AGENT
+          (truth ?MESSAGE False))))) ?AGENT)
+
+(documentation Lying EnglishLanguage "Lying is a process of communication where the speaker knows that the message is not true.")
+(subclass Lying Communication)
+
+(=>
+  (and
+    (instance ?LYING Lying)
+    (agent ?LYING ?LIAR)
+    (patient ?COMM ?MESSAGE))
+  (holdsDuring (WhenFn ?COMM)
+        (knows ?LIAR
+          (truth ?MESSAGE False))))
+
+(holdsProhibition 
+  (exists (?COMM) 
+    (and
+      (instance ?COMM Lying)
+      (agent ?COMM ?AGENT))) ?AGENT)
+
 
 ;; Gewirth's Principle of Generic Consistency
 
@@ -2129,6 +2351,93 @@ property necessary for being capable of purposeful action.")
 (=>
   (instance ?AGENT PurposiveAgent)
   (holdsRight (attribute ?AGENT Freedom) ?AGENT))
+
+;;;
+;;; Rule Utilitarianism
+;;;
+
+(documentation RuleConsequentialism EnglishLanguage "An ethical philosophy holding that rules should be selected based on (the goodness of) their consequences. 
+See https://plato.stanford.edu/entries/consequentialism-rule/ for more info.")
+(subclass RuleConsequentialism Deontology)
+(subclass RuleConsequentialism Consequentialism)
+
+(documentation RuleConsequentialistTheory EnglishLanguage "A family of ethical theories holding that rules sohuld be selected based on (the goodness of) their consequences.")
+(subclass RuleConsequentialistTheory Deontological)
+(subclass RuleConsequentialistTheory ConsequentialistTheory)
+
+(theoryFieldPairSubclass RuleConsequentialism RuleConsequentialistTheory)
+
+;; This would imply that all the 'rule' sentences in the theory are justified by consequentialist arguments.
+;; I.e., exactly what we 'might' want under some forms of rule consequentialism
+;; may fall out of the definitions!
+(subclass RuleConsequentialistTheory DeontologicalImperativeTheory)
+
+;; This implies that each consequence justifying a rule is evaluated by a utility function.
+(<=>
+  (instance ?RCT RuleConsequentialistTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?RCT)
+      (exists ?A ?C)
+        (and
+          (instance ?A ConsequentialistUtilitarianArgument)
+          (conclusion ?A ?C)
+          (containsInformation ?S ?C)))))
+
+;;; Two-level Utilitarianism: https://en.wikipedia.org/wiki/Two-level_utilitarianism
+
+(documentation TwoLevelUtilitarianism EnglishLanguage "An ethical philosophy holding that usually rules should be followed where they apply, 
+and in some 'critical' situations, one hsould apply additional utilitarian moral reasoning. See https://en.wikipedia.org/wiki/Two-level_utilitarianism for more.")
+(subclass TwoLevelUtilitarianism Ethics)
+
+(documentation TwoLevelUtilitarianistTheory EnglishLanguage "An ethical theory holding that usually rules should be followed where they apply, 
+and in some 'critical' situations, one hsould apply additional utilitarian moral reasoning. See https://en.wikipedia.org/wiki/Two-level_utilitarianism for more.")
+(subclass TwoLevelUtilitarianistTheory EthicalSentence)
+
+(theoryFieldPairSubclass TwoLevelUtilitarianism TwoLevelUtilitarianistTheory)
+
+;; I'm learning that I should make functions like this more that isolate the essential existential witnesses!
+(documentation twoLevelUtilitarianistTheories EnglishLanguage "(twoLevelUtilitarianistTheories ?T ?R ?U) denotes that ?R is a Rule Consequentialist theory 
+and ?U is a utilitarian theory that make up the theory ?T.")
+(domain twoLevelUtilitarianistTheories 1 TwoLevelUtilitarianistTheory)
+(domain twoLevelUtilitarianistTheories 2 RuleConsequentialistTheory)
+(domain twoLevelUtilitarianistTheories 3 UtilitarianTheory)
+(instance twoLevelUtilitarianistTheories TernaryPredicate)
+
+;; There may be sentences in the two-level theory about how to coordinate among the two levels
+;; Thus they're only subsets.
+;; Would defeasible reasoning be needed for this in practice?
+(=>
+  (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT)
+  (and
+    (subset ?RUT ?TLUT)
+    (subset ?UT ?TLUT)))
+
+;; Let's do some specific example
+(instance GreaestNumHappyPeopleTwoLevelUtilitarianism TwoLevelUtilitarianism)
+(subProposition GreaestNumHappyPeopleUtilitarianism GreaestNumHappyPeopleTwoLevelUtilitarianism)
+
+;; While this dodges the obligatory-embedding, I believe you could institute a similar wrapper for anyone who holds a deontic theory!
+;; (=>
+;;   (and 
+;;     (hasEthicalPhilosophy ?AGENT GreaestNumHappyPeopleTwoLevelUtilitarianism)
+;;     (theoryFieldPair GreaestNumHappyPeopleTwoLevelUtilitarianism ?TLUT)
+;;     (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT))
+;;   (and
+;;     (forall (?RULE ?SITUATION)
+;;       (=>
+
+;; I think I need new predicates I'll deveolp elsewhere for this.
+(=>
+  (and 
+    (hasEthicalPhilosophy ?AGENT ?TLU)
+    (theoryFieldPair ?TLU ?TLUT)
+    (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT))
+;; for all choice points / situations
+;; If ?RUT is relevant, then 'follow' it
+;; Else, follow ?UT.
+;; Need to define what it means to follow an ethical theory.
+;; Related to evaluate theory but not quite.
 
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
