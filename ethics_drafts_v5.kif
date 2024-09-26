@@ -129,7 +129,7 @@
       (similar ?AGENT ?CP ?SCP))))
 
 (documentation ChoicePointAgentFn EnglishLanguage "Maps Choice Points into an 
-agent that can perform all the actions.")\
+agent that can perform all the actions.")
 (domain ChoicePointAgentFn 1 ChoicePoint)
 (range ChoicePointAgentFn AutonomousAgent)
 (instance ChoicePointAgentFn UnaryFunction)
@@ -447,11 +447,11 @@ used to guide the actions of the agents in the society.")
 
 ;; I'm unsure about the instance-vs-class here.  Generally a group's ethical philosophy is not 100% worked out.
 ;; OTOH, SUMO may simply not have the granularity to model this appropriately.
-(documentation hasEthicalPhilosophy EnglishLanguage "(hasEthicalPhilosophy ?GROUP ?ETHICS) denotes that the ?GROUP has the ethical philosophy ?ETHICS: 
+(documentation holdsEthicalPhilosophy EnglishLanguage "(holdsEthicalPhilosophy ?GROUP ?ETHICS) denotes that the ?GROUP has the ethical philosophy ?ETHICS: 
 the sentences of the philosophy are the result of their ethical judgments and the philosophy influences their decisions (in some manner).")
-(domain hasEthicalPhilosophy 1 Group)
-(domain hasEthicalPhilosophy 2 Ethics)
-(instance hasEthicalPhilosophy BinaryPredicate)
+(domain holdsEthicalPhilosophy 1 Group)
+(domain holdsEthicalPhilosophy 2 Ethics)
+(instance holdsEthicalPhilosophy BinaryPredicate)
 
 ;; A group has an ethical philosophy/theory if and only if every sentence in the theory is the result of an (ethical) judgment by the group
 ;; ... and there are some decisions by the group influenced by the philosophy.
@@ -459,7 +459,7 @@ the sentences of the philosophy are the result of their ethical judgments and th
 ;; I will assume subCollection is not 'proper', i.e., we can have a single-person group. :) 
 (<=>
   (and
-    (hasEthicalPhilosophy ?GROUP ?EP)
+    (holdsEthicalPhilosophy ?GROUP ?EP)
     (theoryFieldPair ?EP ?ET))
   (and
     (forall (?SENT)
@@ -482,7 +482,7 @@ the sentences of the philosophy are the result of their ethical judgments and th
 
 (<=>
   (and
-    (hasEthicalPhilosophy ?GROUP ?EP)
+    (holdsEthicalPhilosophy ?GROUP ?EP)
     (theoryFieldPair ?EP ?ET))
   (and
     (forall (?SENT)
@@ -506,7 +506,36 @@ the sentences of the philosophy are the result of their ethical judgments and th
       (modalAttribute
         (influences ?EP ?DECIDE) Likely)))
 
-;; version prior to introduction of hasEthicalPhilosophy
+;; All sub-groups likely have the same philosophy as the group
+(=>
+  (holdsEthicalPhilosophy ?GROUP ?EP)
+  (forall (?SUBAGENT)
+    (=>
+      (subCollection ?SUBAGENT ?GROUP)
+      (modalAttribute (holdsEthicalPhilosophy ?SUBAGENT ?EP) Likely))))
+
+;; All members likely have the same philosophy as the group
+(=>
+  (holdsEthicalPhilosophy ?GROUP ?EP)
+  (forall (?MEMB)
+    (=>
+      (subCollection ?MEMB ?GROUP)
+      (modalAttribute (holdsEthicalPhilosophy ?MEMB ?EP) Likely))))
+
+;; If an agent holds an ethical philosophy, then the agent proably desires the ethical philosophy
+;; to influences all of its decisions that are relevant to the philosophy.
+(=>
+  (holdsEthicalPhilosophy ?AGENT ?EP)
+  (forall (?DECIDE)
+    (=>
+      (instance ?DECIDE Deciding)
+      (agent ?AGENT ?DECIDE)
+      (relevant ?EP ?DECIDE))
+    (modalAttribute 
+      (desires ?AGENT 
+        (influences ?EP ?DECIDE)) Likely)))
+
+;; version prior to introduction of holdsEthicalPhilosophy
 (=> 
   (and 
     (instance ?MP Ethics)
@@ -600,7 +629,7 @@ the sentences of the philosophy are the result of their ethical judgments and th
       (instance ?F Formula)
       (instance ?MORALATTRIBUTE MoralValueAttribute))))
 
-;; The definition of ethics is that it focuses on judging actions.
+;; The definition of ethics is that it focuses on J actions.
 (documentation SimpleActionValueJudgmentSentence EnglishLanguage "A sentence that 
 describes the attribution of a moral value judgment to an action.")      
 (subclass SimpleActionValueJudgmentSentence SimpleValueJudgmentSentence)
@@ -966,12 +995,6 @@ Typically, the formula should refer to an action.")
       (equal ?VJS 
         (modalAttribute ?FORMULA MorallyNeutral)))))
 
-(documentation SimpleValueJudgmentToUtilityAssignmentSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility assignment sentences.")
-(domain SimpleValueJudgmentToUtilityAssignmentSentenceFn 1 SimpleValueJudgmentSentence)
-(range SimpleValueJudgmentToUtilityAssignmentSentenceFn UtilityAssignmentSentence)
-(instance SimpleValueJudgmentToUtilityAssignmentSentenceFn TotalValuedRelation)
-(instance SimpleValueJudgmentToUtilityAssignmentSentenceFn UnaryFunction)
-
 ;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
 ;; If there's a notion of the strengths of moral value judgments, this ports over cleanly.
 (=> 
@@ -1096,6 +1119,63 @@ Typically, the formula should refer to an action.")
       (equal ?UCS
         (modalAttribute 
           (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
+
+;; Combines the two value judgment-interpretatons of simple utilitarian sentences into one.
+(documentation SimpleUtilitarianToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple utilitarian sentences value judgment sentences.")
+(domain SimpleUtilitarianToValueJudgmentSentenceFn 1 SimpleUtilitarianSentence)
+(range SimpleUtilitarianToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance SimpleUtilitarianToValueJudgmentSentenceFn TotalValuedRelation)
+(instance SimpleUtilitarianToValueJudgmentSentenceFn UnaryFunction)
+
+(=>
+  (instance ?SUS UtilityAssignmentSentence)
+  (equal
+    (SimpleUtilitarianToValueJudgmentSentenceFn ?SUS)
+    (UtilityAssignmentToValueJudgmentSentenceFn ?SUS)))
+
+(=>
+  (instance ?SUS UtilityComparisonSentence)
+  (equal
+    (SimpleUtilitarianToValueJudgmentSentenceFn ?SUS)
+    (UtilityComparisonToValueJudgmentSentence ?SUS)))
+
+(documentation UtilitarianToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps 
+utilitarian sentences into value judgment sentences in a very generic manner.")
+(domain UtilitarianToValueJudgmentSentenceFn 1 UtilitarianSentence)
+(range UtilitarianToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance UtilitarianToValueJudgmentSentenceFn TotalValuedRelation)
+(instance UtilitarianToValueJudgmentSentenceFn UnaryFunction)
+
+;; This should reasonably constrain the output: 
+;; Every sentential part that doesn't contain a simple imperative sentence is the same as some part in the output
+;; Every part that is a simple imperative sentence is translated.
+(=> 
+  (equal (UtilitarianToValueJudgmentSentenceFn ?UTS) ?VJS)
+  (and
+    (forall (?P)
+      (=> 
+        (and 
+          (part ?P ?UTS)
+          (instance ?P SimpleUtilitarianSentence))
+        (exists (?VP)
+          (and 
+            (part ?VP ?VJS)
+            (equal ?VP SimpleUtilitarianToValueJudgmentSentenceFn ?P)))))
+    (forall (?P)
+      =>
+        (and 
+          (part ?P ?UTS)
+          (instance ?P Sentence)
+          (not (instance ?P SimpleUtilitarianSentence)
+          (not 
+            (exists (?PP) 
+              (and 
+                (part ?PP ?P)
+                (instance ?PP SimpleUtilitarianSentence)))))
+        (exists (?VP)
+          (and
+            (part ?VP VJS)
+            (equal ?VP ?P)))))))
 
 (documentation ConsequentialismMetaEthics EnglishLanguage "Consequentialism is an ethical theory that holds 
 that 'whether an act is morally right depends only on consequences (as opposed to the circumstances 
@@ -1917,11 +1997,11 @@ instantiate.")
           (agent ?S ?AGENT))
         (holdsduring (WhenFn ?S) (attribute ?AGENT Motionless))))
     (instance ?IVT DeontologicalImperativeTheory)
-    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?VJT)
-    (equal (CardinalityFn ?VJT) 2)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?IVT)
+    (equal (CardinalityFn ?IVT) 2)
     (equal ?EV 
-      (ValueJudgmentToImperativeSentenceFn 
-        (evaluateTheory (ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
+      (MapSetFn ValueJudgmentToImperativeSentenceFn 
+        (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?EV)
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) Permission) ?EV)))
 
@@ -1953,11 +2033,92 @@ instantiate.")
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?VJT)
     (equal (CardinalityFn ?VJT) 2)
     (equal ?EV 
-      (ValueJudgmentToImperativeSentenceFn 
-        (evaluateTheory (ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
+      (MapSetFn ValueJudgmentToImperativeSentenceFn 
+        (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?IVT) ?CP)))
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?EV)
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) Permission) ?EV)))
 
+
+;; Not my reference Wiki page, but probably the same Schwartz: https://en.wikipedia.org/wiki/Theory_of_basic_human_values
+;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
+(documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
+(subclass Value Abstract)
+
+(documentation holdsValue EnglishLanguage "(holdsValue ?AGENT ?VALUE) denotes that the agent holds the value.")
+(domain holdsValue 1 Agent)
+(domain holdsValue 2 Value)
+(instance holdsValue BinaryPredicate
+
+;; If we blur boundaries, we could call an ethical philosophy a value that can be held.
+;; (=>
+;;   (holdsEthicalPhilosophy ?AGENT ?EP)
+;;   (holdsValue ?AGENT ?EP))
+
+;; If an agent holds a value, then there is a decision of the agent influenced by the value.
+(=>
+  (holdsValue ?AGENT ?VALUE)
+  (exists (?DECIDE)
+    (and
+      (instance ?DECIDE Deciding)
+      (agent ?DECIDE ?AGENT)
+      (influences ?VALUE ?DECIDE))))
+
+(=>
+  (holdsValue ?AGENT ?VALUE)
+  (exists (?JUDGE)
+    (and
+      (instance ?JUDGE Judging)
+      (agent ?JUDGE ?AGENT)
+      (influences ?VALUE ?JUDGE))))
+
+;; If an agent holds a value and is making a decision where the value is relevant, it's likely the value will influence the decision.
+(=>
+  (and
+    (holdsValue ?AGENT ?VALUE)
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (relevant ?VALUE ?DECIDE))
+  (modalAttribute (influences ?VALUE ?DECIDE) Likely))
+
+(=>
+  (and
+    (holdsValue ?AGENT ?VALUE)
+    (instance ?JUDGE Judging)
+    (agent ?JUDGE ?AGENT)
+    (relevant ?VALUE ?JUDGE))
+  (modalAttribute (influences ?VALUE ?JUDGE) Likely))
+
+;; For all instances of deciding, it's likely there exists a value that influences the decision.
+(=>
+  (instance ?DECIDE Deciding)
+  (modalAttribute 
+    (exists (?VALUE)
+      (and
+        (instance ?VALUE Value)
+        (influences ?VALUE ?DECIDE))) Likely))
+
+(=>
+  (instance ?JUDGE Judging)
+  (modalAttribute 
+    (exists (?VALUE)
+      (and
+        (instance ?VALUE Value)
+        (influences ?VALUE ?JUDGE))) Likely))
+
+(=>
+  (hodsValue ?AGENT ?VALUE)
+  (exists (?DESIDERATUM)
+    (and
+      (desires ?AGENT ?DESIDERATUM)
+      (represents ?VALUE ?DESIDERATUM))))
+
+;; If there is a value, then there exists an agent and desire such that the value represents that which is desired >:D :D :D.
+(=> 
+    (instance ?VALUE Value)
+    (exists (?AGENT ?DESIDERATUM)
+        (and
+            (desires ?AGENT ?DESIDERATUM)
+            (represents ?VALUE ?DESIDERATUM))))
 
 ;; Moral Theories
 
@@ -2061,7 +2222,7 @@ situation to the end of time.")
 
 ;; While this dodges the obligatory-embedding, I believe you could institute a similar wrapper for anyone who holds a deontic theory!
 (<=>
-  (hasEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
+  (holdsEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
   (desires ?AGENT
     (forall (?SITUATION ?CPROC)
       (=>
@@ -2074,8 +2235,11 @@ situation to the end of time.")
             (instance ?IPROC ?CPROC)
             (equal ?SITUATION (SITUATIONFn ?IPROC))))))))
 
-(subclass Benevolence VirtueAttribute)
-(instance UtilitarianGreatestNumHappyBenevolence Benevolence)
+;; Exploring the idea of a class of virtues, i.e., there may be different kinds of benevolence.
+;; OTOH, it's just tedious to use (even if arguably more correct).
+(subclass BenevolenceClass VirtueAttribute)
+(instance Benevolence BenevolenceClass)
+(instance UtilitarianGreatestNumHappyBenevolence BenevolenceClass)
 
 (=>
   (attribute ?AGENT UtilitarianGreatestNumHappyBenevolence)
@@ -2210,6 +2374,46 @@ the CognitiveAgent is prohibited from bringing it about that the Formula is true
       (instance ?COMM Lying)
       (agent ?COMM ?AGENT))) ?AGENT)
 
+;; Adding prohibitions for specific acts is 'easy'.
+(exists (?DIT)
+  (and
+    (instance ?DIT DeontologicalImperativeTheory)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?DIT)))
+
+(holdsProhibition
+  (exists (?IPROC) 
+    (and
+      (instance ?IPROC Killing)
+      (agent ?IPROC ?AGENT))) ?AGENT)
+
+;; lol, ChatGPT suggests the following for any harmful action :'D
+;; ahimsa.land 
+;; (holdsProhibition
+;;   (exists (?ACT)
+;;     (and
+;;       (instance ?ACT HarmfulAction)
+;;       (agent ?ACT ?AGENT))) ?AGENT)
+
+
+;; Eudaimonia hypothesis?
+
+;; For all virtues, it's likely that possessing the virtue will cause the agent to be happy. 
+;; Happier would be better?
+(=>
+  (instance ?VIRTUEATTRIBUTE VirtueAttribute)
+  (modalAttribute 
+    (causesProposition
+      (attribute ?AGENT ?VIRTUEATTRIBUTE)
+      (attribute ?AGENT Happiness) Likely)))
+
+;; Or the virtue increases the likelihood the agent is happy?
+;; Either way, the point is that we can talk about this stuff :).
+(=>
+  (instance ?VIRTUEATTRIBUTE VirtueAttribute)
+  (modalAttribute 
+    (increasesLikelihood
+      (attribute ?AGENT ?VIRTUEATTRIBUTE)
+      (attribute ?AGENT Happiness) Likely)))
 
 ;; Gewirth's Principle of Generic Consistency
 
@@ -2413,31 +2617,328 @@ and ?U is a utilitarian theory that make up the theory ?T.")
     (subset ?RUT ?TLUT)
     (subset ?UT ?TLUT)))
 
-;; Let's do some specific example
-(instance GreaestNumHappyPeopleTwoLevelUtilitarianism TwoLevelUtilitarianism)
-(subProposition GreaestNumHappyPeopleUtilitarianism GreaestNumHappyPeopleTwoLevelUtilitarianism)
-
-;; While this dodges the obligatory-embedding, I believe you could institute a similar wrapper for anyone who holds a deontic theory!
-;; (=>
-;;   (and 
-;;     (hasEthicalPhilosophy ?AGENT GreaestNumHappyPeopleTwoLevelUtilitarianism)
-;;     (theoryFieldPair GreaestNumHappyPeopleTwoLevelUtilitarianism ?TLUT)
-;;     (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT))
-;;   (and
-;;     (forall (?RULE ?SITUATION)
-;;       (=>
-
-;; I think I need new predicates I'll deveolp elsewhere for this.
+;; When an agent is making a decision and holds two-level utilitarianism,
+;; and the evaluations of the rules and utilitarian theories are not similar,
+;; the agent prefers the utilitarian analysis to influence its decisions.
+;; Note that this may not fairly represent R. M. Hare's notion of when it's appropriate to switch levels.
 (=>
-  (and 
-    (hasEthicalPhilosophy ?AGENT ?TLU)
-    (theoryFieldPair ?TLU ?TLUT)
-    (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT))
-;; for all choice points / situations
-;; If ?RUT is relevant, then 'follow' it
-;; Else, follow ?UT.
-;; Need to define what it means to follow an ethical theory.
-;; Related to evaluate theory but not quite.
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?AGENT Deciding)
+    (patient ?DECIDE ?CP)
+    (instance ?CP ChoicePoint)
+    (equal ?AGENT (ChoicePointAgentFn ?CP))
+    (holdsEthicalPhilosophy ?AGENT ?EP)
+    (instance ?RUP RuleConsequentialism)
+    (theoryFieldPair ?EP ?TLUT)
+    (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT)
+    (theoryFieldPair ?UP ?UT)
+    (theoryFieldPair ?RUP ?RUT)
+    (not (similar ?AGENT
+      (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?RUT) ?CP)
+      (evaluateTheory (MapSetFn UtilitarianToValueJudgmentSentenceFn ?UT) ?CP))))
+  (prefers ?AGENT
+    (influences ?UP ?DECIDE)
+    (influences ?RUP ?DECIDE)))
+
+;;
+;; Target-Centred Virtue Ethics (or something in that rough ballpark)
+;;
+
+;;  A core idea I see is:
+;; Virtuous acts are defined by reference to how virtuous people approach challenging domains.
+;; Virtuous people are defined by reference to how well they exhibit virtuous acts in the challenging domains.
+;; This is an iterative learning and refinement process.
+;; 
+;; Agent-centric virtue ethics focuses on the virtuous agents.
+;; Target-centric virtue ethics focuses on the vature of the virtuous acts.
+;; 
+;; To this end, the following are specified:
+;; The "field" or challenging domain in which a given virtue is relevant.
+;; The "mode" of response of the given virtue to this challenge.
+;; The "basis" on which this mode/type of response is deemed virtuous: some values.
+;; The "target" that denotes a successful response to the challenge at hand.
+;;
+;; I'm referencing primarily Christine Swanton's Virtue Ethics: A Pluralistic View,
+;; as well as SEP.  I find some descriptions of this factorization less clear than desired.
+;; So the proof-of-concept trying to connect the plugs with this ontology may be lacking in some regards.
+;;
+;; As I've defined Virtue Ethics theries, they'll all be agent-centric.
+;; Modifying SimpleVirtueSentence to attribue virtue attributes to agents or behaviors, 
+;; or to classes thereof, would be one way to solve this if desired.
+;; I'm not personally so sold on the superiority of target-centric virtue ethics, 
+;; but this is a good lesson that the high-level ontology should be very broad to 
+;; incorporate a broad range of theories!
+
+(documentation TargetCenteredVirtueEthics EnglishLanguage "Target-Centred Virtue Ehics is an ethical paradigm that judges the morality of an action 
+based on how virtuous it is.  Unlike agent-centred virtue ethics that focuses on the character of the agent performing an action, 
+criteria are given to determine which actions are virtuous and by which moral bases without necessarily referencing the character of the actor.")
+(subclass TargetCenteredVirtueEthics Ethics)
+
+(documentation TargetCenteredVirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes to behaviors.")
+(subclass TargetCenteredVirtueEthics EthicalTheory)
+
+(theoryFieldPairSubclass TargetCenteredVirtueEthics TargetCenteredVirtueEthicsTheory)
+(relatedInternalConcept VirtueEthics TargetCenteredVirtueEthics)
+
+(documentation VirtueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral virtue judgment.")      
+(subclass VirtueJudgmentSentence EthicalSentence)
+
+(documentation ActionVirtueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral virtue judgment.")      
+(subclass ActionVirtueJudgmentSentence VirtueJudgmentSentence)
+
+(documentation SimpleVirtueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral virtue judgment.")      
+(subclass SimpleVirtueJudgmentSentence VirtueJudgmentSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleVirtueJudgmentSentence)
+  (exists (?F ?VIRTUEATTRIBUTE)
+    (and
+      (equal (modalAttribute ?F ?VIRTUEATTRIBUTE) ?SENTENCE)
+      (instance ?F Formula)
+      (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
+
+;; The definition of ethics is that it focuses on Judging actions.
+(documentation SimpleActionVirtueJudgmentSentence EnglishLanguage "A sentence that 
+describes the attribution of a moral virtue judgment to an action.")      
+(subclass SimpleActionVirtueJudgmentSentence SimpleVirtueJudgmentSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleActionVirtueJudgmentSentence)
+  (exists (?CLASS ?FORMULA ?VIRTUEATTRIBUTE)
+    (and 
+      (equal ?SENTENCE (modalAttribute ?FORMULA ?VIRTUEATTRIBUTE))
+      (equal ?FORMULA 
+        (exists (?PROC)
+          (instance ?PROC ?CLASS)))
+      (subclass ?CLASS AutonomousAgentProcess))))
+
+(<=>
+  (insance ?SENTENCE ActionVirtueJudgmentSentence)
+  (exists (?SVS)
+    (and
+      (instance ?SVS SimpleActionVirtueJudgmentSentence)
+      (part ?SVS ?SENTENCE))))
+
+(<=>
+  (instance ?V TargetCenteredVirtueEthicsTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?V)
+      (instance ?S ActionVirtueJudgmentSentence))))
+
+;; As usual, I'm not sure whether we wish to be applying the virtue judgemnts to the fact that some action is taken of a particular class or to the "instance of the behavior" itself.
+;; Anyway, specifying this helps frame thinsg.
+
+;; I assume virtues and vices can be symmetric?  The fields will overlap yet the vicious target, mode, and bases will be different!
+;; Fx, note how some vicious behavior may be held as virtuous by members of an assassin's guild.
+;; Might be overcomplicating things, however.
+(documentation virtueOrViceField EnglishLanguage "Specifies the field or domain of concern for a virtue or vice.")
+(domain virtueOrViceField 1 MoralVirtueAttribute)
+(domainSubclass virtueOrViceField 2 Situation)
+(subclass virtueOrViceField BinaryPredicate)
+
+(documentation virtueField EnglishLanguage "Specifies the field or domain of concern for a virtue, in which there's likely a challenging element.")
+(domain virtueField 1 VirtueAttribute)
+(domainSubclass virtueField 2 Situation)
+(instance virtueField virtueOrViceField)
+
+;; Hypothesis: The field of a virtue always contains a moral dilemma.
+;; Or it's likely that there is a dilemma in fields of the virtue.
+;; The mere possibility seems weak.
+(=>
+  (and
+    (virtueField ?VIRTUE ?SR)
+    (instance ?S ?SC))
+  (modalAttribute)
+    (exists (?MD)
+      (and
+        (instance ?MD MoralDilemma)
+        (equal ?SMD (ChoicePointSituationFn ?MD)
+        (part ?SMD S)))))
+
+;; The field of honesty is all situations that contain a social interaction.
+(<=>
+  (and
+    (virtueField Honesty ?SC)
+    (instance ?S ?SC))
+  (exists (?SocialInteraction)
+    (and
+      (instance ?SI SocialInteraction)
+      (part (SituationFn ?SI) ?S))))
+
+;; The field of benevolence is all situations where an act can be done that is likely to benefit an agent.
+;; Perhaps I should use Possibility instead of Likely, that is, 
+;; it's possible for there to be an instance of the behavior that does benefit the agent?
+(<=>
+  (and
+    (virtueField ?BENEVOLENCE ?SC)
+    (instance ?S ?SC)
+    (instance ?BENEVOLENCE BenevolenceClass))
+  (exists (?CPROC ?AGENT ?BENEFICIARY)
+    (and
+      (capableInSituation ?CPROC agent ?AGENT ?S)
+      (modalAttribute
+        (exists (?IPROC)
+          (and 
+            (instance ?IPROC ?CIPROC)
+            (agent ?IPROC ?AGENT)
+            (benefits ?IPROC ?BENEFICIARY)) Likely)))))
+
+(<=>
+  (and
+    (virtueField Benevolence ?SC)
+    (instance ?S ?SC))
+  (exists (?CPROC ?AGENT ?BENEFICIARY)
+    (and
+      (capableInSituation ?CPROC agent ?AGENT ?S)
+      (modalAttribute
+        (exists (?IPROC)
+          (and 
+            (instance ?IPROC ?CIPROC)
+            (agent ?IPROC ?AGENT)
+            (benefits ?IPROC ?BENEFICIARY)) Likely)))))
+
+;;  Swanton: "I discuss four such bases: value, status, good (or benefit), and bonds."
+;; Zar: I think the basis is mainly used for justifying that the virtue is actually a virtue.
+(documentation virtueBasis EnglishLanguage "Specifies the moral basis of the virtue as a value.")
+(domain virtueBasis 1 VirtueAttribute)
+(domain virtueBasis 2 Value)
+(instance virtueBasis BinaryPredicate)
+
+(instance ValuingGood Value)
+
+;; If one values promoting goodness, then one desires to benefit others.
+(=> 
+  (holdsValue ?AGENT ValuingGood)
+  (desires ?AGENT
+    (exists (?IPROC ?OTHER)
+      (and
+        (benefits ?IPROC ?OTHER)
+        (agent ?IPROC ?AGENT)))))
+
+(=>
+  (and
+    (instance ?BENEVOLENCE BenevolenceClass)
+    (attribute ?AGENT ?BENEVOLENCE))
+  (holdsValue ?AGENT ValuingGood))
+
+(=>
+  (attribute ?AGENT Benevolence)
+  (holdsValue ?AGENT ValuingGood))
+
+;; All instances of benevolence as a virtue have as their basis valuing goodness.
+(=>
+  (instance ?BENEVOLENCE BenevolenceClass)
+  (virtueBasis ?BENEVOLENCE ValuingGood))
+
+(virtueBasis Benevolence ValuingGood)
+
+;; It could be specified further, I suppose.
+;; ChatGPT: consider values like transparency, integrity, respect for people's dignity, justice and fairness, trust and reliability, respect for autonomy.
+;; I'd add respect for healthy relationships and bonds!
+(virtueBasis Honesty ValuingGood)
+
+;; lololol, can I just say, the mode is a class of behaviors?
+(documentation virtueMode EnglishLanguage "Specifies how a virtue responds within its field by the class of behaviors that are considered appropriate.")
+(domain virtueMode 1 VirtueAttribute)
+(domainSubclass virtueMode 2 AutonomousAgentProcess)
+(instance virtueMode BinaryPredicate)
+
+;; I think Swanton says that modes are non-exclusive!
+(virtueMode Honesty HonestCommunication)
+
+(virtueMode Benevolence Giving)
+(virtueMode Benevolence Helping)
+
+(documentation virtueTarget EnglishLanguage "Specifies the aim or goal at which a virtue is directed, representing a successful response to the situation at hand.")
+(domain virtueTarget 1 VirtueAttribute)
+(domain virtueTarget 2 Formula)
+(instance virtueTarget BinaryPredicate)
+
+;; The below seems too strong, as we'd like to appraise individual acts as virtuous or not.
+(virtueTarget Honesty 
+  (forall (?COMM)
+    (=>
+      (and
+        (instance ?COMM Communication)
+        (virtueField ?COMM ?SC)
+        (instance ?S SC)
+        (part (SituationFn ?COMM) S)))
+    (instance ?COMM HonestCommunication)))
+
+;; Tempting ot just repeat the mode.
+;; (virtueTarget Honesty HonestCommunication)
+
+;; The target of honesty is achieving honest communication.
+;; Is it this simple?  Of course, it could be further elucidated.
+(virtueTarget Honesty 
+  (exists (?COMM)
+    (instance ?COMM HonestCommunication)))
+
+(virtueTarget Honesty
+  (not
+    (exists (?PRETEND)
+      (instance ?PRETEND Pretending))))
+
+(virtueTarget Honesty
+  (not
+    (exists (?LYING)
+      (instance ?LYING Lying))))
+
+(virtueTarget Benevolence
+  (exists (?BENEFIT ?BENEFICIARY)
+    (benefits ?BENEFIT ?BENEFICIARY)))
+
+;; One could stipulate that self-benevolence is not included!
+(virtueTarget Benevolence
+  (exists (?BENEFACTOR ?BENEFIT ?BENEFICIARY)
+    (and
+      (benefits ?BENEFIT ?BENEFICIARY)
+      (agent ?BENEFIT ?BENEFACTOR)
+      (not (equal ?BENEFACTOR ?BENEFICIARY))))
+
+(documentation actionHitsVirtueTarget EnglishLanguage "An action hits the target of a virtue if it brings about the virtue's target in the relevant situation.")
+(domain actionHitsVirtueTarget 1 Process)
+(domain actionHitsVirtueTarget 2 VirtueAttribute)
+(instance actionHitsVirtueTarget BinaryPredicate)
+
+;; An action hits the target of a virtue if there exist a field, mode, and target of the virtue,
+;; such that the action is a part of a situation of the field and that the process causes the target to be achieved.
+;; The proces should be an instantiation of a virtue mode.
+;; I'm not sure how to deal with complex mixtures with multi-target virtues.
+;; These may need to be specified on a virtue-by-virtue basis.
+(<=>
+  (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+  (exists (?FIELD ?MODE ?TARGET)
+    (and
+      (virtueField ?VIRTUE ?FIELD)
+      (virtueMode ?MODE)
+      (virtueTarget ?TARGET)
+      (exists (?S)
+        (and
+          (instance ?S ?FIELD)
+          (part (SituationFn ?IRPOC) ?S)))
+      (instance ?IPROC ?MODE)
+      (realizesFormula ?IPROC ?FPROC)
+      (causesProposition ?FPROC ?TARGET))))
+
+;; Ah, I run into the usual class vs instance problems.
+;; (<=>
+;;   (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+;;   (modalAttribute 
+;;     (exists (?)) ?VIRTUE))))
+
+;; Idea: it's virtuous for there to be an instance of a class
+;; if for all instances, it's likely that they'll hit the virtue target?
+
+;; Anyway, I have an idea how to do it now.
+;; I'll write the TCVE --> VJS translation first.  :)
+;; Basically SimpleSituationalActionValueJudgmentToVirtueSentenceFn
+;; ... already has the the target along with subclasses of field and mode!
+;; so it is sort of set up :).
+;; There's a cool notion of virtue subsumption where a virtue subsumes another if the field is a superset of it, etc.
+
 
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
