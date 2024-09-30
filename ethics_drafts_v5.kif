@@ -3151,6 +3151,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; A 'complete' simple 4-tuple describing a virtue gets translated into agent-centered
 ;; virtue ethics by saying that any agent with the virtue in a situation in the field
 ;; who is capable of its mode is likely to hit the target of the virtue.
+;; This could be used as the definition of what it means for someone to have a virtue, too!
 (=>
   (and 
     (equal (CompleteSimpleTCVEToValueJudgmentSentence ?TVS) ?VJS)
@@ -3159,13 +3160,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
         (virtueField ?VIRTUE ?FIELD)
         (virtueBasis ?VIRTUE ?BASIS)
         (virtueMode ?VIRTUE ?MODE)
-        (virtueTarget ?VIRTUE ?TARGET)))
-    (=> 
-      (instance ?VIRTUE VirtueAttribute)
-      (equal ?MORALATTRIBUTE MorallyGood))
-    (=>
-      (instance ?VIRTUE ViceAtribute)
-      (equal ?MORALATTRIBUTE MorallyBad)))
+        (virtueTarget ?VIRTUE ?TARGET))))
   (equal ?VES
     (forall (?AGENT ?SITUATION)
       (=>
@@ -3182,10 +3177,17 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (realizesFormula IPROC ?FPROC)
               (causesProposition ?FPROC ?TARGET))) Likely)))))
 
+;; For the agent -> target-centered translation, I'd be going through the crude ways to refer to the Field that I used,
+;; for example, saying that the virtue refers to some class of actions or situations.
+;; Or I might go through what the virtuous agent believes about the virtue?
+;; The target is generally "what a virtuous person is likely to do in the field".
+
+;; Fixing Field and Relevance, one can go back and forth between 
+;; Target and "what a virtuous person would likely do".
+
 ;;;
 ;; Kant’s Theory of Categorical Imperative (sketch)
 ;;;
-
 
 ;; 1) "Act only according to that maxim whereby you can at the same time will 
 ;; that it should become a universal law."
@@ -3197,24 +3199,116 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (subclass KantianDeontologicalTheory DeontologicalImperativeTheory)
 (theoryFieldPair KantianDeontology KantianDeontologicalTheory)
 
-(holdsObligation () ?AGENT)
+;; What does it mean to say, "Agent A acts by maxim B in process P"?
 
-;; What does it mean to say, "Agent A acts by maxim B"?
-
-(documentation actsByMaxim EnglishLanguage)
+(documentation actsByMaxim EnglishLanguage "(actsByMaxim ?AGENT ?FORMULA) means that the agent performs an action adhering to the maxim ?FORMULA.")
 (domain actsByMaxim 1 Agent)
 (domain actsByMaxim 2 Formula)
 (instance actsByMaxim BinaryPredicate)
 
+;; An agent acts by a maxim if the maxim entails an obligation to do what the agent does.
+(<=>
+  (actsByMaximInProc ?AGENT ?MAXIM)
+  (exists (?IPROC)
+    (and
+      (entails ?MAXIM (modalAttribute ?F Obligation))
+      (realizesFormula ?IPROC ?F)
+      (agent ?IPROC ?AGENT))))
+
+(documentation actsByMaximInProc EnglishLanguage "(actsByMaximInProc ?AGENT ?FORMULA ?PROCESS) means that the agent acts by the maxim described by ?FORMULA in the ?PROCESS.")
+(domain actsByMaximInProc 1 Agent)
+(domain actsByMaximInProc 2 Formula)
+(domain actsByMaximInProc 3 AutonomousAgentProcess)
+(instance actsByMaximInProc TernaryPredicate)
+
+;; An agent acts by a maxim if the maxim entails an obligation to do what the agent does.
+(<=>
+  (actsByMaximInProc ?AGENT ?MAXIM ?IPROC)
+  (and
+    (entails ?MAXIM (modalAttribute ?F Obligation))
+    (realizesFormula ?IPROC ?F)
+    (agent ?IPROC ?AGENT)))
+
+;; Every agent holds an obligation to only act by maxims iff they desire that every agent 
+;; hold an obligation to act by the maxim whenever it's relevant.
+(holdsObligation 
+  (<=>
+    (actsByMaximInProc ?AGENT ?MAXIM ?IPROC)
+    (desires ?AGENT
+      (forall (?AGENT2)
+        (holdsObligation
+          (=>
+            (relevant ?MAXIM (SituationFn ?AGENT2))
+            (exists (?IPROC)
+              (actsByMaximInProc ?AGENT2 ?MAXIM ?IPROC))) ?AGENT2)))) ?AGENT)
+
+;; Simpler: every agent holds an obligation to act by maxims iff they desire 
+;; all agents to hold the obligation to act by the maxim whenever it's relevant.
+;; Hiding the instance is better.
+(holdsObligation 
+  (<=>
+    (actsByMaxim ?AGENT ?MAXIM)
+    (desires ?AGENT
+      (forall (?AGENT2)
+        (holdsObligation
+          (=>
+            (relevant ?MAXIM (SituationFn ?AGENT2))
+            (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT2)))) ?AGENT)
+
+;; Every agent is prohibited from acting without following a maxim, 
+;; thus forcing one to only act by maxims adhering to the universal willing property.
+(holdsProhibition 
+  (exists (?IPROC)
+    (and
+      (instance ?IPROC AutonomousAgentProcess)
+      (agent ?IPROC ?AGENT)
+      (not
+        (exists (?MAXIM)
+          (actsByMaximInProc ?AGENT ?MAXIM ?IPROC))))) ?AGENT)
+
+;; If there being an obligation for every agent to follow a maxim leads to a contradiction (implying False),
+;; then there is a prohibition on acting by this Maxim.  [Kudos to ChatGPT o1 for suggesting I include this.]
+;; Kant's Perfect Duty.
+(=> 
+  (entails
+    (forall (?AGENT)
+        (holdsObligation
+          (=>
+            (relevant ?MAXIM (SituationFn ?AGENT))
+            (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT))
+    False)
+  (holdsProhibition
+    (actsByMaxim ?AGENT ?MAXIM) ?AGENT))
+
+;; 'desires' is weak for 'wills'.
+;; If the agent believes there is a valid deductive argument that the obligation should hold?
 
 ;; 2) "Act in such a way that you treat humanity, whether in your own person or in the 
 ;; person of any other, never merely as a means to an end, but always at the same time 
 ;; as an end."
 
+;; There is a prohibition on using others for purposes when the process has 
+;; no purpose for the others and when their happiness is not an intended part of the process.
+;; Honestly, just sketching what can be said in the ballpark of this law.
+(holdsProhibition 
+  (exist (?IPROC ?AGENT2 ?PURP)
+    (and
+      (uses ?AGENT2 ?AGENT)
+      (agent ?IPROC ?AGENT)
+      (instrument ?IPROC ?AGENT2)
+      (hasPurposeForAgent ?IPROC ?PURP ?AGENT)
+      (not 
+        (exist (?PURP2)
+          (hasPurposeForAgent ?IPROC ?PURP2 ?AGENT2)))
+      (not
+        (hasPurposeForAgent ?IPROC (attribute ?AGENT2 Happiness) ?AGENT)))) ?AGENT)
+
 ;; 3) "Thus the third practical principle follows [from the first two] as the ultimate 
 ;; condition of their harmony with practical reason: the idea of the will of every 
 ;; rational being as a universally legislating will."
 
+;; 4) "Act according to maxims of a universally legislating member of a merely possible 
+;; kingdom of ends."
 
 
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
