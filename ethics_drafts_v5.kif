@@ -3310,6 +3310,67 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; 4) "Act according to maxims of a universally legislating member of a merely possible 
 ;; kingdom of ends."
 
+;;;
+;; Informed Consent
+;;;
+
+;; Wikipedia: https://en.wikipedia.org/wiki/Informed_consent
+;; "Informed consent is a principle in medical ethics, medical law, media studies, 
+;; and other fields, that a person must have sufficient information and understanding 
+;; before making decisions about accepting risk, such as their medical care. 
+;; Pertinent information may include risks and benefits of treatments, alternative 
+;; treatments, the patient's role in treatment, and their right to refuse treatment."
+
+;; So, all surgeons hold the obligation to, for all surgeries they perform, to 
+;; have received approval for the surgery to take place from the patient prior to 
+;; the surgery.  An explanation ('communication') and understanding ('interpreting') 
+;; should take place prior to the approval.  (Weirdly, 'explanation' is a 'deductive argument' in SUMO.)
+(=> 
+  (instance ?DOC Surgeon)
+  (holdsObligation
+    (forall (?SURGERY)
+      (=>
+        (and
+          (instance ?SURGERY Surgery)
+          (agent ?SURGERY ?DOC)
+          (patient ?SURGERY ?PAT))
+      (exist (?EXP ?EXPLAIN ?UNDERSTAND)
+        (and
+          (instance ?EXP ExpressingApproval)
+          (patient ?EXP ?DOC)
+          (agent ?EXP ?PAT)
+          (result ?EXP
+            (confersNorm ?PAT 
+              (exists (?SURGERYC)
+                (and
+                  (instance ?SURGERYC Surgery)
+                  (agent ?SURGERYC ?DOC)
+                  (patient ?SURGERYC ?PAT)
+                  (similar ?PAT ?SURGERYC ?SURGERY)
+                  (similar ?DOC ?SURGERYC ?SURGERY))) Permission))
+          (instance ?EXPLAIN Communication)
+          (instance ?UNDERSTAND Interpreting)
+          (result ?EXPLAIN ?UNDERSTAND)
+          (agent ?EXPLAIN ?DOC)
+          (destination ?EXPLAIN ?PAT)
+          (refers ?EXLPAIN ?SURGERY)
+          (agent ?UNDERSTAND ?PAT)
+          (realizesFormula ?SURGERY ?FORM)
+          (patient ?UNDERSTAND ?FORM)
+          (before (BeginFn (WhenFn ?EXPLAIN)) (EndFn (WhenFn ?UNDERSTAND)))
+          (before (EndFn (WhenFn ?UNDERSTAND)) (BeginFn (WhenFn ?EXP)))
+          (before (EndFn (WhenFn ?EXP)) (BeginFn (WhenFn ?SURGERY)))))))))
+
+;; Something like this should probably work.  Tweaks would probably be necessary to 
+;; apply it in a practical domain.  Hopefully AI/LLMs can manage!
+;; In this case, the 'virtue' target related to informed consent is probably only 
+;; going through with the surgery when one believes the patient understands the risks 
+;; involved.  Or if being dutiful/pietal, simply following the law.
+;; Utilitarians would evaulate each surgery on a case-by-case basis unless working through 
+;; Rule Utilitarianism, in which case the protocol of informed consent would probably remain as it is.
+;; This is probably a case where the deontological approach is the 'most natural'!
+;; However, in real life, people probably understand both Virtue and Utilitarian paradigms, too, 
+;; and will weigh in on them if needed in edge cases.  Pragmatic ethics vs strict adherence to the code of conduct?
 
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 ;; -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
