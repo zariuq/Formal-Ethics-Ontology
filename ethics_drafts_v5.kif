@@ -601,9 +601,42 @@ the sentences of the philosophy are the result of their ethical judgments and th
 (contraryAttribute MorallyBad MorallyNeutral)
 (contraryAttribute VirtueAttribute ViceAttribute) 
 
+(documentation hasPurposeInArgumentFor EnglishLanguage "This predicate (hasPurposeInArgumentFor ?A ?B) denotes that formula ?A has as its purpose the use as a premise in an argument for formula ?B.")
+(domain hasPurposeInArgumentFor 1 Formula)
+(domain hasPurposeInArgumentFor 2 Formula)
+(instance hasPurposeInArgumentFor AsymmetricRelation)
+(instance hasPurposeInArgumentFor BinaryPredicate)
+(subrelation hasPurposeInArgumentFor hasPurpose)
+
+(<=>
+  (and
+    (hasPurposeInArgumentFor ?A ?B)
+    (containsInformation ?A ?PA)
+    (containsInformation ?B ?PB))
+  (hasPurpose ?A
+    (exists (?ARG)
+        (and
+          (instance ?ARG Argument)
+          (premise ?ARG ?PA)
+          (conclusion ?ARG ?PB)))))
 
 (documentation DeontologicalTheory EnglishLanguage "A set of sentences assigning moral or deontic attributes.")
 (subclass DeontologicalTheory EthicalTheory)
+
+(documentation DeontologicalSentence EnglishLanguage "A sentence that describes an aspect of a deontological theory.")      
+(subclass DeontologicalSentence EthicalSentence)    
+
+(<=>
+  (instance ?D DeontologicalTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?D)
+      (or
+        (instance ?S DeontologicalSentence)
+        (exists (?DS)
+          (and
+            (instance ?DS DeontologicalSentence)
+            (hasPurposeInArgumentFor ?S ?DS)))))))
 
 (documentation ValueJudgmentTheory EnglishLanguage "A set of sentences assigning moral attributes.")
 (subclass ValueJudgmentTheory EthicalTheory)
@@ -613,7 +646,12 @@ the sentences of the philosophy are the result of their ethical judgments and th
   (forall (?S)
     (=>
       (element ?S ?D)
-      (instance ?S ValueJudgmentSentence))))
+      (or
+        (instance ?S ValueJudgmentSentence)
+        (exists (?VJS)
+          (and
+            (instance ?VJS ValueJudgmentSentence)
+            (hasPurposeInArgumentFor ?S ?VJS))))))
 
 (documentation ValueJudgmentSentence EnglishLanguage "A sentence that describes the attribution of a moral value judgment.")      
 (subclass ValueJudgmentSentence EthicalSentence)
@@ -715,6 +753,35 @@ in a given situation.")
     (=>
       (element ?S ?DIT)
       (instance ?S ImperativeSentence))))
+
+(<=>
+  (instance ?DIT DeontologicalImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?DIT)
+      (or
+        (instance ?S ImperativeSentence)
+        (hasPurpose ?S
+          (exists (?ARG ?IS)
+              (and
+                (instance ?ARG Argument)
+                (instance ?IS ImperativeSentence)
+                (containsInformation ?IS ?PS)
+                (containsInformation ?S P)
+                (conclusion ?ARG ?PS)
+                (premise ?ARG ?S)))))))
+
+(<=>
+  (instance ?DIT DeontologicalImperativeTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?DIT)
+      (or
+        (instance ?S ImperativeSentence)
+        (exists (?IS)
+          (and
+            (instance ?IS ImperativeSentence)
+            (hasPurposeInArgumentFor ?S ?IS)))))))
 
 (documentation SimpleImperativeToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
 (domain SimpleImperativeToValueJudgmentSentenceFn 1 SimpleImperativeSentence)
@@ -903,6 +970,53 @@ imperative sentences into value judgment sentences in a very generic manner.")
   (equal ?S
     (ValueJudgmentToImperativeSentenceFn (ImperativeToValueJudgmentSentenceFn ?S))))
 
+;;;
+;; Utilitarianism
+;;;
+
+(documentation Utilitarianism EnglishLanguage "Utilitarianism is the ethical paradigm that judges the morality of an action based on whether it maximizes the good over the bad, which is typically determined via a utility function.")
+(subclass Utilitarianism Ethics)
+
+(documentation UtilitarianTheory EnglishLanguage "A set of sentences dealing with the utility of behaviors.")
+(subclass UtilitarianTheory EthicalTheory)
+(theoryFieldPairSubclass Utilitarianism UtilitarianTheory)
+
+(documentation UtilitarianSentence EnglishLanguage "A sentence of the variety of a utilitarian theory.")
+(subclass UtilitarianSentence EthicalSentence)
+
+(<=> 
+  (instance ?U UtilitarianTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?U)
+      (or 
+        (instance ?S UtilitarianSentence)
+        (exists (?US)
+          (and
+            (instance ?US UtilitarianSentence)
+            (hasPurposeInArgumentFor ?S ?US)))))))
+
+(documentation SimpleUtilitarianSentence EnglishLanguage "A sentence that assigns or compares the value of situations described by formulas.")      
+(subclass SimpleUtilitarianSentence UtilitarianSentence) 
+
+(documentation UtilityAssignmentSentence EnglishLanguage "A Sentence that assigns a (real) number value to a situation described by a formula.")
+(subclass UtilityAssignmentSentence SimpleUtilitarianSentence)
+
+(documentation UtilityComparisonSentence EnglishLanguage "A sentence that compares the value of two situations described by formulas.")
+(subclass UtilityComparisonSentence SimpleUtilitarianSentence)
+
+(<=>
+  (instance ?SENTENCE UtilitarianSentence)
+  (exists (?SUS)
+    (and 
+      (instance ?SUS SimpleUtilitarianSentence)
+      (part ?SUS ?SENTENCE))))
+
+(<=>
+  (instance ?SENTENCE SimpleUtilitarianSentence)
+  (or
+    (instance ?SENTENCE UtilityComparisonSentence)
+    (instance ?SENTENCE UtilityAssignmentSentence)))
 
 (documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that 
 maps Formulas to the net utility of that which is described.  
@@ -915,6 +1029,30 @@ Typically, the formula should refer to an action.")
     (and
         (domain ?UF 1 Formula)
         (range ?UF RealNumber)))
+
+(<=>
+  (instance ?SENTENCE UtilityAssignmentSentence)
+  (exists (?FORMULA ?VALUE ?UF)
+    (and 
+      (equal ?SENTENCE (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
+      (instance ?UF UtilityFormulaFn)
+      (instance ?FORMULA Formula)
+      (instance ?VALUE RealNumber))))
+
+(<=> 
+  (instance ?SENTENCE UtilityComparisonSentence)
+  (exists (?FORMULA1 ?FORMULA2 ?COMPARATOR ?UF)
+    (and
+      (instance ?FORMULA1 Formula)
+      (instance ?FORMULA2 Formula)
+      (instance ?UF UtilityFormulaFn)
+      (or
+            (equal ?COMPARATOR greaterThan)
+            (equal ?COMPARATOR lessThan)
+            (equal ?COMPARATOR greaterThanOrEqualTo)
+            (equal ?COMPARATOR lessThanOrEqualTo)
+            (equal ?COMPARATOR equal))
+      (equal ?SENTENCE (AssignmentFn ?COMPARATOR (AssignmentFn ?UF ?FORMULA1) (AssignmentFn ?UF ?FORMULA2))))))
 
 (documentation UtilityComparisonToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps utility comparison sentences to value judgment sentences.")
 (domain UtilityComparisonToValueJudgmentSentence 1 UtilityComparisonSentence)
@@ -1378,7 +1516,8 @@ by reference to the consequences of some action.")
 (subclass ConsequentialistUtilitarianArgument ConsequentialistArgument)
 
 ;; Ok, this is very sloppy.
-;; 1) I'm not sure how to apply a UtilityFormulaFn to a Consequence (instance)
+;; 1) I'm not sure how to apply a UtilityFormulaFn to a Consequence (instance).
+;;     -- Well, Consequence ~ Situation, so it fits!
 ;; 2) I'm saying that for every consequence in the premises, the argument contains an assignment 
 ;;    of value to that consequence by some utility function.
 ;; 3) I should make a hasConsequenceSet predicate to pair it as a proper existential witness!
@@ -1556,8 +1695,40 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 (documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
 (subclass VirtueEthicsTheory EthicalTheory)
-
 (theoryFieldPairSubclass VirtueEthics ValueJudgmentTheory)
+
+(documentation VirtueEthicsSentence EnglishLanguage "A sentence of a virtue ethics language/theory.")      
+(subclass VirtueEthicsSentence EthicalSentence)
+
+(<=>
+  (instance ?V VirtueEthicsTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?V)
+      (or
+        (instance ?S VirtueEthicsSentence)
+        (exists (?VES)
+          (and
+            (instance ?VES VirtueEthicsSentence)
+            (hasPurposeInArgumentFor ?S ?VES)))))))
+
+(documentation SimpleVirtueSentence EnglishLanguage "A sentence that describes an virtue/vice attribute assignment to an agent.")      
+(subclass SimpleVirtueSentence VirtueEthicsSentence)    
+
+(<=>
+  (instance ?SENTENCE SimpleVirtueSentence)
+  (exists (?AGENT ?VIRTUEATTRIBUTE)
+    (and
+      (equal ?SENTENCE (attribute ?AGENT ?VIRTUEATTRIBUTE))
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
+
+(<=>
+  (insance ?SENTENCE VirtueEthicsSentence)
+  (exists (?SVS)
+    (and
+      (instance ?SVS SimpleVirtueSentence)
+      (part ?SVS ?SENTENCE))))     
 
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
 (domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
@@ -2126,7 +2297,6 @@ instantiate.")
 
 (documentation bestActionByUtilityInSituation EnglishLanguage "This predicate is true if the class of actions is the 
 best in the situation according to the given utility function.")
-
 (domainSubclass bestActionByUtilityInSituation 1 AutonomousAgentProcess)
 (domain bestActionByUtilityInSituation 2 UtilityFormulaFn)
 (domain bestActionByUtilityInSituation 3 Situation)
@@ -2136,14 +2306,38 @@ best in the situation according to the given utility function.")
   (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION)
   (and
     (exists (?AGENT)
-      (capableInSituation ?CPROC agent ?AGENT ?SITUATION)))
-    forall (?AGENT ?CPROC2)
+      (capableInSituation ?CPROC agent ?AGENT ?SITUATION))
+    (forall (?AGENT ?CPROC2)
       (=>
         (and 
           (capableInSituation ?CPROC2 agent ?AGENT ?SITUATION)
           (realizesFormulaSubclass ?CPROC ?F1)
           (realizesFormulaSubclass ?CPROC2 ?F2))
-        (greaterThanOrEqualTo (AssignmentFn ?UF ?F1) (AssignmentFn ?UF ?F2))))
+        (greaterThanOrEqualTo (AssignmentFn ?UF ?F1) (AssignmentFn ?UF ?F2))))))
+
+(documentation bestActionByUtilityInSituationForAgent EnglishLanguage "This predicate is true if the class of actions is the 
+best in the situation according to the given utility function for this specific agent.")
+(domain bestActionByUtilityInSituationForAgent 1 Agent)
+(domainSubclass bestActionByUtilityInSituationForAgent 2 AutonomousAgentProcess)
+(domain bestActionByUtilityInSituationForAgent 3 UtilityFormulaFn)
+(domain bestActionByUtilityInSituationForAgent 4 Situation)
+(instance bestActionByUtilityInSituationForAgent QuaternaryPredicate)
+
+;; The NumHappyPeopleUtilityFn measures the happiness in the situation, so we need to combine them!
+;; The situation we wish to analyze is some update of the situation where this action is taken.
+;; Having a good RL-style state model would be easier.
+(<=>
+  (bestActionByUtilityInSituationForAgent ?AGENT ?CPROC ?UF ?SITUATION)
+  (and
+    (capableInSituation ?CPROC agent ?AGENT ?SITUATION)
+    (describesSituation ?SITUATION ?SF)
+    (forall (?CPROC2)
+        (=>
+          (and 
+            (capableInSituation ?CPROC2 agent ?AGENT ?SITUATION)
+            (equal ?SF1 (and ?SF (exists (?IPROC) (and (instance ?IPROC ?CPROC) (agent ?IPROC ?AGENT) (SituationFn ?IPROC ?SITUATION)))))
+            (equal ?SF2 (and ?SF (exists (?IPROC) (and (instance ?IPROC ?CPROC2) (agent ?IPROC ?AGENT) (SituationFn ?IPROC ?SITUATION)))))
+          (greaterThanOrEqualTo (AssignmentFn ?UF ?SF1) (AssignmentFn ?UF ?SF2))))))
 
 ;; All agents have an obligation to do that which is the best in all situations
 ;; according to utility functions they believe represent happiness.
@@ -2157,7 +2351,7 @@ best in the situation according to the given utility function.")
         (and 
           (agent ?IPROC ?AGENT)
           (instance ?IPROC ?CPROC)
-          (equal ?SITUATION (SITUATIONFn ?IPROC))))))) ?AGENT)
+          (equal ?SITUATION (SituationFn ?IPROC))))))) ?AGENT)
 
 
 (documentation NumHappyPeopleOnEarthUtilityFn EnglishLanguage "A utility function that returns the number of happy people on Earth from the beginning of the 
@@ -2211,7 +2405,7 @@ situation to the end of time.")
         (and 
           (agent ?IPROC ?AGENT)
           (instance ?IPROC ?CPROC)
-          (equal ?SITUATION (SITUATIONFn ?IPROC)))))) ?AGENT)
+          (equal ?SITUATION (SituationFn ?IPROC)))))) ?AGENT)
 
 ;; Ok, the above ways of meausuring utility are crude.  They should by synthesized with the causal lightcone stuff from consequentialism!
 ;; Homework for my AI descendents!
@@ -2233,7 +2427,20 @@ situation to the end of time.")
           (and 
             (agent ?IPROC ?AGENT)
             (instance ?IPROC ?CPROC)
-            (equal ?SITUATION (SITUATIONFn ?IPROC))))))))
+            (equal ?SITUATION (SituationFn ?IPROC))))))))
+
+;; Let's make a version where the agent simply does the best thing it can!
+(<=>
+  (holdsEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
+  (desires ?AGENT
+    (forall (?SITUATION ?CPROC)
+      (=>
+        (bestActionByUtilityInSituationForAgent ?AGENT ?CPROC NumHappyPeopleUtilityFn ?SITUATION)
+        (exists (?IPROC)
+          (and 
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?CPROC)
+            (equal ?SITUATION (SituationFn ?IPROC))))))))
 
 ;; Exploring the idea of a class of virtues, i.e., there may be different kinds of benevolence.
 ;; OTOH, it's just tedious to use (even if arguably more correct).
@@ -2253,7 +2460,7 @@ situation to the end of time.")
           (and 
             (agent ?IPROC ?AGENT)
             (instance ?IPROC ?CPROC)
-            (equal ?SITUATION (SITUATIONFn ?IPROC))))))))
+            (equal ?SITUATION (SituationFn ?IPROC))))))))
 
 ;; Honesty and Truthfulness (largely as virtues)
 
@@ -2275,7 +2482,6 @@ situation to the end of time.")
 
 (documentation Honesty EnglishLanguage "Honesty is a virtue denoting the tendency of an agent to be honest.")
 (instance Honesty VirtueAttribute)
-(instance Truthfulness VirtueAttribute)
 
 ;; Intentional honesty
 (<=> 
@@ -2288,7 +2494,7 @@ situation to the end of time.")
           (agent ?COMM ?AGENT))
         (instance ?COMM HonestCommunication)))))
 
-;; Factual honesty
+;; Factual or objective honesty
 (<=> 
   (attribute ?AGENT Honesty)
   (forall (?COMM)
@@ -2378,7 +2584,10 @@ the CognitiveAgent is prohibited from bringing it about that the Formula is true
 (exists (?DIT)
   (and
     (instance ?DIT DeontologicalImperativeTheory)
-    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?DIT)))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) Prohibition) ?DIT)
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC Lying)) Prohibition))
+    (element (modalAttribute (forall (?IPROC) (=> (instance ?IPROC Communication) (instance ?IPROC HonestCommunication))) Obligation))))
+
 
 (holdsProhibition
   (exists (?IPROC) 
@@ -2565,7 +2774,7 @@ See https://plato.stanford.edu/entries/consequentialism-rule/ for more info.")
 (subclass RuleConsequentialism Deontology)
 (subclass RuleConsequentialism Consequentialism)
 
-(documentation RuleConsequentialistTheory EnglishLanguage "A family of ethical theories holding that rules sohuld be selected based on (the goodness of) their consequences.")
+(documentation RuleConsequentialistTheory EnglishLanguage "A family of ethical theories holding that rules should be selected based on (the goodness of) their consequences.")
 (subclass RuleConsequentialistTheory Deontological)
 (subclass RuleConsequentialistTheory ConsequentialistTheory)
 
@@ -2594,28 +2803,33 @@ See https://plato.stanford.edu/entries/consequentialism-rule/ for more info.")
 and in some 'critical' situations, one hsould apply additional utilitarian moral reasoning. See https://en.wikipedia.org/wiki/Two-level_utilitarianism for more.")
 (subclass TwoLevelUtilitarianism Ethics)
 
-(documentation TwoLevelUtilitarianistTheory EnglishLanguage "An ethical theory holding that usually rules should be followed where they apply, 
+(documentation TwoLevelUtilitarianTheory EnglishLanguage "An ethical theory holding that usually rules should be followed where they apply, 
 and in some 'critical' situations, one hsould apply additional utilitarian moral reasoning. See https://en.wikipedia.org/wiki/Two-level_utilitarianism for more.")
-(subclass TwoLevelUtilitarianistTheory EthicalSentence)
+(subclass TwoLevelUtilitarianTheory EthicalTheory)
 
-(theoryFieldPairSubclass TwoLevelUtilitarianism TwoLevelUtilitarianistTheory)
+(theoryFieldPairSubclass TwoLevelUtilitarianism TwoLevelUtilitarianTheory)
 
 ;; I'm learning that I should make functions like this more that isolate the essential existential witnesses!
-(documentation twoLevelUtilitarianistTheories EnglishLanguage "(twoLevelUtilitarianistTheories ?T ?R ?U) denotes that ?R is a Rule Consequentialist theory 
+(documentation twoLevelUtilitarianTheories EnglishLanguage "(twoLevelUtilitarianTheories ?T ?R ?U) denotes that ?R is a Rule Consequentialist theory 
 and ?U is a utilitarian theory that make up the theory ?T.")
-(domain twoLevelUtilitarianistTheories 1 TwoLevelUtilitarianistTheory)
-(domain twoLevelUtilitarianistTheories 2 RuleConsequentialistTheory)
-(domain twoLevelUtilitarianistTheories 3 UtilitarianTheory)
-(instance twoLevelUtilitarianistTheories TernaryPredicate)
+(domain twoLevelUtilitarianTheories 1 TwoLevelUtilitarianTheory)
+(domain twoLevelUtilitarianTheories 2 RuleConsequentialistTheory)
+(domain twoLevelUtilitarianTheories 3 UtilitarianTheory)
+(instance twoLevelUtilitarianTheories TernaryPredicate)
 
 ;; There may be sentences in the two-level theory about how to coordinate among the two levels
 ;; Thus they're only subsets.
 ;; Would defeasible reasoning be needed for this in practice?
 (=>
-  (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT)
+  (twoLevelUtilitarianTheories ?TLUT ?RUT ?UT)
   (and
     (subset ?RUT ?TLUT)
     (subset ?UT ?TLUT)))
+
+(=>
+  (instance ?TLUT twoLevelUtilitarianistTheory)
+  (exists (?RUT ?UT)
+    (twoLevelUtilitarianTheories ?TLUT ?RUT ?UT)))
 
 ;; When an agent is making a decision and holds two-level utilitarianism,
 ;; and the evaluations of the rules and utilitarian theories are not similar,
@@ -2631,7 +2845,7 @@ and ?U is a utilitarian theory that make up the theory ?T.")
     (holdsEthicalPhilosophy ?AGENT ?EP)
     (instance ?RUP RuleConsequentialism)
     (theoryFieldPair ?EP ?TLUT)
-    (twoLevelUtilitarianistTheories ?TLUT ?RUT ?UT)
+    (twoLevelUtilitarianTheories ?TLUT ?RUT ?UT)
     (theoryFieldPair ?UP ?UT)
     (theoryFieldPair ?RUP ?RUT)
     (not (similar ?AGENT
@@ -2640,6 +2854,47 @@ and ?U is a utilitarian theory that make up the theory ?T.")
   (prefers ?AGENT
     (influences ?UP ?DECIDE)
     (influences ?RUP ?DECIDE)))
+
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?AGENT Deciding)
+    (patient ?DECIDE ?CP)
+    (instance ?CP ChoicePoint)
+    (equal ?AGENT (ChoicePointAgentFn ?CP))
+    (holdsEthicalPhilosophy ?AGENT ?EP)
+    (instance ?RUP RuleConsequentialism)
+    (theoryFieldPair ?EP ?TLUT)
+    (twoLevelUtilitarianTheories ?TLUT ?RUT ?UT)
+    (theoryFieldPair ?UP ?UT)
+    (theoryFieldPair ?RUP ?RUT)
+    (containsInformation (ListAndFn (SetToListFn (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?RUT) ?CP))) ?RUTPROP)
+    (containsInformation (ListAndFn (SetToListFn (evaluateTheory (MapSetFn UtilitarianToValueJudgmentSentenceFn ?UT) ?CP))) ?UTPROP)
+    (not (consistent ?RUTPROP ?UTPROP)))
+  (prefers ?AGENT
+    (influences ?UP ?DECIDE)
+    (influences ?RUP ?DECIDE)))
+
+;; We should include this case, too!
+(=>
+  (and
+    (instance ?DECIDE Deciding)
+    (agent ?AGENT Deciding)
+    (patient ?DECIDE ?CP)
+    (instance ?CP ChoicePoint)
+    (equal ?AGENT (ChoicePointAgentFn ?CP))
+    (holdsEthicalPhilosophy ?AGENT ?EP)
+    (instance ?RUP RuleConsequentialism)
+    (theoryFieldPair ?EP ?TLUT)
+    (twoLevelUtilitarianTheories ?TLUT ?RUT ?UT)
+    (theoryFieldPair ?UP ?UT)
+    (theoryFieldPair ?RUP ?RUT)
+    (similar ?AGENT
+      (evaluateTheory (MapSetFn ImperativeToValueJudgmentSentenceFn ?RUT) ?CP)
+      (evaluateTheory (MapSetFn UtilitarianToValueJudgmentSentenceFn ?UT) ?CP)))
+  (prefers ?AGENT
+    (influences ?RUP ?DECIDE)
+    (influences ?UP ?DECIDE)))
 
 ;;
 ;; Target-Centred Virtue Ethics (or something in that rough ballpark)
@@ -3199,6 +3454,8 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (subclass KantianDeontologicalTheory DeontologicalImperativeTheory)
 (theoryFieldPair KantianDeontology KantianDeontologicalTheory)
 
+(instance KDT KantianDeontologicalTheory)
+(instance KDT2 KantianDeontologicalTheory)
 ;; What does it mean to say, "Agent A acts by maxim B in process P"?
 
 (documentation actsByMaxim EnglishLanguage "(actsByMaxim ?AGENT ?FORMULA) means that the agent performs an action adhering to the maxim ?FORMULA.")
@@ -3208,7 +3465,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 
 ;; An agent acts by a maxim if the maxim entails an obligation to do what the agent does.
 (<=>
-  (actsByMaximInProc ?AGENT ?MAXIM)
+  (actsByMaxim ?AGENT ?MAXIM)
   (exists (?IPROC)
     (and
       (entails ?MAXIM (modalAttribute ?F Obligation))
@@ -3245,40 +3502,43 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; Simpler: every agent holds an obligation to act by maxims iff they desire 
 ;; all agents to hold the obligation to act by the maxim whenever it's relevant.
 ;; Hiding the instance is better.
-(holdsObligation 
-  (<=>
-    (actsByMaxim ?AGENT ?MAXIM)
-    (desires ?AGENT
-      (forall (?AGENT2)
-        (holdsObligation
-          (=>
-            (relevant ?MAXIM (SituationFn ?AGENT2))
-            (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT2)))) ?AGENT)
+(element 
+  (holdsObligation 
+    (<=>
+      (actsByMaxim ?AGENT ?MAXIM)
+      (desires ?AGENT
+        (forall (?AGENT2)
+          (holdsObligation
+            (=>
+              (relevant ?MAXIM (SituationFn ?AGENT2))
+              (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT2)))) ?AGENT) KDT)
 
 ;; Every agent is prohibited from acting without following a maxim, 
 ;; thus forcing one to only act by maxims adhering to the universal willing property.
-(holdsProhibition 
-  (exists (?IPROC)
-    (and
-      (instance ?IPROC AutonomousAgentProcess)
-      (agent ?IPROC ?AGENT)
-      (not
-        (exists (?MAXIM)
-          (actsByMaximInProc ?AGENT ?MAXIM ?IPROC))))) ?AGENT)
+(element
+  (holdsProhibition 
+    (exists (?IPROC)
+      (and
+        (instance ?IPROC AutonomousAgentProcess)
+        (agent ?IPROC ?AGENT)
+        (not
+          (exists (?MAXIM)
+            (actsByMaximInProc ?AGENT ?MAXIM ?IPROC))))) ?AGENT) KDT)
 
 ;; If there being an obligation for every agent to follow a maxim leads to a contradiction (implying False),
 ;; then there is a prohibition on acting by this Maxim.  [Kudos to ChatGPT o1 for suggesting I include this.]
 ;; Kant's Perfect Duty.
-(=> 
-  (entails
-    (forall (?AGENT)
-        (holdsObligation
-          (=>
-            (relevant ?MAXIM (SituationFn ?AGENT))
-            (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT))
-    False)
-  (holdsProhibition
-    (actsByMaxim ?AGENT ?MAXIM) ?AGENT))
+(element
+  (=> 
+    (entails
+      (forall (?AGENT)
+          (holdsObligation
+            (=>
+              (relevant ?MAXIM (SituationFn ?AGENT))
+              (actsByMaxim ?AGENT2 ?MAXIM)) ?AGENT))
+      False)
+    (holdsProhibition
+      (actsByMaxim ?AGENT ?MAXIM) ?AGENT)) KDT)
 
 ;; 'desires' is weak for 'wills'.
 ;; If the agent believes there is a valid deductive argument that the obligation should hold?
@@ -3290,18 +3550,42 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; There is a prohibition on using others for purposes when the process has 
 ;; no purpose for the others and when their happiness is not an intended part of the process.
 ;; Honestly, just sketching what can be said in the ballpark of this law.
-(holdsProhibition 
-  (exist (?IPROC ?AGENT2 ?PURP)
-    (and
-      (uses ?AGENT2 ?AGENT)
-      (agent ?IPROC ?AGENT)
-      (instrument ?IPROC ?AGENT2)
-      (hasPurposeForAgent ?IPROC ?PURP ?AGENT)
-      (not 
-        (exist (?PURP2)
-          (hasPurposeForAgent ?IPROC ?PURP2 ?AGENT2)))
-      (not
-        (hasPurposeForAgent ?IPROC (attribute ?AGENT2 Happiness) ?AGENT)))) ?AGENT)
+(element
+  (holdsProhibition 
+    (exist (?IPROC ?AGENT2 ?PURP)
+      (and
+        (uses ?AGENT2 ?AGENT)
+        (agent ?IPROC ?AGENT)
+        (instrument ?IPROC ?AGENT2)
+        (hasPurposeForAgent ?IPROC ?PURP ?AGENT)
+        (not 
+          (exist (?PURP2)
+            (hasPurposeForAgent ?IPROC ?PURP2 ?AGENT2)))
+        (not
+          (hasPurposeForAgent ?IPROC (attribute ?AGENT2 Happiness) ?AGENT)))) ?AGENT) KDT2)
+
+(element
+  (holdsProhibition 
+    (exist (?IPROC ?AGENT2 ?PURP)
+      (and
+        (uses ?AGENT2 ?AGENT)
+        (agent ?IPROC ?AGENT)
+        (instrument ?IPROC ?AGENT2)
+        (hasPurposeForAgent ?IPROC ?PURP ?AGENT)
+        (not 
+          (exist (?PURP2)
+            (hasPurposeForAgent ?IPROC ?PURP2 ?AGENT2)))
+        (not
+          (exists (?DECIDE)
+            (and
+              (instance ?DECIDE Deciding)
+              (agent ?DECIDE ?AGENT)
+              (result ?DECIDE ?CPROC)
+              (instance ?IPROC ?CPROC)))
+              (influences 
+                (desires ?AGENT
+                  (attribute ?AGENT2 Happiness))
+                ?DECIDE)))) ?AGENT) KDT2)
 
 ;; 3) "Thus the third practical principle follows [from the first two] as the ultimate 
 ;; condition of their harmony with practical reason: the idea of the will of every 
@@ -3359,7 +3643,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
           (patient ?UNDERSTAND ?FORM)
           (before (BeginFn (WhenFn ?EXPLAIN)) (EndFn (WhenFn ?UNDERSTAND)))
           (before (EndFn (WhenFn ?UNDERSTAND)) (BeginFn (WhenFn ?EXP)))
-          (before (EndFn (WhenFn ?EXP)) (BeginFn (WhenFn ?SURGERY)))))))))
+          (before (EndFn (WhenFn ?EXP)) (BeginFn (WhenFn ?SURGERY))))))) ?DOC))
 
 ;; Something like this should probably work.  Tweaks would probably be necessary to 
 ;; apply it in a practical domain.  Hopefully AI/LLMs can manage!
