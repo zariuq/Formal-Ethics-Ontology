@@ -3197,7 +3197,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (realizesFormula ?IPROC ?FPROC)
       (causesProposition ?FPROC ?TARGET))))
 
-;; This is cleaner: it's easier to say that an action hits teh virtue's target,
+;; This is cleaner: it's easier to say that an action hits the virtue's target,
 ;; In the context with the field, mode, and target already specified.
 (<=>
   (and
@@ -3213,6 +3213,88 @@ criteria are given to determine which actions are virtuous and by which moral ba
     (instance ?IPROC ?MODE)
     (realizesFormula ?IPROC ?FPROC)
     (causesProposition ?FPROC ?TARGET)))
+
+;; lol, so I'm getting better at logic.
+;; So in the case that this existant situation is already there, for all such cases,
+;; we can say that the consequent holds :-).
+(<=>
+  (and
+    (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+    (virtueField ?VIRTUE ?FIELD)
+    (virtueMode ?VIRTUE ?MODE)
+    (virtueTarget ?VIRTUE ?TARGET)
+    (instance ?SITUATION ?FIELD)
+    (part (SituationFn ?IPROC) ?S)
+    (instance ?IPROC ?MODE))
+  (and
+    (realizesFormula ?IPROC ?FPROC)
+    (causesProposition ?FPROC ?TARGET)))
+
+;; A virtue, on a target-centered account, “is a disposition to respond to, or acknowledge, 
+;; items within its field or fields in an excellent or good enough way” (Swanton 2003: 19).
+;; "As I shall put it, a virtue is a disposition to respond well to the ‘demands of the world’"
+;; I might wish to define this, too, fx, X  has virtue Y iff X is likely to respond to targets in the field.
+;; This will make it a proper virtue ethics theory!
+
+;; So if an agent possess a virtue with these aspects, then it's likely to take an action that hits the target
+;; in situations in the field.
+(<=>
+  (and
+    (attribute ?AGENT ?VIRTUE)
+    (virtueField ?VIRTUE ?FIELD)
+    (virtueMode ?VIRTUE ?MODE)
+    (virtueTarget ?VIRTUE ?TARGET))
+    (forall (?SITUATION)
+      (=>
+        (and
+          (equal ?SITUATION (SituationFn ?AGENT))
+          (instance ?SITUATION ?FIELD))
+        (modalAttribute 
+          (exists (?IPROC)
+            (and
+              (agent ?IPROC ?AGENT)
+              (instance ?IPROC ?MODE)
+              (actionHitsVirtueTarget ?IPROC ?VIRTUE))) Likely))))
+
+;; Also, a capability-based version.  Will virtuous people tend to be capable of taking the virtuous actios in the field?
+;; Likely enough so that we can just go with the above?  :>
+(<=>
+  (and
+    (attribute ?AGENT ?VIRTUE)
+    (virtueField ?VIRTUE ?FIELD)
+    (virtueMode ?VIRTUE ?MODE)
+    (virtueTarget ?VIRTUE ?TARGET))
+    (forall (?SITUATION)
+      (=>
+        (and
+          (capableInSituation ?MODE agent ?AGENT ?SITUATION)
+          (instance ?SITUATION ?FIELD))
+        (modalAttribute 
+          (exists (?IPROC)
+            (and
+              (agent ?IPROC ?AGENT)
+              (instance ?IPROC ?MODE)
+              (actionHitsVirtueTarget ?IPROC ?VIRTUE))) Likely))))
+
+;; An agent possesses a virtue iff there exists field, mode, and target aspects such that they're likely to behave appropriately?
+(<=>
+  (attribute ?AGENT ?VIRTUE)
+  (exists (?FIELD ?MODE ?TARGET))
+    (and
+      (virtueField ?VIRTUE ?FIELD)
+      (virtueMode ?VIRTUE ?MODE)
+      (virtueTarget ?VIRTUE ?TARGET))
+      (forall (?SITUATION)
+        (=>
+          (and
+            (capableInSituation ?MODE agent ?AGENT ?SITUATION)
+            (instance ?SITUATION ?FIELD))
+          (modalAttribute 
+            (exists (?IPROC)
+              (and
+                (agent ?IPROC ?AGENT)
+                (instance ?IPROC ?MODE)
+                (actionHitsVirtueTarget ?IPROC ?VIRTUE))) Likely))))
 
 ;; Ah, I run into the usual class vs instance problems.
 ;; (<=>
@@ -3294,6 +3376,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; Basically, this translation direction is underspecified.
 ;; Including a "description of a class of situations" would make it more appropriate.
 ;; Oh the fun little details to tweak.
+;; So now if an agent possess this virtue, they'll likely "take the appropriate action"!
 (=>
   (and 
     (equal (SimpleSituationalActionValueJudgmentToVirtueSentenceFn ?SSAVJ) ?VES)
