@@ -586,6 +586,79 @@ the sentences of the philosophy are the result of their ethical judgments and th
 (subclass VirtueAttribute PsychologicalAttribute)
 (subclass ViceAttribute PsychologicalAttribute)
 
+(documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+(subclass VirtuousAgent AutonomousAgent)
+
+(increasesLikelihood
+  (exists (?VIRTUE)
+    (and
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VIRTUE VirtueAttribute)
+      (attribute ?AGENT ?VIRTUE)))
+  (instance ?AGENT VirtuousAgent))
+
+(=>
+  (instance ?AGENT VirtuousAgent)
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE VirtueAttribute) 
+      (attribute ?AGENT ?VIRTUE))))
+
+(documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+(subclass ViciousAgent AutonomousAgent)
+  
+(increasesLikelihood
+  (exists (?VICE)
+    (and
+      (instance ?AGENT AutonomousAgent)
+      (instance ?VICE ViceAttribute)
+      (attribute ?AGENT ?VICE)))
+  (instance ?AGENT ViciousAgent))
+  
+(=>
+  (instance ?AGENT ViciousAgent)
+  (exists (?VICE)
+    (and
+      (instance ?VICE ViceAttribute)
+      (attribute ?AGENT ?VICE))))
+
+(documentation VirtuousAct EnglishLanguage "'A virtuous act is an action that embodies or demonstrates virtues.'")
+(subclass VirtuousAct AutonomousAgentProcess)
+
+;; Probably we can be stronger, but it could be that there is an overriding virtue/vice that is not fuflfilled by this act!
+(increasesLikelihood
+  (exists (?VIRTUE)
+    (and
+      (instance ?ACT AutonomousAgentProcess)
+      (instance ?VIRTUE VirtueAttribute)
+      (attribute ?ACT ?VIRTUE)))
+  (instance ?ACT VirtuousAct))
+
+(=>
+  (instance ?ACT VirtuousAct)
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE VirtueAttribute)
+      (attribute ?ACT ?VIRTUE))))
+
+(documentation ViciousAct EnglishLanguage "'A vicious act is an action that embodies or demonstrates vices.'")
+(subclass ViciousAct AutonomousAgentProcess)
+
+(increasesLikelihood
+  (exists (?VICE)
+    (and
+      (instance ?ACT AutonomousAgentProcess)
+      (instance ?VICE ViceAttribute)
+      (attribute ?ACT ?VICE)))
+  (instance ?ACT ViciousAct))
+
+(=>
+  (instance ?ACT ViciousAct)
+  (exists (?VICE)
+    (and
+      (instance ?VICE ViceAttribute)
+      (attribute ?ACT ?VICE))))
+
 (documentation DeonticAttribute EnglishLanguage "A Class containing all of the Attributes relating to the notions of permission, obligation, and prohibition.")	
 (subclass DeonticAttribute ObjectiveNorm)
 
@@ -1687,18 +1760,72 @@ Moral Nihilism can also be defined as 'the view that there are no moral facts' (
             (instance ?JTMT EthicalTheory)
             (instance ?JTMT JustifiedTrueTheory)))))))
 
+;; I'm not sure what to call this.  Agent-centered virtue ethics seems slightly more 
+;;particular and to be centered on what moral basis there is for grounding ethics in 
+;; virtues.  Yet to unify target-centered virtue ethics, some general class of virtue 
+;; theories is needed.
+(documentation GeneralVirtueEthics EnglishLanguage "'General virtue ethics' is a class of 
+ethical paradigms that assign virtue entities to some sort of entities.  It is created to 
+structurally unify (agent-centered) virtue ethics and target-centered virtue ethics.")
+(subclass GeneralVirtueEthics Ethics)
+
+(documentation GeneralVirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
+(subclass GeneralVirtueEthicsTheory EthicalTheory)
+(theoryFieldPairSubclass GeneralVirtueEthics GeneralVirtueEthicsTheory)
+
+(documentation GeneralVirtueEthicsSentence EnglishLanguage "A sentence of a (general) virtue ethics language/theory.")      
+(subclass GeneralVirtueEthicsSentence EthicalSentence)
+
+(documentation SimpleGeneralVirtueSentence EnglishLanguage "A sentence that describes an virtue/vice attribute assignment to an entity.")      
+(subclass SimpleGeneralVirtueSentence VirtueEthicsSentence)   
+
+(<=>
+  (instance ?V GeneralVirtueEthicsTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?V)
+      (or
+        (instance ?S GeneralVirtueEthicsSentence)
+        (exists (?GVES)
+          (and
+            (instance ?GVES GeneralVirtueEthicsSentence)
+            (hasPurposeInArgumentFor ?S ?VES))))))) 
+
+(<=>
+  (instance ?SENTENCE SimpleGeneralVirtueSentence)
+  (exists (?ENTITY ?VIRTUEATTRIBUTE)
+    (and
+      (equal ?SENTENCE (property ?ENTITY ?VIRTUEATTRIBUTE))
+      (instance ?ENTITY Entity)
+      (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
+
+(=>
+  (exists (?SGVS)
+    (and
+      (instance ?SGVS SimpleGeneralVirtueSentence)
+      (part ?SGVS ?SENTENCE)))
+  (insance ?SENTENCE GeneralVirtueEthicsSentence))
+
+;; Probably we don't need to get this general:
+(<=>
+  (insance ?SENTENCE GeneralVirtueEthicsSentence)
+  (exists (?GVS ?VIRTUE)
+    (and
+      (instance ?VIRTUEORVICE MoralVirtueAttribute)
+      (refers ?GVS ?VIRTUEORVICE))))      
+
 (documentation VirtueEthics EnglishLanguage "Virtue ethics is the ethical paradigm that judges the morality of an action 
 based on the character of the agent performing an action.  A virtuous agent is one who possesses virtues.  
 'An action is right if and only if it is what a virtuous agent would characteristically (i.e., acting in character) 
 do in the circumstances' (On Virtue Ethics -- Right Action).")
-(subclass VirtueEthics Ethics)
+(subclass VirtueEthics GeneralVirtueEthics)
 
-(documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes.")
-(subclass VirtueEthicsTheory EthicalTheory)
-(theoryFieldPairSubclass VirtueEthics ValueJudgmentTheory)
+(documentation VirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes (to agents).")
+(subclass VirtueEthicsTheory GeneralVirtueEthicsTheory)
+(theoryFieldPairSubclass VirtueEthics VirtueEthicsTheory)
 
 (documentation VirtueEthicsSentence EnglishLanguage "A sentence of a virtue ethics language/theory.")      
-(subclass VirtueEthicsSentence EthicalSentence)
+(subclass VirtueEthicsSentence GeneralVirtueEthicsSentence)
 
 (<=>
   (instance ?V VirtueEthicsTheory)
@@ -2906,7 +3033,7 @@ and ?U is a utilitarian theory that make up the theory ?T.")
 ;; This is an iterative learning and refinement process.
 ;; 
 ;; Agent-centric virtue ethics focuses on the virtuous agents.
-;; Target-centric virtue ethics focuses on the vature of the virtuous acts.
+;; Target-centric virtue ethics focuses on the nature of the virtuous acts.
 ;; 
 ;; To this end, the following are specified:
 ;; The "field" or challenging domain in which a given virtue is relevant.
@@ -2924,63 +3051,157 @@ and ?U is a utilitarian theory that make up the theory ?T.")
 ;; I'm not personally so sold on the superiority of target-centric virtue ethics, 
 ;; but this is a good lesson that the high-level ontology should be very broad to 
 ;; incorporate a broad range of theories!
+;;
+;; A reasonable review that helps to elucidate the concepts (perhaps better than the book iteslf, imo): 
+;; https://ndpr.nd.edu/reviews/target-centred-virtue-ethics/
+
+;; Ok, now that I added this part, (hasPurposeInArgumentFor ?S ?VES),
+;; I can turn this into a type of virtue ethics!
+
+;;  I would have:
+;; 
+;; 1) Intentional Aspirations of Virtue X
+;; 2) Indicators or Symptoms of Virtue X
 
 (documentation TargetCenteredVirtueEthics EnglishLanguage "Target-Centered Virtue Ehics is an ethical paradigm that judges the morality of an action 
 based on how virtuous it is.  Unlike agent-centred virtue ethics that focuses on the character of the agent performing an action, 
 criteria are given to determine which actions are virtuous and by which moral bases without necessarily referencing the character of the actor.")
-(subclass TargetCenteredVirtueEthics Ethics)
+(subclass TargetCenteredVirtueEthics GeneralVirtueEthics)
+;; (subclass TargetCenteredVirtueEthics VirtueEthics)
 
 (documentation TargetCenteredVirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes to behaviors.")
-(subclass TargetCenteredVirtueEthics EthicalTheory)
+(subclass TargetCenteredVirtueEthics GeneralVirtueEthicsTheory)
+;; (subclass TargetCenteredVirtueEthics VirtueEthicsTheory)
 
 (theoryFieldPairSubclass TargetCenteredVirtueEthics TargetCenteredVirtueEthicsTheory)
-(relatedInternalConcept VirtueEthics TargetCenteredVirtueEthics)
+;; (relatedInternalConcept VirtueEthics TargetCenteredVirtueEthics)
 
 (documentation TargetCenteredVirtueEthicsSentence EnglishLanguage "A sentence of a Target-Centred Virtue Ethics Theory.")
-(subclass TargetCenteredVirtueEthicsSentence EthicalSentence)
+(subclass TargetCenteredVirtueEthicsSentence GeneralVirtueEthicsSentence)
 
-(documentation SimpleTargetCenteredVirtueEthicsSentence EnglishLanguage "A sentence that assigns a field, basis, mode, or target to a virtue.")
-(subclass SimpleTargetCenteredVirtueEthicsSentence TargetCenteredVirtueEthics)
+;; "A virtuous act is an act that hits the target of a virtue, which is to say that it 
+;; succeeds in responding to items in its field in the specified way (233)." Citation of Swanton from SEP Virte Ethics page.
+;; This justifies making the 'point' be to determine virtue of acts.  Tho it could be equally argued as assigning virtue to agents, still!
+(documentation SimpleTargetCenteredVirtueEthicsSentence EnglishLanguage "A sentence that assigns a virtue to an action.")
+(subclass SimpleTargetCenteredVirtueEthicsSentence TargetCenteredVirtueEthicsSentence)
+(subclass SimpleTargetCenteredVirtueEthicsSentence SimpleGeneralVirtueSentence)
+
+(<=>
+  (instance ?SENTENCE SimpleTargetCenteredVirtueEthicsSentence)
+  (exists (?IPROC ?VIRTUEATTRIBUTE)
+    (and
+      (equal ?SENTENCE (attribute ?IPROC ?VIRTUEATTRIBUTE))
+      (instance ?IPROC AutonomousAgentprocess)
+      (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
+
+(documentation VirtueAspectSentence EnglishLanguage "A sentence that assigns a field, basis, mode, or target to a virtue.")
+(subclass VirtueAspectSentence TargetCenteredVirtueEthicsSentence)
+
+;; A bit clunky, yet if one of the OR options is satisfied, the other variables can be anything.
+(<=> 
+  (instance ?SENTENCE VirtueAspectSentence)
+  (exists (?VIRTUE ?FIELD ?BASIS ?MODE ?TARGET)
+    (or
+      (equal ?SENTENCE (virtueField ?VIRTUE ?FIELD))
+      (equal ?SENTENCE (virtueBasis ?VIRTUE ?BASIS))
+      (equal ?SENTENCE (virtueMode ?VIRTUE ?MODE))
+      (equal ?SENTENCE (virtueTarget ?VIRTUE ?TARGET)))))
+
+;; I'm mainly adding this for the ease of a translation function.
+(documentation CompleteVirtueAspectSentence EnglishLanguage "A sentence that assigns a field, basis, mode, and target to a virtue.")
+(subclass CompleteVirtueAspectSentence TargetCenteredVirtueEthicsSentence)
 
 (<=> 
-  (instance ?SENTENCE SimpleTargetCenteredVirtueEthicsSentence)
-  (or
-    (equal ?SENTENCE (virtueField ?VIRTUE ?FIELD))
-    (equal ?SENTENCE (virtueBasis ?VIRTUE ?BASIS))
-    (equal ?SENTENCE (virtueMode ?VIRTUE ?MODE))
-    (equal ?SENTENCE (virtueTarget ?VIRTUE ?TARGET))))
+  (instance ?SENTENCE CompleteVirtueAspectSentence)
+  (exists (?VIRTUE ?FIELD ?BASIS ?MODE ?TARGET)
+    (equal ?SENTENCE 
+      (and 
+        (virtueField ?VIRTUE ?FIELD)
+        (virtueBasis ?VIRTUE ?BASIS)
+        (virtueMode ?VIRTUE ?MODE)
+        (virtueTarget ?VIRTUE ?TARGET)))))
 
-;; Novel idea: sentences of the broader theory may refer to the simple sentences in
-;; ways other than by including them as parts...?
+;; Complete virtue aspect sentences contain virtue aspect sentences as parts.
 (<=>
   (instance ?SENTENCE TargetCenteredVirtueEthicsSentence)
-  (exists (?STCVES)
+  (exists (?TCVES)
     (and
-      (instance ?STCVES SimpleTargetCenteredVirtueEthicsSentence)
       (or
-        (part ?STCVES ?SENTENCE)
-        (refers ?SENTENCE ?STCVES)
-        (refers ?SENTENCE SimpleTargetCenteredVirtueEthicsSentence)))))
+        (instance ?TCVES VirtueAspectSentence)
+        (instance ?TCVES SimpleTargetCenteredVirtueEthicsSentence))
+      (or
+        (part ?TCVES ?SENTENCE)))))
 
+;; If making TCVE a form of a VET via the definition of a virtuous agent, 
+;; then this part would be offbase, right?
+;; It's tricky to find some way to limit the scope of a theory that isn't overly generic.
+;; Just saying the sentence is related to TCVES might be better?  
+;; Related being like a symmetric extension of (A refers B)?
+;; There may be two views of a TCVE theory, actually:
+;; One in which the point is really specifying virtue aspects to allow for the judging of acts or agents
+;; Another in which these aspects help us to elaborate what we mean when saying that an agent is virtuous,
+;; which is seeing the TCVE theory as a supplement to an agent-centric theory!
 (<=>
   (instance ?V TargetCenteredVirtueEthicsTheory)
   (forall (?S)
     (=>
       (element ?S ?V)
-      (instance ?S TargetCenteredVirtueEthicsSentence))))
+      (or
+        (instance ?S TargetCenteredVirtueEthicsSentence)
+        (exists (?TCVES)
+          (and
+            (instance ?TCVES TargetCenteredVirtueEthicsSentence)
+            (hasPurposeInArgumentFor ?S ?TCVES)))))))
 
-;; I'm mainly adding this for the ease of a translation function.
-(documentation CompleteSimpleTargetCenteredVirtueEthicsSentence EnglishLanguage "A sentence that assigns a field, basis, mode, and target to a virtue.")
-(subclass CompleteSimpleTargetCenteredVirtueEthicsSentence TargetCenteredVirtueEthics)
+;; The following could be used to allow full flexbility in the ontological sense (which doesn't allow for much programmatic usage!)
+;; Given the addition of GeneralVirtueEthics as a superclass, this is no longer needed.
+(<=>
+  (instance ?V TargetCenteredVirtueEthicsTheory)
+  (forall (?S)
+    (=>
+      (element ?S ?V)
+      (or
+        (instance ?S TargetCenteredVirtueEthicsSentence)
+        (exists (?TCVES)
+          (and
+            (instance ?TCVES TargetCenteredVirtueEthicsSentence)
+            (or
+              (refers ?S ?TCVES)
+              (refers ?TCVES ?S))))))))
 
-(<=> 
-  (instance ?SENTENCE CompleteSimpleTargetCenteredVirtueEthicsSentence)
-  (equal ?SENTENCE 
-    (and 
-      (virtueField ?VIRTUE ?FIELD)
-      (virtueBasis ?VIRTUE ?BASIS)
-      (virtueMode ?VIRTUE ?MODE)
-      (virtueTarget ?VIRTUE ?TARGET))))
+;; In a (complete) TCVE theory, every virtue mentioned will be described by all four aspects.
+;; I would say that, minimally, the target should be described.  
+;; The others seem unnecessary yet helpful.  Yet here we are for now :).
+(=>
+  (instance ?V TargetCenteredVirtueEthicsTheory)
+  (forall (?VIRTUE)
+    (=>
+      (and
+        (instance ?VIRTUE VirtueAttribute)
+        (exists (?SENTENCE)
+          (and
+            (element ?SENTENCE ?V)
+            (part ?VIRTUE ?SENTENCE))))
+      (exists (?SF ?SB ?SM ?ST ?FIELD ?BASIS ?MODE ?TARGET)
+        (and
+          (part (virtueField ?VIRTUE ?FIELD) ?SF)
+          (part (virtueBasis ?VIRTUE ?BASIS) ?SB)
+          (part (virtueMode ?VIRTUE ?MODE) ?SM)
+          (part (virtueTarget ?VIRTUE ?TARGET) ?ST)
+          (element ?SF ?V)
+          (element ?SB ?V)
+          (element ?SM ?V)
+          (element ?ST ?V))))))
+
+;; Every TCVE theory contains at least one simple sentence assigning a virtue to an action.
+;; That is, the theories should connect the target, field, etc to actual judgments of actions.
+(=>
+  (instance ?V TargetCenteredVirtueEthicsTheory)
+  (exists (?SENTENCE ?STCVES)
+    (and
+      (element ?SENTENCE ?V)
+      (instance ?STCVES SimpleTargetCenteredVirtueEthicsSentence)
+      (part ?STCVES ?SENTENCE))))
 
 ;; As usual, I'm not sure whether we wish to be applying the virtue judgemnts to the fact that some action is taken of a particular class or to the "instance of the behavior" itself.
 ;; Anyway, specifying this helps frame thinsg.
@@ -3016,11 +3237,13 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (<=>
   (and
     (virtueField Honesty ?SC)
-    (instance ?S ?SC))
-  (exists (?SocialInteraction)
-    (and
-      (instance ?SI SocialInteraction)
-      (part (SituationFn ?SI) ?S))))
+    (instance ?SITUATION ?SC))
+  (and
+    (instance ?SITUATION Situation)
+    (exists (?SocialInteraction)
+      (and
+        (instance ?SI SocialInteraction)
+        (part (SituationFn ?SI) ?SITUATION)))))
 
 ;; The field of benevolence is all situations where an act can be done that is likely to benefit an agent.
 ;; Perhaps I should use Possibility instead of Likely, that is, 
@@ -3043,10 +3266,10 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (<=>
   (and
     (virtueField Benevolence ?SC)
-    (instance ?S ?SC))
+    (instance ?SITUATION ?SC))
   (exists (?CPROC ?AGENT ?BENEFICIARY)
     (and
-      (capableInSituation ?CPROC agent ?AGENT ?S)
+      (capableInSituation ?CPROC agent ?AGENT ?SITUATION)
       (modalAttribute
         (exists (?IPROC)
           (and 
@@ -3062,14 +3285,15 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (instance virtueBasis BinaryPredicate)
 
 (instance ValuingGood Value)
+(instance ValuingBonds Value)
 
 ;; If one values promoting goodness, then one desires to benefit others.
 (=> 
   (holdsValue ?AGENT ValuingGood)
   (desires ?AGENT
-    (exists (?IPROC ?OTHER)
+    (exists (?IPROC ?BENEFICIARY)
       (and
-        (benefits ?IPROC ?OTHER)
+        (benefits ?IPROC ?BENEFICIARY)
         (agent ?IPROC ?AGENT)))))
 
 (=>
@@ -3088,11 +3312,13 @@ criteria are given to determine which actions are virtuous and by which moral ba
   (virtueBasis ?BENEVOLENCE ValuingGood))
 
 (virtueBasis Benevolence ValuingGood)
+(virtueBasis Benevolence ValuingBonds)
 
 ;; It could be specified further, I suppose.
 ;; ChatGPT: consider values like transparency, integrity, respect for people's dignity, justice and fairness, trust and reliability, respect for autonomy.
 ;; I'd add respect for healthy relationships and bonds!
 (virtueBasis Honesty ValuingGood)
+(virtueBasis Honesty ValuingBonds)
 
 ;; lololol, can I just say, the mode is a class of behaviors?
 (documentation virtueMode EnglishLanguage "Specifies how a virtue responds within its field by the class of behaviors that are considered appropriate.")
@@ -3106,6 +3332,9 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (virtueMode Benevolence Giving)
 (virtueMode Benevolence Helping)
 
+;; Update: Mode as property seems wrong.
+;; In essence, one could use KappaFn to define the subclass of AutonomousAgentprocess where all members of the class
+;; possess a certain property, right?
 (documentation virtueModeAsProperty EnglishLanguage "Specifies how a virtue responds within its field by properties that are considered appropriate.")
 (domain virtueModeAsProperty 1 VirtueAttribute)
 (domainSubclass virtueModeAsProperty 2 Attribute)
@@ -3184,51 +3413,133 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; These may need to be specified on a virtue-by-virtue basis
 (<=>
   (actionHitsVirtueTarget ?IPROC ?VIRTUE)
-  (exists (?FIELD ?MODE ?TARGET)
+  (exists (?FIELD ?MODE ?TARGET ?SITUATION)
     (and
       (virtueField ?VIRTUE ?FIELD)
       (virtueMode ?VIRTUE ?MODE)
       (virtueTarget ?VIRTUE ?TARGET)
-      (exists (?S)
-        (and
-          (instance ?S ?FIELD)
-          (part (SituationFn ?IRPOC) ?S)))
+      (instance ?SITUATION ?FIELD)
+      (part (SituationFn ?IRPOC) ?SITUATION)
       (instance ?IPROC ?MODE)
       (realizesFormula ?IPROC ?FPROC)
       (causesProposition ?FPROC ?TARGET))))
 
 ;; This is cleaner: it's easier to say that an action hits the virtue's target,
 ;; In the context with the field, mode, and target already specified.
-(<=>
-  (and
-    (actionHitsVirtueTarget ?IPROC ?VIRTUE)
-    (virtueField ?VIRTUE ?FIELD)
-    (virtueMode ?VIRTUE ?MODE)
-    (virtueTarget ?VIRTUE ?TARGET))
-  (and
-    (exists (?S)
-      (and
-        (instance ?S ?FIELD)
-        (part (SituationFn ?IRPOC) ?S)))
-    (instance ?IPROC ?MODE)
-    (realizesFormula ?IPROC ?FPROC)
-    (causesProposition ?FPROC ?TARGET)))
+;; This isn't really cleaner.
+;; (<=>
+;;   (and
+;;     (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+;;     (virtueField ?VIRTUE ?FIELD)
+;;     (virtueMode ?VIRTUE ?MODE)
+;;     (virtueTarget ?VIRTUE ?TARGET))
+;;   (and
+;;     (exists (?S)
+;;       (and
+;;         (instance ?S ?FIELD)
+;;         (part (SituationFn ?IRPOC) ?S)))
+;;     (instance ?IPROC ?MODE)
+;;     (realizesFormula ?IPROC ?FPROC)
+;;     (causesProposition ?FPROC ?TARGET)))
 
 ;; lol, so I'm getting better at logic.
 ;; So in the case that this existant situation is already there, for all such cases,
 ;; we can say that the consequent holds :-).
-(<=>
+;; Am I?  The inverse direction doesn't hold and I put <=>
+;; (=>
+;;   (and
+;;     (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+;;     (virtueField ?VIRTUE ?FIELD)
+;;     (virtueMode ?VIRTUE ?MODE)
+;;     (virtueTarget ?VIRTUE ?TARGET)
+;;     (instance ?SITUATION ?FIELD)
+;;     (part (SituationFn ?IPROC) ?SITUATION)
+;;     (instance ?IPROC ?MODE))
+;;   (and
+;;     (realizesFormula ?IPROC ?FPROC)
+;;     (causesProposition ?FPROC ?TARGET)))
+
+;; The unpacked existential form is what we really want:
+;; In the case that the virtue's context in instantiated, the equivalence holds.
+;; Should a full contextual specification be included in the arguments of "hitting a target"?
+;; Perhaps.  I'll leave that to future ethicists ;-)
+(=>
   (and
-    (actionHitsVirtueTarget ?IPROC ?VIRTUE)
     (virtueField ?VIRTUE ?FIELD)
     (virtueMode ?VIRTUE ?MODE)
     (virtueTarget ?VIRTUE ?TARGET)
     (instance ?SITUATION ?FIELD)
-    (part (SituationFn ?IPROC) ?S)
+    (part (SituationFn ?IRPOC) ?SITUATION)
     (instance ?IPROC ?MODE))
+  (<=>
+    (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+    (exists (?FPROC)
+      (and
+        (realizesFormula ?IPROC ?FPROC)
+        (causesProposition ?FPROC ?TARGET)))))
+
+;; Can we just say that these are synonymous?
+(<=>
+  (attribute ?IPROC ?VIRTUE)
+  (actionHitsVirtueTarget ?IPROC ?VIRTUE))
+
+(=>
+  (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+  (instance ?IPROC VirtuousAct))
+
+(<=>
+  (instance ?IPROC VirtuousAct)
+  (exists (?VIRTUE)
+    (actionHitsVirtueTarget ?IPROC ?VIRTUE)))
+
+;; Generally hits target could be the Class-version of this
+(documentation actionClassGenerallyHitsVirtueTarget EnglishLanguage "An class of actions is likely to hit the target of a virtue if it usually brings about the virtue's target in the relevant situation.")
+(domainSubclass actionClassGenerallyHitsVirtueTarget 1 Process)
+(domain actionClassGenerallyHitsVirtueTarget 2 VirtueAttribute)
+(instance actionClassGenerallyHitsVirtueTarget BinaryPredicate)
+
+;; An action class generally hits the target of a virtue if,
+;; for all instances and situations within the field, 
+;; the instance is likely to hit the target.
+(<=>
   (and
-    (realizesFormula ?IPROC ?FPROC)
-    (causesProposition ?FPROC ?TARGET)))
+    (actionClassGenerallyHitsVirtueTarget ?CPROC ?VIRTUE)
+    (virtueField ?VIRTUE ?FIELD)
+    (virtueMode ?VIRTUE ?MODE)
+    (virtueTarget ?VIRTUE ?TARGET)
+    (subclass ?CPROC ?MODE))
+  (modalAttribute 
+    (forall (?IPROC ?SITUATION)
+      (=>
+        (and
+          (instance ?IPROC ?CPROC)
+          (instance ?SITUATION ?FIELD)
+          (part (SituationFn ?IPROC) ?SITUATION))
+        (and
+          (realizesFormula ?IPROC ?FPROC)
+          (causesProposition ?FPROC ?TARGET)))) Likely))
+
+;; Actually, I can just use this!
+(<=>
+  (and
+    (actionClassGenerallyHitsVirtueTarget ?CPROC ?VIRTUE)
+    (virtueField ?VIRTUE ?FIELD)
+    (virtueMode ?VIRTUE ?MODE)
+    (virtueTarget ?VIRTUE ?TARGET)
+    (subclass ?CPROC ?MODE))
+  (modalAttribute 
+    (forall (?IPROC ?SITUATION)
+      (=>
+        (and
+          (instance ?IPROC ?CPROC)
+          (instance ?SITUATION ?FIELD)
+          (part (SituationFn ?IPROC) ?SITUATION))
+        (actionHitsVirtueTarget ?IPROC ?VIRTUE))) Likely))
+
+(increasesLikelihood
+  (exists (?VIRTUE)
+    (actionClassGenerallyHitsVirtueTarget ?CPROC VIRTUE))
+  (subclass ?CPROC ?VirtuousAct))
 
 ;; A virtue, on a target-centered account, “is a disposition to respond to, or acknowledge, 
 ;; items within its field or fields in an excellent or good enough way” (Swanton 2003: 19).
@@ -3296,11 +3607,118 @@ criteria are given to determine which actions are virtuous and by which moral ba
                 (instance ?IPROC ?MODE)
                 (actionHitsVirtueTarget ?IPROC ?VIRTUE))) Likely))))
 
+;; Schema of Overall Rightness (via Swanton, Target-Centred Virtue Ethics):
+;; "An action is right if and only if it is overall virtuous, and 
+;; an act is overall virtuous if and only if it hits the targets of relevant virtues to a sufficient extent."
+
+;; Is it weird to make a UnaryPredicate?
+(documentation overallVirtuous EnglishLanguage "An act is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
+(subclass overallVirtuous Predicate)
+(subclass overallVirtuous InheritableRelation)
+(valence overallVirtuous 1)
+(domain overallVirtuous 1 AutonomousAgentProcess)
+
+(documentation overallVirtuousClassInSituation EnglishLanguage "An class of actions is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
+(subclass overallVirtuous BinaryPredicate)
+(domainSubclass overallVirtuous 1 AutonomousAgentProcess)
+(domainSubclass overallVirtuous 2 Situation)
+
+(<=>
+  (overallVirtuous ?IPROC)
+  (forall (?VIRTUE)
+    (=>
+      (relevant ?VIRTUE (SituationFn ?IPROC))
+      (actionHitsVirtueTarget ?IPROC ?VIRTUE))))
+
+(=>
+  (and
+    (virtueField ?VIRTUE ?FIELD)
+    (instance (SituationFn ?IPROC) ?FIELD)
+    (instance ?IPROC AutonomousAgentProcess))
+  (relevant ?VIRTUE ??IPROC))
+
+;; Of course, there's a complex mixture of "whether they sufficiently satisfy enough of the non-conflicting relevant virtues"....
+;; And we get degrees of satisfaction issues again, etc.
+(<=>
+  (overallVirtuous ?IPROC)
+  (forall (?VIRTUE)
+    (=>
+      (relevant ?VIRTUE ?IPROC)
+      (actionHitsVirtueTarget ?IPROC ?VIRTUE))))
+
+(<=>
+  (overallVirtuousClassInSituation ?CPROC ?SC)
+  (forall (?VIRTUE)
+    (=>
+      (and
+        (virtueField ?VIRTUE ?FIELD)
+        (subclass ?SC ?FIELD))
+      (actionClassGenerallyHitsVirtueTarget ?CPROC ?VIRTUE))))
+
+
+;; Basically what it means for a class of actions to be generally overall virtuous.
+(<=>
+  (modalAttribute
+    (exist (?IPROC)
+      (instance ?IPROC ?CPROC)) MorallyGood)
+  (modalAttribute 
+    (forall (?IPROC)
+      (=>
+        (instance ?IPROC ?CROP)
+        (overallVirtuous ?IPROC))) Likely))
+
+;; Now it's clean: a class of actions is good if they generally hit all relevant virtues.
+;; The weakening into "sufficiently hit an appropriate mixture of relevant virtues" is an exercise left to the reader ;)
+(<=>
+  (modalAttribute
+    (exist (?IPROC)
+      (instance ?IPROC ?CPROC)) MorallyGood)
+  (forall (?VIRTUE)
+    (=>
+      (relevant ?SC ?CPROC)
+      (actionClassGenerallyHitsVirtueTarget ?CPROC ?VIRTUE)))
+
+;; Whether to let the 'situation' float or not is a bit confusing.
+(<=>
+  (modalAttribute
+    (exist (?IPROC)
+      (instance ?IPROC ?CPROC)) MorallyGood)
+  (forall (?SC)
+    (=>
+      (relevant ?SC ?CPROC)
+      (overallVirtuousClassInSituation ?CPROC ?SC))))
+
 ;; Ah, I run into the usual class vs instance problems.
+;; Yup: the question of whether to judge classes of actions or specific actions as good/bad.
 ;; (<=>
 ;;   (actionHitsVirtueTarget ?IPROC ?VIRTUE)
 ;;   (modalAttribute 
 ;;     (exists (?)) ?VIRTUE))))
+
+;; Can I just use attribute?  I think I can!
+;; I see evidence of a RelationalAttribute being used like this.  NormativeAttributes are a subclass of them.
+
+(<=>
+  (attribute ?IPROC MorallyGood)
+  (overallVirtuous ?IPROC))
+
+(<=>
+  (property ?CPROC MorallyGood)
+  (exists (?SC)
+    (and
+      (relevant ?CPROC ?SC)
+      (overallVirtuousClassInSituation ?CPROC ?SC))))
+
+(<=>
+  (instance ?IPROC VirtuousAct)
+  (overallVirtuous ?IPROC))
+
+(<=>
+  (subclass ?CPROC VirtuousAct)
+  (exists (?SC)
+    (and
+      (relevant ?CPROC ?SC)
+      (overallVirtuousClassInSituation ?CPROC ?SC))))
 
 ;; Idea: it's virtuous for there to be an instance of a class
 ;; if for all instances, it's likely that they'll hit the virtue target?
@@ -3416,7 +3834,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
                 (instance ?IPROC ?CLASS)))))))))
 
 (documentation CompleteSimpleTCVEToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps complete simple target-centered virtue ethics sentences to (situational action) value judgment sentences.")
-(domain CompleteSimpleTCVEToValueJudgmentSentence 1 CompleteSimpleTargetCenteredVirtueEthicsSentence)
+(domain CompleteSimpleTCVEToValueJudgmentSentence 1 CompleteVirtueAspectSentence)
 (range CompleteSimpleTCVEToValueJudgmentSentence ValueJudgmentSentence)
 (instance CompleteSimpleTCVEToValueJudgmentSentence TotalValuedRelation)
 (instance CompleteSimpleTCVEToValueJudgmentSentence UnaryFunction)
@@ -3481,7 +3899,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; Oh, I might wish to do a translation from target-centered to agent-centered virtue ethics, and vice-versa.
 
 (documentation CompleteSimpleTCVEToVirtueSentence EnglishLanguage "A UnaryFunction that maps complete simple target-centered virtue ethics sentences to virtue ethics sentences.")
-(domain CompleteSimpleTCVEToVirtueSentence 1 CompleteSimpleTargetCenteredVirtueEthicsSentence)
+(domain CompleteSimpleTCVEToVirtueSentence 1 CompleteVirtueAspectSentence)
 (range CompleteSimpleTCVEToVirtueSentence VirtueEthicsSentence)
 (instance CompleteSimpleTCVEToVirtueSentence TotalValuedRelation)
 (instance CompleteSimpleTCVEToVirtueSentence UnaryFunction)
