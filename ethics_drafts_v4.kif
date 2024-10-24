@@ -1715,7 +1715,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; So let's define a map from simple virtue ethics statements to value judgment statements.
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
-(domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueEthicsSentence)
+(domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueSentence)
 (range SimpleVirtueToValueJudgmentSentenceFn ValueJudgmentSentence)
 (instance SimpleVirtueToValueJudgmentSentenceFn TotalValuedRelation)
 (instance SimpleVirtueToValueJudgmentSentenceFn UnaryFunction)
@@ -2085,7 +2085,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 ;; Ok, another stab at a more general variety:
 ;; Oh, maybe I could say that if ?S is morally good, then if an agent takes an action that makes ?S more likely, 
 ;; then ?S is likely virtuous in all virtues relevant to ?S!!!  Ahahaha, what a good idea!  
-;; IncreasesLikeliHood and causesProposition both... exist ;- D.
+;; increasesLikelihood and causesProposition both... exist ;- D.
 
 (=>
   (and
