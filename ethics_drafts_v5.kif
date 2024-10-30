@@ -1858,9 +1858,55 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (part ?SVS ?SENTENCE))))     
 
 (documentation SimpleVirtueDesireSentence EnglishLanguage "A setnence that describes a virtue/vice assignment to an agent along with a formula agents with this virtue desire to fulfill.")
+(subclass SimpleVirtueDesireSentence VirtueEthicsSentence)
 
 (<=>
-  (instance ?SENTENCE SimpleVirtueDesireSentence))
+  (instance ?SENTENCE SimpleVirtueDesireSentence)
+  (exists (?VIRTUEATTRIBUTE ?FORM)
+    (and
+      (equal ?SENTENCE
+        (forall (?AGENT)
+          (=>
+            (and
+              (instance ?AGENT AutonomousAgentProcess)
+              (attribute ?AGENT ?VIRTUEATTRIBUTE))
+            (desires ?AGENT ?FORM)))))))
+
+;; An action is right if and only if it is what a virtuous agent would 
+;; characteristically (i.e., acting in character) do in the circumstances.
+;; Let's actually just define this theorem.
+;; For all fields and modes, an action is morally good for agents to do in this field,
+;; if and only if it is likely that all agents with all relevant virtues in this field 
+;; are likely to take this action class.
+(<=>
+  (modalAttribute 
+    (forall (?AGENT ?SITUATION)
+      (=> 
+        (and
+          (equal ?SITUATION (SituationFn ?AGENT))
+          (instance ?SITUATION ?FIELD)
+          (capableInSituation ?MODE agent ?AGENT ?SITUATION))
+        (exists (?IPROC)
+          (and
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?MODE))))) MorallyGood)
+  (modalAttribute 
+    (forall (?AGENT ?SITUATION)
+      (=>
+        (and
+          (forall (?VIRTUE)
+            (=>
+              (and
+                (relevant ?VIRTUE ?FIELD)
+                (relevant ?VIRTUE ?MODE))
+             (attribute ?AGENT ?VIRTUE)))
+          (equal ?SITUATION (SituationFn ?AGENT))
+          (instance ?SITUATION ?FIELD)
+          (capableInSituation ?MODE agent ?AGENT ?SITUATION))
+        (exists (?IPROC)
+          (and
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?MODE))))) Likely))
 
 (documentation SimpleVirtueToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into value judgment sentences.")
 (domain SimpleVirtueToValueJudgmentSentenceFn 1 SimpleVirtueSentence)
@@ -1878,20 +1924,20 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (equal ?SVS (attribute ?AGENT ?VIRTUEATTRIBUTE))
     (instance ?AGENT AutonomousAgent)
     (=> 
-      (equal ?VIRTUEATTRIBUTE VirtueAttribute)
+      (instance ?VIRTUEATTRIBUTE VirtueAttribute)
       (equal ?MORALATTRIBUTE MorallyGood))
     (=>
-      (equal ?VIRTUEATTRIBUTE ViceAtribute)
+      (instance ?VIRTUEATTRIBUTE ViceAtribute)
       (equal ?MORALATTRIBUTE MorallyBad)))
   (equal ?VJS 
-    (forall (?CLASS ?SITUATION)
+    (forall (?MODE ?FIELD ?SITUATION)
       (=> 
         (and
-          (subclass ?CLASS AutonomousAgentProcess)
-          (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?CLASS))
-          (refers ?VIRTUEATTRIBUTE Situation)
-          (instance ?SIUATION Situation)
-          (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
+          (subclass ?MODE AutonomousAgentProcess)
+          (relevant ?VIRTUEATTRIBUTE ?MODE)
+          (relevant ?VIRTUEATTRIBUTE ?FIELD)
+          (instance ?SITUATION ?FIELD)
+          (capableInSituation ?MODE agent ?AGENT ?SITUATION)
           (modalAttribute
             (exists (?PROC)
               (and 
@@ -1905,12 +1951,21 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
                 (and
                   (equal ?SITUATION1 (SituationFn ?AGENT)
                   (similar ?AGENT ?SITUATION ?SITUATION1)
-                  (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
+                  (capableInSituation ?MODE agent ?AGENT ?SITUATION1)))
                 (exists (?PROC)
                   (and
                     (agent ?PROC ?AGENT)
-                    (instance ?PROC CLASS)
+                    (instance ?PROC MODE)
                     (equal ?SITUATION1 (SituationFn ?PROC)))))) ?MORALATTRIBUTE) Likely)))))
+
+;; Ok, I think I want to define one with a simple situatinoal action value judgment sentence.
+;; Basically, declaring the existence of the field and mode.
+;; How to translate from, "Bob is Honest" to "it's good to take honest actions"?  You don't.
+;; You'd say, "it's good to do what an honest person would do."
+;; Where should the modal operator lie?  "It is good {to do what an honest person would do}"?
+;; Or "It is good {to do X} where X is what an honest person would do"?
+;; I think the latter is better as it doesn't just "refer back to the virtue".  It "unpacks" it.
+;; And that's what I have.  So no change.
 
 (documentation SimpleSituationalActionValueJudgmentToVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple situational action value judgment sentences into simple virtue ethics sentences.")
 (domain SimpleSituationalActionValueJudgmentToVirtueSentenceFn 1 SimpleSituationalActionValueJudgmentSentence)
@@ -1939,36 +1994,36 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
     (=> 
       (equal ?MORALATTRIBUTE MorallyGood)
       (and 
-        (equal ?VIRTUETYPE VirtueAttribute)
+        (instance ?VIRTUETYPE VirtueAttribute)
         (equal ?AGENTTYPE VirtuousAgent)))
     (=> 
       (equal ?MORALATTRIBUTE MorallyBad)
       (and
-        (equal ?VIRTUETYPE ViceAttribute)
+        (instance ?VIRTUETYPE ViceAttribute)
         (equal ?AGENTTYPE ViciousAgent))))
   (equal ?VES
-        (forall (?AGENT)
-          (=> 
+    (forall (?AGENT)
+      (=> 
+        (and
+          (instance ?AGENT ?AGENTTYPE)
+          (exists (?VIRTUE)
             (and
-              (instance ?AGENT ?AGENTTYPE)
-              (exists (?VIRTUE)
+              (instance ?VIRTUE ?VIRTUETYPE)
+              (attribute ?AGENT ?VIRTUE)
+              (relevant ?VIRTUE (ClassToSetFn ?CLASS))
+              (relevant ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
+        (modalAttribute 
+          (forall (?SITUATION)
+            (=>
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT))
+                (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
+              (exists (?PROC)
                 (and
-                  (instance ?VIRTUE ?VIRTUETYPE)
-                  (attribute ?AGENT ?VIRTUE)
-                  (refers ?VIRTUE (ClassToSetFn ?CLASS))
-                  (refers ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
-            (modalAttribute 
-              (forall (?SITUATION)
-                (=>
-                  (and
-                    (equal ?SITUATION (SituationFn ?AGENT))
-                    (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
-                    (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
-                  (exists (?PROC)
-                    (and
-                      (agent ?PROC ?AGENT)
-                      (instance ?PROC ?CLASS)
-                      (equal ?SITUATION (SituationFn ?PROC)))))) Likely)))))
+                  (agent ?PROC ?AGENT)
+                  (instance ?PROC ?CLASS)
+                  (equal ?SITUATION (SituationFn ?PROC)))))) Likely)))))
 
 ;; Can we collapse this forall situations?  -- Yes, this looks better.
 ;; The virtue ethics sentence now reads: for all virtuous agents in similar 
@@ -2002,25 +2057,80 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
         (equal ?VIRTUETYPE ViceAttribute)
         (equal ?AGENTTYPE ViciousAgent))))
   (equal ?VES
-        (forall (?AGENT ?SITUATION)
-          (=> 
+    (forall (?AGENT ?SITUATION)
+      (=> 
+        (and
+          (instance ?AGENT ?AGENTTYPE)
+          (equal ?SITUATION (SituationFn ?AGENT))
+          (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+          (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
+          (exists (?VIRTUE)
             (and
-              (instance ?AGENT ?AGENTTYPE)
-              (equal ?SITUATION (SituationFn ?AGENT))
-              (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
-              (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
-              (exists (?VIRTUE)
-                (and
-                  (instance ?VIRTUE ?VIRTUETYPE)
-                  (attribute ?AGENT ?VIRTUE)
-                  (refers ?VIRTUE (ClassToSetFn ?CLASS))
-                  (refers ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
-            (modalAttribute 
+              (instance ?VIRTUE ?VIRTUETYPE)
+              (attribute ?AGENT ?VIRTUE)
+              (refers ?VIRTUE (ClassToSetFn ?CLASS))
+              (refers ?VIRTUE (SituationFormulaFn ?DESCRIPTION)))))
+        (modalAttribute 
+          (exists (?PROC)
+            (and
+              (agent ?PROC ?AGENT)
+              (instance ?PROC ?CLASS)
+              (equal ?SITUATION (SituationFn ?PROC)))) Likely)))))
+
+;; Let's make the existential virtue a variable now.   To say that the translation assigns 
+;; some virtue to the nature of taking this good action!
+;; If you have some KB of virtues, you could do an actual matching. :)
+(=>
+  (and 
+    (equal (SimpleSituationalActionValueJudgmentToVirtueSentenceFn ?SSAVJ) ?VES)
+    (subclass ?CLASS AutonomousAgentProcess)
+    (equal ?SSAVJ 
+      (and 
+        ?DESCRIPTION
+        (modalAttribute 
+          (forall (?AGENT ?SITUATION1)
+            (=> 
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT)
+                (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
               (exists (?PROC)
                 (and
                   (agent ?PROC ?AGENT)
-                  (instance ?PROC ?CLASS)
-                  (equal ?SITUATION (SituationFn ?PROC)))) Likely)))))
+                  (instance ?PROC CLASS))))) ?MORALATTRIBUTE)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyGood)
+      (and 
+        (instance ?VIRTUETYPE VirtueAttribute)
+        (equal ?AGENTTYPE VirtuousAgent)))
+    (=> 
+      (equal ?MORALATTRIBUTE MorallyBad)
+      (and
+        (instance ?VIRTUETYPE ViceAttribute)
+        (equal ?AGENTTYPE ViciousAgent))))
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE ?VIRTUETYPE)
+      (relevant ?VIRTUE ?CLASS)
+      (relevant ?VIRTUE (SituationFormulaFn ?DESCRIPTION))  
+      (equal ?VES
+        (forall (?AGENT)
+          (=> 
+            (and
+              (instance ?AGENT ?AGENTTYPE)
+              (attribute ?AGENT ?VIRTUE))
+            (modalAttribute 
+              (forall (?SITUATION)
+                (=>
+                  (and
+                    (equal ?SITUATION (SituationFn ?AGENT))
+                    (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                    (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
+                  (exists (?PROC)
+                    (and
+                      (agent ?PROC ?AGENT)
+                      (instance ?PROC ?CLASS)
+                      (equal ?SITUATION (SituationFn ?PROC)))))) Likely)))))))
 
 ;; Paradigm Equivalence
 
@@ -3096,7 +3206,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
   (exists (?IPROC ?VIRTUEATTRIBUTE)
     (and
       (equal ?SENTENCE (attribute ?IPROC ?VIRTUEATTRIBUTE))
-      (instance ?IPROC AutonomousAgentprocess)
+      (instance ?IPROC AutonomousAgentProcess)
       (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
 
 (documentation VirtueAspectSentence EnglishLanguage "A sentence that assigns a field, basis, mode, or target to a virtue.")
@@ -3208,6 +3318,22 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (instance ?STCVES SimpleTargetCenteredVirtueEthicsSentence)
       (part ?STCVES ?SENTENCE))))
 
+;; Documentation for Field-Target Virtue Aspect Sentence
+;; ChatGPT o1-generated.
+;; Useful for defining translations with other moral languages as, imo, Field and Target
+;; Are the essential characteristics.  Whereas other paradigms may leave out the 'mode' dimension.
+(documentation FTVirtueAspectSentence EnglishLanguage "A sentence that assigns a field and target to a virtue.")
+(subclass FTVirtueAspectSentence TargetCenteredVirtueEthicsSentence)
+
+;; Defining the instance conditions for FTVirtueAspectSentence
+(<=>
+  (instance ?SENTENCE FTVirtueAspectSentence)
+  (exists (?VIRTUE ?FIELD ?TARGET)
+    (equal ?SENTENCE 
+      (and 
+        (virtueField ?VIRTUE ?FIELD)
+        (virtueTarget ?VIRTUE ?TARGET)))))
+
 ;; As usual, I'm not sure whether we wish to be applying the virtue judgemnts to the fact that some action is taken of a particular class or to the "instance of the behavior" itself.
 ;; Anyway, specifying this helps frame thinsg.
 
@@ -3223,6 +3349,16 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (domain virtueField 1 VirtueAttribute)
 (domainSubclass virtueField 2 Situation)
 (instance virtueField virtueOrViceField)
+
+;; Virtues are relevant to their fields. 
+;; Honesty is relevant to communication.
+(=>
+  (virtueField ?VIRTUE ?FIELD)
+  (relevant ?VIRTUE ?FIELD))
+
+(=>
+  (virtueField ?VIRTUE ?FIELD)
+  (refers ?VIRTUE ?FIELD))
 
 ;; Hypothesis: The field of a virtue always contains a moral dilemma.
 ;; Or it's likely that there is a dilemma in fields of the virtue.
@@ -3338,7 +3474,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 (virtueMode Benevolence Helping)
 
 ;; Update: Mode as property seems wrong.
-;; In essence, one could use KappaFn to define the subclass of AutonomousAgentprocess where all members of the class
+;; In essence, one could use KappaFn to define the subclass of AutonomousAgentProcess where all members of the class
 ;; possess a certain property, right?
 (documentation virtueModeAsProperty EnglishLanguage "Specifies how a virtue responds within its field by properties that are considered appropriate.")
 (domain virtueModeAsProperty 1 VirtueAttribute)
@@ -3452,7 +3588,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; Provided the contextual set-up, hitting the target simply means 'realizing the target'.
 (=>
   (and
-    (instance ?VIRTUE Virtue)
+    (instance ?VIRTUE VirtueAttribute)
     (virtueField ?VIRTUE ?FIELD)
     (virtueMode ?VIRTUE ?MODE)
     (virtueTarget ?VIRTUE ?TARGET)
@@ -3875,21 +4011,25 @@ criteria are given to determine which actions are virtuous and by which moral ba
                 (and
                   (agent ?PROC ?AGENT)
                   (instance ?PROC CLASS))))) MorallyGood))))
-  (equal ?TCVES
-    (exists (?VIRTUE ?FIELD)
-      (and
-        (instance ?VIRTUE ?VIRTUETYPE)
-        (virtueField ?VIRTUE ?FIELD)
-        (instance (SituationFormulaFn ?DESCRIPTION) ?FIELD)
-        (virtueMode ?VIRTUE ?CLASS)
-        (virtueTarget ?VIRTUE
-          (forall (?SITUATION)
-            (=>
-              (instance ?SITUATION ?FIELD)
-              (exists (?IPROC)
-                (instance ?IPROC ?CLASS)))))))))
+  (exists (?VIRTUE ?FIELD)
+    (and
+      (instance (SituationFormulaFn ?DESCRIPTION) ?FIELD)
+      (equal ?TCVES
+          (and
+            (instance ?VIRTUE VirtueAttribute)
+            (virtueField ?VIRTUE ?FIELD)
+            (virtueMode ?VIRTUE ?CLASS)
+            (virtueTarget ?VIRTUE
+              (forall (?SITUATION)
+                (=>
+                  (instance ?SITUATION ?FIELD)
+                  (exists (?IPROC)
+                    (instance ?IPROC ?CLASS))))))))))
 
 ;; Causes proposition version.
+;; Putting the existential quantifier outside the sentence (output) definition is good:
+;; Now the claim that this formula that's good causes the target is outside the sentence.
+;; The TCVE sentence just says that the target is the target.
 (=>
   (and 
     (equal (SimpleSituationalActionValueJudgmentToVirtueSentenceFn ?SSAVJ) ?VES)
@@ -3907,22 +4047,23 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (exists (?PROC)
                 (and
                   (agent ?PROC ?AGENT)
-                  (instance ?PROC CLASS))))) ?MORALATTRIBUTE))))
-  (equal ?TCVES
-    (exists (?VIRTUE ?FIELD ?TARGET)
-      (and
-        (instance ?VIRTUE ?VIRTUETYPE)
-        (virtueField ?VIRTUE ?FIELD)
-        (instance (SituationFormulaFn ?DESCRIPTION) ?FIELD)
-        (virtueMode ?VIRTUE ?CLASS)
-        (virtueTarget ?VIRTUE ?TARGET)
-        (causesProposition 
-          (forall (?SITUATION)
-            (=>
-              (instance ?SITUATION ?FIELD)
-              (exists (?IPROC)
-                (instance ?IPROC ?CLASS))))
-          ?TARGET)))))
+                  (instance ?PROC CLASS))))) MorallyGood))))
+  (exists (?VIRTUE ?FIELD ?TARGET)
+    (and
+      (instance (SituationFormulaFn ?DESCRIPTION) ?FIELD)
+      (causesProposition 
+        (forall (?SITUATION)
+          (=>
+            (instance ?SITUATION ?FIELD)
+            (exists (?IPROC)
+              (instance ?IPROC ?CLASS))))
+        ?TARGET)
+      (equal ?TCVES 
+        (and
+          (instance ?VIRTUE VirtueAttribute)
+          (virtueField ?VIRTUE ?FIELD)
+          (virtueMode ?VIRTUE ?CLASS)
+          (virtueTarget ?VIRTUE ?TARGET))))))
 
 (documentation CompleteSimpleTCVEToValueJudgmentSentence EnglishLanguage "A UnaryFunction that maps complete simple target-centered virtue ethics sentences to (situational action) value judgment sentences.")
 (domain CompleteSimpleTCVEToValueJudgmentSentence 1 CompleteVirtueAspectSentence)
@@ -3950,7 +4091,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (forall (?AGENT ?SITUATION)
         (=>
           (and
-            (equal ?SIUATION (SituationFn ?AGENT))
+            (equal ?SITUATION (SituationFn ?AGENT))
             (instance ?SITUATION ?FIELD)
             (capableInSituation ?MODE agent ?AGENT ?SITUATION))
           (exists (?IPROC)
@@ -3979,7 +4120,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (forall (?AGENT ?SITUATION)
         (=>
           (and
-            (equal ?SIUATION (SituationFn ?AGENT))
+            (equal ?SITUATION (SituationFn ?AGENT))
             (instance ?SITUATION ?FIELD)
             (capableInSituation ?MODE agent ?AGENT ?SITUATION))
           (exists (?IPROC)
@@ -4006,7 +4147,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (forall (?AGENT ?SITUATION)
         (=>
           (and
-            (equal ?SIUATION (SituationFn ?AGENT))
+            (equal ?SITUATION (SituationFn ?AGENT))
             (instance ?SITUATION ?FIELD)
             (capableInSituation ?MODE agent ?AGENT ?SITUATION))
           (exists (?IPROC)
@@ -4014,6 +4155,80 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (agent ?IPROC ?AGENT)
               (instance ?IPROC ?MODE)
               (actionHitsVirtueTarget ?IPROC ?VIRTUE))))) MorallyGood)))
+
+;; Treating Field and Target as 'essential', so only mapping from such a sentence.
+(documentation FTSimpleTCVEToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps Field-Target simple target-centered virtue ethics sentences to value judgment sentences.")
+(domain FTSimpleTCVEToValueJudgmentSentenceFn 1 FTVirtueAspectSentence)
+(range FTSimpleTCVEToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance FTSimpleTCVEToValueJudgmentSentenceFn TotalValuedRelation)
+(instance FTSimpleTCVEToValueJudgmentSentenceFn UnaryFunction)
+
+;; Definition of the mapping
+(=>
+  (and 
+    (equal (FTSimpleTCVEToValueJudgmentSentenceFn ?TVS) ?VJS)
+    (equal ?TVS 
+      (and 
+        (virtueField ?VIRTUE ?FIELD)
+        (virtueTarget ?VIRTUE ?TARGET)))
+    (instance ?VIRTUE VirtueAttribute))
+  (equal ?VJS
+    (modalAttribute 
+      (forall (?AGENT ?SITUATION)
+        (=>
+          (and
+            (equal ?SITUATION (SituationFn ?AGENT))
+            (instance ?SITUATION ?FIELD))
+          (exists (?IPROC)
+            (and
+              (agent ?IPROC ?AGENT)
+              (realizesFormula ?IPROC ?TARGET))))) MorallyGood)))
+
+
+;; Field and Target seem like the essential aspects, so let's map only into those!
+;; Basically, what's the situation and what's the goal!
+(documentation SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn EnglishLanguage "A UnaryFunction that maps simple situational action value judgment sentences into Field-Target virtue ethics sentences.")
+(domain SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn 1 SimpleSituationalActionValueJudgmentSentence)
+(range SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn FTVirtueAspectSentence)
+(instance SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn TotalValuedRelation)
+(instance SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn UnaryFunction)
+
+;; To go to the FT sentence, I'll just treat "doing the good thing" as the target.
+;; The causes proposition version is nice.  Yet I'll keep it simple for fun here. 
+(=>
+  (and 
+    (equal (SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn ?SSAVJ) ?TCVES)
+    (subclass ?CLASS AutonomousAgentProcess)
+    (equal ?SSAVJ 
+      (and 
+        ?DESCRIPTION
+        (modalAttribute 
+          (forall (?AGENT ?SITUATION)
+            (=>
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT))
+                (similar ?AGENT ?SITUATION (SituationFormulaFn ?DESCRIPTION))
+                (capableInSituation ?CLASS agent ?AGENT ?SITUATION))
+              (exists (?PROC)
+                (and
+                  (agent ?PROC ?AGENT)
+                  (instance ?PROC ?CLASS))))) MorallyGood))))
+  (exists (?VIRTUE ?FIELD)
+    (and
+      (instance ?VIRTUE VirtueAttribute)
+      (instance (SituationFormulaFn ?DESCRIPTION) ?FIELD)
+      (relevant ?VIRTUE ?CLASS)
+      (equal ?TCVES
+        (and
+          (virtueField ?VIRTUE ?FIELD)
+          (virtueTarget ?VIRTUE
+            (forall (?SITUATION)
+              (=>
+                (instance ?SITUATION ?FIELD)
+                (exists (?IPROC)
+                  (and
+                    (agent ?IPROC ?AGENT)
+                    (instance ?IPROC ?CLASS)))))))))))
 
 ;; Oh, I might wish to do a translation from target-centered to agent-centered virtue ethics, and vice-versa.
 
@@ -4029,7 +4244,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; This could be used as the definition of what it means for someone to have a virtue, too!
 (=>
   (and 
-    (equal (CompleteSimpleTCVEToValueJudgmentSentence ?TVS) ?VJS)
+    (equal (CompleteSimpleTCVEToValueJudgmentSentence ?TVS) ?VES)
     (equal ?TVS 
       (and 
         (virtueField ?VIRTUE ?FIELD)
@@ -4052,21 +4267,27 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (realizesFormula IPROC ?FPROC)
               (causesProposition ?FPROC ?TARGET))) Likely)))))
 
+(documentation CompleteSimpleTCVEToVirtueDesireSentence EnglishLanguage "A UnaryFunction that maps complete simple target-centered virtue ethics sentences to (agentic) virtue desire ethics sentences.")
+(domain CompleteSimpleTCVEToVirtueDesireSentence 1 CompleteVirtueAspectSentence)
+(range CompleteSimpleTCVEToVirtueDesireSentence SimpleVirtueDesireSentence)
+(instance CompleteSimpleTCVEToVirtueDesireSentence TotalValuedRelation)
+(instance CompleteSimpleTCVEToVirtueDesireSentence UnaryFunction)
+(subrelation CompleteSimpleTCVEToVirtueDesireSentence CompleteSimpleTCVEToVirtueSentence)
+
+;; Now to SimpleVirtueDesireSentence
 (=>
   (and 
-    (equal (CompleteSimpleTCVEToValueJudgmentSentence ?TVS) ?VJS)
+    (equal (CompleteSimpleTCVEToVirtueDesireSentence ?TVS) ?SVDS)
     (equal ?TVS 
       (and 
         (virtueField ?VIRTUE ?FIELD)
         (virtueBasis ?VIRTUE ?BASIS)
         (virtueMode ?VIRTUE ?MODE)
         (virtueTarget ?VIRTUE ?TARGET))))
-  (equal ?VES
+  (equal ?SVDS
     (forall (?AGENT)
       (=>
-        (and
-          (instance ?AGENT AutonomousAgent)
-          (attribue ?AGENT ?VIRTUE))
+        (attribue ?AGENT ?VIRTUE))
         (desires ?AGENT
           (forall (?SITUATION)
             (=>
@@ -4079,6 +4300,77 @@ criteria are given to determine which actions are virtuous and by which moral ba
                   (instance ?IPROC ?MODE)
                   (actionHitsVirtueTarget ?IPROC ?VIRTUE))))))))))
 
+(documentation FTSimpleTCVEToVirtueDesireSentence EnglishLanguage "A UnaryFunction that maps Field-Target simple target-centered virtue ethics sentences to simple virtue desire sentences.")
+(domain FTSimpleTCVEToVirtueDesireSentence 1 FTVirtueAspectSentence)
+(range FTSimpleTCVEToVirtueDesireSentence SimpleVirtueDesireSentence)
+(instance FTSimpleTCVEToVirtueDesireSentence TotalValuedRelation)
+(instance FTSimpleTCVEToVirtueDesireSentence UnaryFunction)
+;; Being a subrelation means that they should correspond on these elements.
+(subrelation FTSimpleTCVEToVirtueDesireSentence CompleteSimpleTCVEToVirtueSentence)
+
+;; Same as Complete Aspect version w/o the mode.
+(=>
+  (and 
+    (equal (FTSimpleTCVEToVirtueDesireSentence ?TVS) ?SVDS)
+    (equal ?TVS 
+      (and 
+        (virtueField ?VIRTUE ?FIELD)
+        (virtueTarget ?VIRTUE ?TARGET))))
+  (equal ?SVDS
+    (forall (?AGENT)
+      (=>
+        (attribute ?AGENT ?VIRTUE)
+        (desires ?AGENT
+          (forall (?SITUATION)
+            (=>
+              (and
+                (equal ?SITUATION (SituationFn ?AGENT))
+                (instance ?SITUATION ?FIELD))
+              (exists (?IPROC)
+                (and
+                  (agent ?IPROC ?AGENT)
+                  (actionHitsVirtueTarget ?IPROC ?VIRTUE))))))))))
+
+;; We could use the following 'lemma' to simplify the translation.
+;; If all agents with virtue V desire T, then we can say that all agents with virtue V 
+;; desire that they realize T in situations in the field of V.
+;; Basically an interpretation in which "T is the target of V" means that 
+;; "V agents desire T".  Targets are then seen as a shorthand for discussing dispotions.
+(=>
+  (and 
+    (equal (FTSimpleTCVEToVirtueDesireSentence ?TVS) ?SVDS)
+    (equal ?TVS 
+      (and 
+        (virtueField ?VIRTUE ?FIELD)
+        (virtueTarget ?VIRTUE ?TARGET))))
+  (equal ?SVDS
+    (forall (?AGENT)
+      (=>
+        (attribute ?AGENT ?VIRTUE)
+        (desires ?AGENT ?TARGET)))))
+
+(=>
+  (and
+    (virtueField ?VIRTUE ?FIELD)
+    (forall (?AGENT)
+      (=>
+        (attribute ?AGENT ?VIRTUE)
+        (desires ?AGENT ?TARGET))))
+  (forall (?AGENT)
+    (=>
+      (attribute ?AGENT ?VIRTUE)
+      (desires ?AGENT
+        (forall (?SITUATION)
+          (=>
+            (and
+              (equal ?SITUATION (SituationFn ?AGENT))
+              (instance ?SITUATION ?FIELD))
+            (exists (?IPROC)
+              (and
+                (agent ?IPROC ?AGENT)
+                (realizesFormula ?IPROC ?TARGET)))))))))
+  
+
 ;; For the agent -> target-centered translation, I'd be going through the crude ways to refer to the Field that I used,
 ;; for example, saying that the virtue refers to some class of actions or situations.
 ;; Or I might go through what the virtuous agent believes about the virtue?
@@ -4087,54 +4379,43 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; Fixing Field and Relevance, one can go back and forth between 
 ;; Target and "what a virtuous person would likely do".
 
-(documentation SimpleVirtueToTCVESentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics sentences into target-centered virtue ethics sentences.")
-(domain SimpleVirtueToTCVESentenceFn 1 SimpleVirtueSentence)
-(range SimpleVirtueToTCVESentenceFn TargetCenteredVirtueEthicsSentence)
-(instance SimpleVirtueToTCVESentenceFn TotalValuedRelation)
-(instance SimpleVirtueToTCVESentenceFn UnaryFunction)
+(documentation SimpleVirtueDesireToTCVESentenceFn EnglishLanguage "A UnaryFunction that maps simple virtue ethics desire sentences into target-centered virtue ethics sentences.")
+(domain SimpleVirtueDesireToTCVESentenceFn 1 SimpleVirtueDesireSentence)
+(range SimpleVirtueDesireToTCVESentenceFn TargetCenteredVirtueEthicsSentence)
+(instance SimpleVirtueDesireToTCVESentenceFn TotalValuedRelation)
+(instance SimpleVirtueDesireToTCVESentenceFn UnaryFunction)
 
 ;; I'm not sure how to define skolem symbols in SUMO, so I'm just using existential quantification for now.
 ;;  Ok, I think we should say that there exsits a variable, ?FIELD, such that ?VJS 
 ;; equals some sentence containing it.
+;; So The resulting sentence is one with a FIELD that is constrained to contain a situation of the formula desired
+;; and to be relevant to the virtue.  Otherwise, the formula is regarded to be the target.
+;; Beyond that, we could do the "target is some variable caused by the formula", too.
 (=>
   (and
-    (equal (SimpleVirtueToValueJudgmentSentenceFn ?SVS) ?VJS)
-    (equal ?SVS (attribute ?AGENT ?VIRTUE))
-    (instance ?VIRTUE Virtue)
-    (instance ?AGENT AutonomousAgent))
+    (equal (SimpleVirtueDesireToTCVESentenceFn ?SVDS) ?TCVE)
+    (equal ?SVDS 
+      (forall (?AGENT)
+          (=>
+            (attribute ?AGENT ?VIRTUE)
+            (desires ?AGENT ?FORM))))
+    (instance ?VIRTUE VirtueAttribute))
   (exists (?FIELD)
-    (equal ?VJS 
-      (and
-        (virtueField ?VIRTUE ?FIELD)
-        (relevant ?VIRTUE ?FIELD)
-
-    (forall (?CLASS ?SITUATION)
-      (=> 
+    (and
+      (forall (?IPROC)
+        (=> 
+          (realizesFormula ?FORM ?IPROC)
+          (modalAttribute (instance (SituationFn ?IPROC) ?FIELD) Likely)))
+      (relevant ?VIRTUE ?FIELD)
+      (equal ?TCVE 
         (and
-          (subclass ?CLASS AutonomousAgentProcess)
-          (refers ?VIRTUEATTRIBUTE (ClassToSetFn ?CLASS))
-          (refers ?VIRTUEATTRIBUTE Situation)
-          (instance ?SIUATION Situation)
-          (capableInSituation ?CLASS agent ?AGENT ?SITUATION)
-          (modalAttribute
-            (exists (?PROC)
-              (and 
-                (agent ?PROC ?AGENT)
-                (instance ?PROC ?PROC)
-                (equal ?SITUATION (SituationFn ?PROC)))) Likely))
-        (modalAttribute 
-          (modalAttribute
-            (forall (?AGENT ?SITUATION1)
-              (=> 
-                (and
-                  (equal ?SITUATION1 (SituationFn ?AGENT)
-                  (similar ?AGENT ?SITUATION ?SITUATION1)
-                  (capableInSituation ?CLASS agent ?AGENT ?SITUATION1)))
-                (exists (?PROC)
-                  (and
-                    (agent ?PROC ?AGENT)
-                    (instance ?PROC CLASS)
-                    (equal ?SITUATION1 (SituationFn ?PROC)))))) ?MORALATTRIBUTE) Likely)))))
+          (virtueField ?VIRTUE ?FIELD)
+          (virtueTarget ?VIRTUE ?FORM))))))
+
+;; So now I think we can translate back and forth?
+;; Unfortunately, they're not quite isomorphic.  AI should be able to massage it easily enough.
+(FTSimpleTCVEToValueJudgmentSentenceFn (SimpleVirtueDesireToFTTCVESentenceFn ?SVDS))
+(FTSimpleTCVEToVirtueDesireSentence (SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn ?SSAVJS))
 
 ;;;
 ;; Kant’s Theory of Categorical Imperative (sketch)
