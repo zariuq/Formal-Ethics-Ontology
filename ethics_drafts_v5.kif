@@ -34,6 +34,74 @@
 ;; Question now is if ChoicePoint needs to be updated!
 
 
+;; This should ontologically work for the Virtue ethics case without providing a specific measure.
+(documentation similar EnglishLanguage "The predicate similar attempts to capture the ontologic notion of similarity 
+from a subjective point of view. (similar ?A ?E1 ?E2) means that ?E1 and ?E2 are similar to cognitive agent ?A.")
+(instance similar TernaryPredicate)
+(domain similar 1 CognitiveAgent)
+(domain similar 2 Entity)
+(domain similar 3 Entity)
+
+;; This might help.
+(=>
+  (equal ?E1 ?E2)
+  (forall (?A)
+    (similar ?A ?E1 ?E2)))
+
+(<=>
+  (similar ?A ?E1 ?E2)
+  (similar ?A ?E2 ?E1))
+
+(=>
+  (similar ?A ?E1 ?E2)
+  (forall (?J1 ?J2 ?O1 ?O2)
+    (=>
+      (and
+        (instance ?J1 Judging)
+        (instance ?O1 Formula)
+        (agent ?J1 ?A)
+        (patient ?J1 ?E1)
+        (result ?J1 ?O1)
+        (instance ?J2 Judging)
+        (instance ?O2 Formula)
+        (agent ?J2 ?A)
+        (patient ?J2 ?E2)
+        (result ?J2 ?O2))
+      (modalAttribute
+        (similar ?A ?O1 ?O2) Likely))))
+
+;; Adds that all patients of the judgment, that is, things factoring into the judgment
+;; ... or about which the judgemnt is made ...
+;; that are not E1, E2, or the results, are the same.
+(=>
+  (similar ?A ?E1 ?E2)
+  (forall (?J1 ?J2 ?O1 ?O2)
+    (=>
+      (and
+        (instance ?J1 Judging)
+        (instance ?O1 Formula)
+        (agent ?J1 ?A)
+        (patient ?J1 ?E1)
+        (result ?J1 ?O1)
+        (instance ?J2 Judging)
+        (instance ?O2 Formula)
+        (agent ?J2 ?A)
+        (patient ?J2 ?E2)
+        (result ?J2 ?O2)
+        (forall (?O)
+          (=>
+            (and
+              (not (equal ?O ?O1))
+              (not (equal ?O ?O2))
+              (not (equal ?O ?E1))
+              (not (equal ?O ?E2)))
+            (<=>
+              (patient ?J1 ?O)
+              (patient ?J2 ?O)))))
+      (modalAttribute
+        (similar ?A ?O1 ?O2) Likely))))
+
+
 (documentation ChoicePoint EnglishLanguage "A set of classes of processes where one agent has to choose between two or more (mutually exclusive?) options.")
 (subclass ChoicePoint Set)
 (subclass ChoicePoint NonNullSet)
@@ -263,6 +331,218 @@ smallest situation containing all the options and the agent.")
               (instance ?I2 ?BEHAVE2))) Possibility))
         (entails (ListAndFn (SetToListFn ?MT)) ?OBL1)
         (entails (ListAndFn (SetToListFn ?MT)) ?OBL2)))))
+
+;; For now, somehow, I'm leaving this non-subjective.  That is, highly, highly vague.
+(documentation relevant EnglishLanguage "The predicate relevant attempts to ontologically represent the notion of 
+an entity ?E1 being relevant to ?E2: (relevant ?E1 ?E2). Relevant: having a bearing on or connection with the 
+subject at issue; 'the scientist corresponds with colleagues in order to learn about matters relevant to her 
+own research'.")
+(instance relevant BinaryPredicate)  
+(domain relevant 1 Entity)
+(domain relevant 2 Entity)
+
+;; The patient of a process is relevant to the process.
+(=>
+  (and
+    (instance ?E2 Process)
+    (patient ?E2 ?E1))
+  (relevant ?E1 ?E2))
+
+;; If an Object plays some role in a Process, then it is relevant to the process.
+(=> 
+  (and
+    (instance ?E1 Object)
+    (instance ?E2 Process)
+    (exists (?ROLE)
+      (playsRoleInEvent ?E1 ?ROLE ?E2)))
+  (relevant ?E1 ?E2))
+
+(=> 
+  (and 
+    (instance ?E1 Object)
+    (instance ?E2 Process)
+    (eventLocated ?E2 ?E1))
+  (relevant ?E1 ?E2))
+
+;; This isn't a case role, so  it's distinct ;- ).
+;; Partly located may be too strong yet let's be general, eh, bruh?  
+(=> 
+  (and 
+    (instance ?E1 Physical)
+    (instance ?E2 Process)
+    (partlyLocated ?E2 ?E1))
+  (relevant ?E1 ?E2))
+
+(documentation Situation EnglishLanguage "A spatiotemporal context or portion of reality wherein entities exist or events occur.")
+(subclass Situation Physical)
+
+;; I guess this is already there in that WhenFn can be applied to any Physical entity?
+;; Basically for every situation, there is a time and place of the situation 😎.
+(=>
+  (instance ?S Situation)
+  (exists (?T)
+    (equal ?T (WhenFn ?S))))
+
+;; For all situations, for all time intervals during the situation,
+;; there exists a location of the situation at that time.    
+(=> 
+  (instance ?S Situation)
+  (forall (?T)
+    (=>
+      (and
+        (instance ?T TimePoint)
+        (temporalPart ?T (WhenFn ?S)))
+      (exists (?L)
+        (equal ?L (WhereFn ?S (?T)))))))
+
+;; Using a predicate to define the properties of a situation rather than the function.
+;; This allows one to define specific functions.
+;; The properties of situations are probably already too strong to allow for
+;; practically workable partial definitions of situations.
+;; ... which actually simply entail weakening the forall quantification, approximating it.
+;; I wonder how developed the technology of approximations to universals is.
+(documentation situationOf EnglishLanguage "This predicate is true when the arguments are a physical entity and its situation.")
+(instance situationOf BinaryPredicate)
+(domain situationOf 1 Physical)
+(domain situationOf 2 Situation)
+(subrelation situationOf represents)
+
+;; Every physical entity is in at least one situation.
+(=> 
+  (instance ?PHYSICAL Physical)
+  (exists (?SITUATION)
+    (situationOf ?PHYSICAL ?SITUATION)))
+
+;; The situation containing a physical entity spatiotemporally contains the entity.
+(=> 
+  (and
+    (situationOf ?PHYSICAL ?SITUATION)
+    (equal ?TS (WhenFn ?SITUATION))
+    (equal ?TP (WhenFn ?PHYSICAL))
+    (equal ?LS (WhereFn ?SITUATION ?TS))
+    (equal ?LP (WhereFn ?PHYSICAL ?TP)))
+  (and
+    (temporalPart ?TP ?TS)
+    (part ?LP ?LS)))
+
+;; For objects, the situation includes everything nearby.
+(=> 
+  (and
+    (situationOf ?PHYSICAL ?SITUATION)
+    (instance ?PHYSICAL Object)
+    (equal ?TS (WhenFn ?SITUATION))
+    (equal ?LS (WhereFn ?SITUATION ?TS)))
+  (forall (?NEAR)
+    (=> 
+      (and
+        (orientation ?NEAR ?PHYSICAL Near)
+        (equal ?TR (WhenFn ?NEAR))
+        (equal ?LR (WhereFn ?NEAR ?TR)))
+      (and
+        (temporalPart ?TR ?TS)
+        (part ?LR ?LS)))))
+
+;; For processes with agents, the situation includes everything near the agent.
+(=> 
+  (and
+    (situationOf ?PHYSICAL ?SITUATION)
+    (instance ?PHYSICAL Process)
+    (agent ?PHYSICAL ?AGENT)
+    (equal ?TS (WhenFn ?SITUATION))
+    (equal ?LS (WhereFn ?SITUATION ?TS)))
+  (forall (?NEAR)
+    (=> 
+      (and
+        (orientation ?NEAR ?AGENT Near)
+        (equal ?TR (WhenFn ?NEAR))
+        (equal ?LR (WhereFn ?NEAR ?TR)))
+      (and
+        (temporalPart ?TR ?TS)
+        (part ?LR ?LS)))))
+
+;; Now maybe I want a SituationFn that given some physical entity returns the situation?
+;; Yeah, this is a fabulous catch-all!
+;; SituationFn returns the minimal situation satisfynig the situation properties.
+(documentation SituationFn EnglishLanguage "Maps a Physical Entity to its situation, which is the minimal situation containing the physical entity.")
+(domain SituationFn 1 Physical)
+(range SituationFn Situation)
+(instance SituationFn UnaryFunction)
+(instance SituationFn TotalValuedRelation)
+(relatedInternalConcept SituationFn WhereFn)
+(relatedInternalConcept SituationFn WhenFn)
+
+(=>
+  (equal ?SITUATION (SituationFn ?PHYSICAL))
+  (situationOf ?PHYSICAL ?SITUATION))
+
+;; ChatGPT's version
+(=> 
+  (instance ?PHYSICAL Physical)
+  (situationOf ?PHYSICAL (SituationFn ?PHYSICAL)))
+
+;; This works for the minimality constraint!  It's cleaner.
+(=>
+  (situationOf ?PHYSICAL ?SITUATION)
+  (part (SituationFn ?PHYSICAL) ?SITUATION))
+
+;; (=>
+;;   (equal ?MIN_SITUATION (SituationFn (?PHYSICAL)))
+;;   (forall (?SITUATION)
+;;     (=>
+;;       (situationOf ?PHYSICAL ?SITUATION)
+;;       (part ?MIN_SITUATION ?SITUATION))))
+
+;; Too strong, but at least it's the minimal situation :'D
+(=>
+  (situationOf ?PHYSICAL ?SITUATION)
+  (forall (?REL)
+    (=>
+      (and
+        (instance ?REL Physical)
+        (relevant ?REL ?PHYSICAL))    
+      (part (SituationFn ?REL) ?SITUATION))))
+
+;; As with  situationOf, this can become 'primary'!
+(documentation describesSituation EnglishLanguage "(describesSituation ?SIT ?FORMULA) describes how ?SIT manifests the ideas outliden by the proposition represented by ?FORMULA.")
+(domain  describesSituation 1 Formula)
+(domain describesSituation 2 Situation)
+(instance describesSituation BinaryPredicate)
+(subrelation describesSituation represents)
+
+(documentation SituationFormulaFn EnglishLanguage "Maps a Formula to the Situation it describes or the Situation of what it describes.  This function is compatible with SituationFn for physcial entities.")  
+(domain SituationFormulaFn 1 Formula)
+(range SituationFormulaFn Situation)
+(instance SituationFormulaFn UnaryFunction)
+(instance SituationFormulaFn TotalValuedRelation)
+(relatedInternalConcept SituationFormulaFn SituationFn)
+
+(=> 
+  (describesSituation ?FORMULA SITUATION)
+  (part (SituationFormulaFn ?FORMULA) ?SITUATION))
+
+(=>
+  (equal ?SITUATION (SituationFormulaFn ?FORMULA)
+  (describesSituation ?FORMULA ?SITUATION)))
+
+;; If a Process realizes a Formula, then the situation of the formula is the situation of the process.
+
+(=>
+  (realizesFormula ?PROCESS ?FORMULA)
+  (equal (SituationFn ?PROCESS) (SituationFormulaFn ?FORMULA)))
+
+;; The same for Objects and conforms.
+
+(=>
+  (conformsFormula ?OBJ ?FORMULA)
+  (equal (SituationFn ?OBJ) (SituationFormulaFn ?FORMULA)))
+
+;; And let's say the same for represents in general
+
+(=>
+  (and
+    (instance ?PHYSICAL Physical)
+    (represents ?PHYSICAL ?FORMULA))
+  (equal (SituationFn ?PHYSICAL) (SituationFormulaFn ?FORMULA)))
 
 (documentation theoryFieldPair EnglishLanguage "This predicate denotes that a field of study considered as a proposition 
 and a theory are paired in the natural manner.") 
@@ -1412,7 +1692,7 @@ judgment.")
       (equal ?CS
         (forall (?MS)
           (=>
-            (insance ?MS SimpleActionValueJudgmentSentence)
+            (instance ?MS SimpleActionValueJudgmentSentence)
             (<=>
               (truth ?MS True)
               (and
@@ -1804,11 +2084,11 @@ structurally unify (agent-centered) virtue ethics and target-centered virtue eth
     (and
       (instance ?SGVS SimpleGeneralVirtueSentence)
       (part ?SGVS ?SENTENCE)))
-  (insance ?SENTENCE GeneralVirtueEthicsSentence))
+  (instance ?SENTENCE GeneralVirtueEthicsSentence))
 
 ;; Probably we don't need to get this general:
 (<=>
-  (insance ?SENTENCE GeneralVirtueEthicsSentence)
+  (instance ?SENTENCE GeneralVirtueEthicsSentence)
   (exists (?GVS ?VIRTUE)
     (and
       (instance ?VIRTUEORVICE MoralVirtueAttribute)
@@ -1851,13 +2131,13 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
 
 (<=>
-  (insance ?SENTENCE VirtueEthicsSentence)
+  (instance ?SENTENCE VirtueEthicsSentence)
   (exists (?SVS)
     (and
       (instance ?SVS SimpleVirtueSentence)
       (part ?SVS ?SENTENCE))))     
 
-(documentation SimpleVirtueDesireSentence EnglishLanguage "A setnence that describes a virtue/vice assignment to an agent along with a formula agents with this virtue desire to fulfill.")
+(documentation SimpleVirtueDesireSentence EnglishLanguage "A sentence that describes a virtue/vice assignment to an agent along with a formula agents with this virtue desire to fulfill.")
 (subclass SimpleVirtueDesireSentence VirtueEthicsSentence)
 
 (<=>
@@ -3179,13 +3459,13 @@ and ?U is a utilitarian theory that make up the theory ?T.")
 ;; 2) Indicators or Symptoms of Virtue X
 
 (documentation TargetCenteredVirtueEthics EnglishLanguage "Target-Centered Virtue Ehics is an ethical paradigm that judges the morality of an action 
-based on how virtuous it is.  Unlike agent-centred virtue ethics that focuses on the character of the agent performing an action, 
+based on how virtuous it is.  Unlike agent-centered virtue ethics that focuses on the character of the agent performing an action, 
 criteria are given to determine which actions are virtuous and by which moral bases without necessarily referencing the character of the actor.")
 (subclass TargetCenteredVirtueEthics GeneralVirtueEthics)
 ;; (subclass TargetCenteredVirtueEthics VirtueEthics)
 
 (documentation TargetCenteredVirtueEthicsTheory EnglishLanguage "A set of sentences assigning virtue or vice attributes to behaviors.")
-(subclass TargetCenteredVirtueEthics GeneralVirtueEthicsTheory)
+(subclass TargetCenteredVirtueEthicsTheory GeneralVirtueEthicsTheory)
 ;; (subclass TargetCenteredVirtueEthics VirtueEthicsTheory)
 
 (theoryFieldPairSubclass TargetCenteredVirtueEthics TargetCenteredVirtueEthicsTheory)
@@ -3560,7 +3840,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (virtueMode ?VIRTUE ?MODE)
       (virtueTarget ?VIRTUE ?TARGET)
       (instance ?SITUATION ?FIELD)
-      (part (SituationFn ?IRPOC) ?SITUATION)
+      (part (SituationFn ?IPROC) ?SITUATION)
       (instance ?IPROC ?MODE)
       (realizesFormula ?IPROC ?FTARGET)
       (causesProposition ?FTARGET ?TARGET))))
@@ -3575,7 +3855,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
     (virtueMode ?VIRTUE ?MODE)
     (virtueTarget ?VIRTUE ?TARGET)
     (instance ?SITUATION ?FIELD)
-    (part (SituationFn ?IRPOC) ?SITUATION)
+    (part (SituationFn ?IPROC) ?SITUATION)
     (instance ?IPROC ?MODE))
   (<=>
     (actionHitsVirtueTarget ?IPROC ?VIRTUE)
@@ -3593,7 +3873,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
     (virtueMode ?VIRTUE ?MODE)
     (virtueTarget ?VIRTUE ?TARGET)
     (instance ?SITUATION ?FIELD)
-    (part (SituationFn ?IRPOC) ?SITUATION)
+    (part (SituationFn ?IPROC) ?SITUATION)
     (instance ?IPROC ?MODE)
     (causesProposition ?FTARGET ?TARGET))
   (<=>
@@ -3755,13 +4035,13 @@ criteria are given to determine which actions are virtuous and by which moral ba
 
 ;; Is it weird to make a UnaryPredicate?
 (documentation overallVirtuous EnglishLanguage "An act is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
-(subclass overallVirtuous Predicate)
-(subclass overallVirtuous InheritableRelation)
+(instance overallVirtuous Predicate)
+(instance overallVirtuous InheritableRelation)
 (valence overallVirtuous 1)
 (domain overallVirtuous 1 AutonomousAgentProcess)
 
 (documentation overallVirtuousClassInSituation EnglishLanguage "An class of actions is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
-(subclass overallVirtuousClassInSituation BinaryPredicate)
+(instance overallVirtuousClassInSituation BinaryPredicate)
 (domainSubclass overallVirtuousClassInSituation 1 AutonomousAgentProcess)
 (domainSubclass overallVirtuousClassInSituation 2 Situation)
 
@@ -3778,7 +4058,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
     (instance ?SITUATION ?FIELD)
     (part (SituationFn ?IPROC) ?SITUATION)
     (instance ?IPROC AutonomousAgentProcess))
-  (relevant ?VIRTUE ??IPROC))
+  (relevant ?VIRTUE ?IPROC))
 
 ;; Of course, there's a complex mixture of "whether they sufficiently satisfy enough of the non-conflicting relevant virtues"....
 ;; And we get degrees of satisfaction issues again, etc.
@@ -3920,10 +4200,10 @@ criteria are given to determine which actions are virtuous and by which moral ba
                   (instance ?PROC CLASS))))) ?MORALATTRIBUTE)))
     (=> 
       (equal ?MORALATTRIBUTE MorallyGood)
-      (equal ?VIRTUETYPE VirtueAttribute))
+      (instance ?VIRTUETYPE VirtueAttribute))
     (=> 
       (equal ?MORALATTRIBUTE MorallyBad)
-      (equal ?VIRTUETYPE ViceAttribute))
+      (instance ?VIRTUETYPE ViceAttribute))
     (equal ?SC
       (KappaFn ?S
         (exists (?AGENT) (similar ?AGENT ?S (SituationFormulaFn ?DESCRIPTION))))))
@@ -3974,10 +4254,10 @@ criteria are given to determine which actions are virtuous and by which moral ba
                   (instance ?PROC CLASS))))) ?MORALATTRIBUTE)))
     (=> 
       (equal ?MORALATTRIBUTE MorallyGood)
-      (equal ?VIRTUETYPE VirtueAttribute))
+      (instance ?VIRTUETYPE VirtueAttribute))
     (=> 
       (equal ?MORALATTRIBUTE MorallyBad)
-      (equal ?VIRTUETYPE ViceAttribute)))
+      (instance ?VIRTUETYPE ViceAttribute)))
   (equal ?TCVES
     (exists (?VIRTUE ?SC)
       (and
