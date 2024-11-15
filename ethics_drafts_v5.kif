@@ -362,7 +362,8 @@ own research'.")
     (instance ?E1 Object)
     (instance ?E2 Process)
     (eventLocated ?E2 ?E1))
-  (relevant ?E1 ?E2))
+  (modalAttribute
+    (relevant ?E1 ?E2) Likely))
 
 ;; This isn't a case role, so  it's distinct ;- ).
 ;; Partly located may be too strong yet let's be general, eh, bruh?  
@@ -371,7 +372,28 @@ own research'.")
     (instance ?E1 Physical)
     (instance ?E2 Process)
     (partlyLocated ?E2 ?E1))
-  (relevant ?E1 ?E2))
+  (modalAttribute
+    (relevant ?E1 ?E2) Likely))
+
+;; "Something (A) is relevant to a task (T) if it increases the likelihood of 
+;; accomplishing the goal (G), which is implied by T." (Hjørland & Sejer Christensen, 2002). (Wikipedia)
+
+(=>
+  (increasesLikelihood ?F1 ?F2)
+  (relevant ?F1 ?F2))
+
+;; The relevance theory principle of relevance:
+;; every utterance presumes that it is "relevant enough for it to be worth the addressee's effort to process it"
+;; https://en.wikipedia.org/wiki/Relevance_theory#The_two_principles_of_relevance
+(=>
+  (and
+    (instance ?COMM Communication)
+    (agent ?COMM ?AGENT)
+    (patient ?COMM ?MESSAGE)
+    (situationOf ?COMM ?SITUATION))
+  (holdsDuring (WhenFn ?COMM)
+    (believes ?AGENT
+      (relevant ?MESSAGE ?SITUATION))))
 
 (documentation Situation EnglishLanguage "A spatiotemporal context or portion of reality wherein entities exist or events occur.")
 (subclass Situation Physical)
@@ -639,7 +661,7 @@ deductively valid.")
   (instance ?JTMT JustifiedTrueTheory)
   (forall (?S)
     (=>
-      (element ?N ?JTMT))
+      (element ?S ?JTMT))
       (exists (?VDA ?C)
         (and 
             (instance ?VDA ValidDeductiveArgument)
@@ -648,13 +670,13 @@ deductively valid.")
             (forall (?PREM)
               (=>
                 (premise ?VDA ?PREM)
-                (truth ?VDA True)))))))
+                (truth ?PREM True)))))))
 
 ;; We could add this if it's used a lot!
 (documentation JustifiedTrueEthicalTheory EnglishLanguage "A justified true 
 theory is one whose premises are all true and whose argumenst are 
 deductively valid.")
-(subclass JustifiedTrueEthicalTheory JustifiedTheory)
+(subclass JustifiedTrueEthicalTheory JustifiedTrueTheory)
 (subclass JustifiedTrueEthicalTheory EthicalTheory)             
 
 (documentation EthicalSentence EnglishLanguage "A sentence of an ethical theory.")
@@ -2499,8 +2521,40 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
   (exists (?AGENT)
     (and 
       (instance ?AGENT CognitiveAgent)
+      (agent ?CONJECTURING ?CONJECTURING)
       (believes ?AGENT 
         (modalAttribute ?CONJECTURE Possibility)))))
+
+;; Can be simplified!
+(=> 
+  (and
+    (instance ?CONJECTURING Conjecture)
+    (result ?CONJECTURING ?CONJECTURE)
+    (instance ?CONJECTURE Conjecture)
+    (instance ?AGENT CognitiveAgent)
+    (agent ?CONJECTURING ?AGENT))
+  (believes ?AGENT 
+        (modalAttribute ?CONJECTURE Possibility)))
+
+;; Let's bring this back!
+(documentation conjectures EnglishLanguage "(conjectures ?AGENT ?FORMULA) is true when ?AGENT believes that ?FORMULA is likely true.")
+(domain 1 conjectures CognitiveAgent)
+(domain 2 conjectures Formula)
+(instance conjectures BinaryPredicate)
+(instance conjectures PropositionalAttitude)
+
+(=>
+  (conjectures ?AGENT ?FORMULA)
+  (believes ?AGENT
+    (modalAttribute ?FORMULA Likely)))
+
+(=>
+  (conjectures ?AGENT ?FORMULA)
+  (exists (?CONJECTURING)
+    (and
+      (agent ?CONJECTURING ?AGENT)
+      (instance ?CONJECTURING Conjecturing)
+      (result ?CONJECTURING ?FORMULA))))
 
 (documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
 (instance SetToListFn UnaryFunction)
@@ -2734,52 +2788,38 @@ instantiate.")
 
 ;; Not my reference Wiki page, but probably the same Schwartz: https://en.wikipedia.org/wiki/Theory_of_basic_human_values
 ;; Schwartz defined 'values' as "conceptions of the desirable that influence the way people select action and evaluate events"
+;; "A value is a conception, explicit or implicit, distinctive of an individual or 
+;; characteristic of a group, of the desirable which influences the selection from 
+;; available modes, means, and ends of action."
+;; From Clyde Kluckhonh in Values and Value-Orientation in the Theory of Action
+
 (documentation Value EnglishLanguage "Values are abstract entities that guide decision-making processes and influence the evaluation of events and actions.")
 (subclass Value Abstract)
 
 (documentation holdsValue EnglishLanguage "(holdsValue ?AGENT ?VALUE) denotes that the agent holds the value.")
 (domain holdsValue 1 Agent)
 (domain holdsValue 2 Value)
-(instance holdsValue BinaryPredicate
+(instance holdsValue BinaryPredicate)
 
 ;; If we blur boundaries, we could call an ethical philosophy a value that can be held.
 ;; (=>
 ;;   (holdsEthicalPhilosophy ?AGENT ?EP)
 ;;   (holdsValue ?AGENT ?EP))
 
-;; If an agent holds a value, then there is a decision of the agent influenced by the value.
 (=>
   (holdsValue ?AGENT ?VALUE)
-  (exists (?DECIDE)
+  (exists (?DESIDERATUM)
     (and
-      (instance ?DECIDE Deciding)
-      (agent ?DECIDE ?AGENT)
-      (influences ?VALUE ?DECIDE))))
+      (desires ?AGENT ?DESIDERATUM)
+      (represents ?VALUE ?DESIDERATUM))))
 
-(=>
-  (holdsValue ?AGENT ?VALUE)
-  (exists (?JUDGE)
-    (and
-      (instance ?JUDGE Judging)
-      (agent ?JUDGE ?AGENT)
-      (influences ?VALUE ?JUDGE))))
-
-;; If an agent holds a value and is making a decision where the value is relevant, it's likely the value will influence the decision.
-(=>
-  (and
-    (holdsValue ?AGENT ?VALUE)
-    (instance ?DECIDE Deciding)
-    (agent ?DECIDE ?AGENT)
-    (relevant ?VALUE ?DECIDE))
-  (modalAttribute (influences ?VALUE ?DECIDE) Likely))
-
-(=>
-  (and
-    (holdsValue ?AGENT ?VALUE)
-    (instance ?JUDGE Judging)
-    (agent ?JUDGE ?AGENT)
-    (relevant ?VALUE ?JUDGE))
-  (modalAttribute (influences ?VALUE ?JUDGE) Likely))
+;; If there is a value, then there exists an agent and desire such that the value represents that which is desired >:D :D :D.
+;; There are no unrealized, only possible values.
+;; Or, well, all instantiated values are held by some agent.
+(=> 
+    (instance ?VALUE Value)
+    (exists (?AGENT)
+      (holdsValue ?AGENT ?VALUE)))
 
 ;; For all instances of deciding, it's likely there exists a value that influences the decision.
 (=>
@@ -2798,20 +2838,62 @@ instantiate.")
         (instance ?VALUE Value)
         (influences ?VALUE ?JUDGE))) Likely))
 
-(=>
-  (hodsValue ?AGENT ?VALUE)
-  (exists (?DESIDERATUM)
-    (and
-      (desires ?AGENT ?DESIDERATUM)
-      (represents ?VALUE ?DESIDERATUM))))
 
-;; If there is a value, then there exists an agent and desire such that the value represents that which is desired >:D :D :D.
-(=> 
-    (instance ?VALUE Value)
-    (exists (?AGENT ?DESIDERATUM)
+;; If an agent holds a value, then there is likely a decision or judgment of the agent influenced by the value.
+(=>
+  (holdsValue ?AGENT ?VALUE)
+  (modalAttribute
+    (or
+      (exists (?DECIDE)
         (and
-            (desires ?AGENT ?DESIDERATUM)
-            (represents ?VALUE ?DESIDERATUM))))
+          (instance ?DECIDE Deciding)
+          (agent ?DECIDE ?AGENT)
+          (influences ?VALUE ?DECIDE)))
+      (exists (?JUDGE)
+      (and
+        (instance ?JUDGE Judging)
+        (agent ?JUDGE ?AGENT)
+        (influences ?VALUE ?JUDGE)))) Likely))
+
+;; If an agent holds a value and is making a decision where the value is relevant, it's likely the value will influence the decision.
+(=>
+  (and
+    (holdsValue ?AGENT ?VALUE)
+    (instance ?DECIDE Deciding)
+    (agent ?DECIDE ?AGENT)
+    (relevant ?VALUE ?DECIDE))
+  (modalAttribute (influences ?VALUE ?DECIDE) Likely))
+
+(=>
+  (and
+    (holdsValue ?AGENT ?VALUE)
+    (instance ?JUDGE Judging)
+    (agent ?JUDGE ?AGENT)
+    (relevant ?VALUE ?JUDGE))
+  (modalAttribute (influences ?VALUE ?JUDGE) Likely))
+
+;; Schwartz conjectures that there exists at least one universal value.
+(conjectures Schwartz 
+  (exists (?VALUE)
+    (forall (?AGENTS)
+      (=>
+        (intance ?AGENT CognitiveAgent)
+        (holdsValue ?AGENT ?VALUE)))))
+
+
+;; Let's include Schwwartz's universal values +!, just cuz y not.
+(instance ValuingBenevolence Value)
+(instance ValuingPower Value)
+(instance ValuingAchievement Value)
+(instance ValuingHedonism Value)
+(instance ValuingStimulation Value)
+(instance ValuingSelfDirection Value)
+(instance ValuingUniversalism Value)
+(instance ValuingTradition Value)
+(instance ValuingConformity Value)
+(instance ValuingSecurity Value)
+(instance ValuingSpirituality Value)
+
 
 ;; Moral Theories
 
@@ -5063,5 +5145,38 @@ criteria are given to determine which actions are virtuous and by which moral ba
     (prefers ?NORMALPERSON SITUATION1 SITUATION2)
     0.5))
 
-;; Auxiliary functions.
-;; 
+;;;
+;; Ethical Conjectures
+;;;
+
+;; Normativity: There exist ethical codes that all rational agents will put forth: 
+;; ethical theorems whose premises are self-evident.
+
+;; 1) "rational" is not in SUMO
+;; (=>
+;;    (instance ?AGENT CognitiveAgent)
+;;    (capability Reasoning agent ?AGENT))
+;; : relating to, based on, or agreeable to reason : reasonable (Merriam-Webster)
+;; Obviously, there are unspoken assumptions.
+;; Let's go with CAs for now.
+
+;; There is a true, justified ethical theory whose sentences are all justified by 
+;; valid deductive arguments from true premises.
+;; Any cognitive agent who considers the theory will hold the theory's philosophy and believe it.
+
+(instance NormativityConjecture Conjecture)
+(equal NormativityConjecture
+  (exists (?THEORY)
+    (and
+      (instance ?THEORY JustifiedTrueEthicalTheory)
+      (theoryFieldPair ?ETHICS ?THEORY)
+      (forall (?AGENT)
+        (=>
+          (and
+            (instance ?AGENT CognitiveAgent)
+            (considers ?AGENT ?THEORY))
+          (and
+            (holdsEthicalPhilosophy ?AGENT ?ETHICS)
+            (believes ?AGENT ?THEORY)))))))
+
+
