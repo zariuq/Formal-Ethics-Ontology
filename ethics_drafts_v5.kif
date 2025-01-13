@@ -313,13 +313,14 @@ smallest situation containing all the options and the agent.")
 ;; the agent can do each of the actions; 
 ;; but the agent cannot do both (or all) of the actions." 
 ;; (SEP: https://plato.stanford.edu/entries/moral-dilemmas/)
+;; It's a moral dilemma thanks to the existence of such a theory.
 (<=>
   (instance ?MD MoralDilemma)
   (and
     (instance ?MD ChoicePoint)
-    (instance ?MT DeontologicalImperativeTheory)
-    (exists (?BEHAVE1 ?BEHAVE2 ?AGENT ?DECIDE ?OBL1 ?OBL2)
+    (exists (?MT ?BEHAVE1 ?BEHAVE2 ?AGENT ?DECIDE ?OBL1 ?OBL2)
       (and 
+        (instance ?MT DeontologicalImperativeTheory)
         (element ?BEHAVE1 ?MD)
         (element ?BEHAVE2 ?MD)
         (equal ?OBL1 (modalAttribute (exists (?I) (instance ?I ?BEHAVE1)) Obligation))
@@ -718,6 +719,12 @@ an ethical sentence from an ethical theory (in a given paradigm).")
       (instance ?SENTENCE EthicalSentence)
       (result ?JUDGE ?SENTENCE))))
 
+(=>
+  (and
+    (instance ?JUDGE EthicalJudging)
+    (result ?JUDGE ?SENTENCE))
+  (instance ?SENTENCE EthicalSentence))
+
 (documentation MetaEthicalTheory EnglishLanguage "A theory about ethical theories that is itself not technically a ethical theory.")
 (subclass MetaEthicalTheory Theory)
 ;; I think it's safe to make ethical theories a subclass xD
@@ -877,7 +884,7 @@ the sentences of the philosophy are the result of their ethical judgments and th
 
 (instance MorallyGood MoralValueAttribute)
 (instance MorallyBad MoralValueAttribute)
-(instance MorallyNeutral MoralValueAttribute)
+(instance MorallyPermissible MoralValueAttribute)
 
 (documentation MoralVirtueAttribute EnglishLanguage "Moral Virtue Attributes are a subclass of Moral Attributes dealing with the virtues and vices.")
 (subclass MoralVirtueAttribute MoralAttribute)
@@ -972,8 +979,7 @@ the sentences of the philosophy are the result of their ethical judgments and th
 
 ;; Generally speaking, yes.  Might some paraconsistency reign?  :- p
 (contraryAttribute MorallyGood MorallyBad)
-(contraryAttribute MorallyGood MorallyNeutral)
-(contraryAttribute MorallyBad MorallyNeutral)
+(contraryAttribute MorallyPermissible MorallyBad)
 (contraryAttribute VirtueAttribute ViceAttribute) 
 
 (documentation hasPurposeInArgumentFor EnglishLanguage "This predicate (hasPurposeInArgumentFor ?A ?B) denotes that formula ?A has as its purpose the use as a premise in an argument for formula ?B.")
@@ -1182,7 +1188,7 @@ in a given situation.")
     (=>
       (equal ?DEONTIC Permission)
       (equal ?VJS 
-        (modalAttribute ?RULE MorallyNeutral)))))
+        (modalAttribute ?RULE MorallyPermissible)))))
 
 (documentation SimpleImperativeToValueJudgmentSentenceV2Fn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
 (domain SimpleImperativeToValueJudgmentSentenceV2Fn 1 SimpleImperativeSentence)
@@ -1210,7 +1216,7 @@ in a given situation.")
       (equal ?VJS 
         (or
           (modalAttribute ?RULE MorallyGood)
-          (modalAttribute ?RULE MorallyNeutral))))))
+          (modalAttribute ?RULE MorallyPermissible))))))
 
 ;; Challenge: without some recursive structure of sentences (i.e., SUO-KIF),  I cannot 
 ;; fully specify what this does.
@@ -1277,7 +1283,7 @@ imperative sentences into value judgment sentences in a very generic manner.")
       (equal ?ITS
         (modalAttribute ?SITUATION Prohibition)))
     (=>
-      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?MORALATTRIBUTE MorallyPermissible)
       (equal ?ITS
         (modalAttribute ?SITUATION Permission)))))
 
@@ -1506,7 +1512,7 @@ Typically, the formula should refer to an action.")
     (=>
       (equal ?VALUE 0)
       (equal ?VJS 
-        (modalAttribute ?FORMULA MorallyNeutral)))))
+        (modalAttribute ?FORMULA MorallyPermissible)))))
 
 ;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
 ;; If there's a notion of the strengths of moral value judgments, this ports over cleanly.
@@ -1527,7 +1533,7 @@ Typically, the formula should refer to an action.")
       (equal ?UAS
         (equal (AssignmentFn ?UF ?FORMULA) -1)))
     (=>
-      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?MORALATTRIBUTE MorallyPermissible)
       (equal ?UAS
         (equal (AssignmentFn ?UF ?FORMULA) 0)))))   
 
@@ -1587,7 +1593,7 @@ Typically, the formula should refer to an action.")
         (modalAttribute 
           (lessThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
     (=>
-      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?MORALATTRIBUTE MorallyPermissible)
       (equal ?UAS
         (modalAttribute 
           (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))
@@ -1628,7 +1634,7 @@ Typically, the formula should refer to an action.")
               (realizesFormulaSubclass ?CP ?F)
               (lessThan (AssignmentFn ?UF ?FORMULA) (AssignmentFn ?UF ?F)))) Likely)))
     (=>
-      (equal ?MORALATTRIBUTE MorallyNeutral)
+      (equal ?MORALATTRIBUTE MorallyPermissible)
       (equal ?UCS
         (modalAttribute 
           (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
@@ -2681,7 +2687,7 @@ instantiate.")
                  (entails 
                   (and (ListAndFn (SetToListFn ?VJT)) ?CPFORM) 
                   (and ?S (equal ?MORALATTRIBUTE MorallyBad)))))
-            (equal ?MORALATTRIBUTE  MorallyNeutral)))))))
+            (equal ?MORALATTRIBUTE  MorallyPermissible)))))))
 
 ;; Example: for the choice point between keeping oneself (in a given location) and killing,
 ;; and the ethical theory that killing is universally bad,
@@ -2704,7 +2710,7 @@ instantiate.")
     (equal (CardinalityFn ?VJT) 2)
     (equal ?EV (evaluateTheory ?VJT ?CP))
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
-    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?KEEPING)) MorallyNeutral) ?EV)))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?KEEPING)) MorallyPermissible) ?EV)))
 
 (exists  (?CP ?VJT ?STAYINGSTILL)
   (and
@@ -2724,7 +2730,7 @@ instantiate.")
     (equal (CardinalityFn ?VJT) 2)
     (equal ?EV (evaluateTheory ?VJT ?CP))
     (element (modalAttribute (exists (?IPROC) (instance ?IPROC Killing)) MorallyBad) ?EV)
-    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) MorallyNeutral) ?EV)))
+    (element (modalAttribute (exists (?IPROC) (instance ?IPROC ?STAYINGSTILL)) MorallyPermissible) ?EV)))
 
 
 ;; We can map imperative sentences through the evaluation trivilaly
@@ -3016,11 +3022,11 @@ situation to the end of time.")
 (documentation GreatestHappinessPrincipleUtilitarianism EnglishLanguage "The Greatest Happiness principle stipulates that the best course of action is that which causes the greatest happiness.")
 (subclass GreatestHappinessPrincipleUtilitarianism Utilitarianism)
 
-(instance GreaestNumHappyPeopleUtilitarianism GreatestHappinessPrincipleUtilitarianism)
+(instance GreatestNumHappyPeopleUtilitarianism GreatestHappinessPrincipleUtilitarianism)
 
 ;; While this dodges the obligatory-embedding, I believe you could institute a similar wrapper for anyone who holds a deontic theory!
 (<=>
-  (holdsEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
+  (holdsEthicalPhilosophy ?AGENT GreatestNumHappyPeopleUtilitarianism)
   (desires ?AGENT
     (forall (?SITUATION ?CPROC)
       (=>
@@ -3035,7 +3041,7 @@ situation to the end of time.")
 
 ;; Let's make a version where the agent simply does the best thing it can!
 (<=>
-  (holdsEthicalPhilosophy ?AGENT GreaestNumHappyPeopleUtilitarianism)
+  (holdsEthicalPhilosophy ?AGENT GreatestNumHappyPeopleUtilitarianism)
   (desires ?AGENT
     (forall (?SITUATION ?CPROC)
       (=>
@@ -3045,6 +3051,34 @@ situation to the end of time.")
             (agent ?IPROC ?AGENT)
             (instance ?IPROC ?CPROC)
             (equal ?SITUATION (SituationFn ?IPROC))))))))
+
+;; Ultimately, this isn't used either.  It's too silly.
+(desires ?AGENT
+  (forall (?ACT)
+    (=>
+      (and
+        (instance ?ACT AutonomousAgentProcess)
+        (equal ?START (BeginFn (WhenFn ?ACT)))
+        (equal ?END (EndFn (WhenFn ?ACT)))
+        (equal ?HAPPYSTART (CardinalityFn (KappaFn ?BEING (holdsDuring ?START (attribute ?BEING Happiness)))))
+        (equal ?HAPPYEND (CardinalityFn (KappaFn ?BEING (holdsDuring ?END (attribute ?BEING Happiness))))))
+      (greaterThanOrEqualTo ?HAPPYEND ?HAPPYSTART))))
+
+;; (desires ?AGENT
+;;   (forall (?ACT ?AGENTS)
+;;     (=>
+;;       (and
+;;         (agent ?ACT ?AGENTS)
+;;         (instance ?ACT AutonomousAgentProcess)
+;;         (equal ?DUR (WhenFn ?ACT))
+;;         (equal ?START (BeginFn ?DUR))
+;;         (equal ?END (EndFn ?DUR))
+;;         (equal ?HAPPYSTART (CardinalityFn (KappaFn ?BEING (holdsDuring ?START (attribute ?BEING Happiness)))))
+;;         (equal ?HAPPYEND (CardinalityFn (KappaFn ?BEING (holdsDuring ?END (attribute ?BEING Happiness))))))
+;;       (forall (?ACTS)
+;;         (=>
+;;           (capabilityDuring ?ACTS agent ?AGENTS ?DUR))
+;;       (greaterThanOrEqualTo ?HAPPYEND ?HAPPYSTART))))
 
 ;; Exploring the idea of a class of virtues, i.e., there may be different kinds of benevolence.
 ;; OTOH, it's just tedious to use (even if arguably more correct).
@@ -3212,7 +3246,8 @@ the CognitiveAgent is prohibited from bringing it about that the Formula is true
 
 ;; For all virtues, it's likely that possessing the virtue will cause the agent to be happy. 
 ;; Happier would be better?
-(=>
+;; Yes, degree would be better.  But measuring degrees of happiness is non-trivial.
+(<=>
   (instance ?VIRTUEATTRIBUTE VirtueAttribute)
   (modalAttribute 
     (causesProposition
@@ -3221,7 +3256,7 @@ the CognitiveAgent is prohibited from bringing it about that the Formula is true
 
 ;; Or the virtue increases the likelihood the agent is happy?
 ;; Either way, the point is that we can talk about this stuff :).
-(=>
+(<=>
   (instance ?VIRTUEATTRIBUTE VirtueAttribute)
   (modalAttribute 
     (increasesLikelihood
@@ -3736,6 +3771,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
         (equal ?SMD (ChoicePointSituationFn ?MD)
         (part ?SMD S)))))
 
+(instance Honesty VirtueAttribute)
 ;; The field of honesty is all situations that contain a social interaction.
 (<=>
   (and
@@ -3748,6 +3784,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
         (instance ?SI SocialInteraction)
         (part (SituationFn ?SI) ?SITUATION)))))
 
+(instance Benevolence VirtueAttribute)
 ;; The field of benevolence is all situations where an act can be done that is likely to benefit an agent.
 ;; Perhaps I should use Possibility instead of Likely, that is, 
 ;; it's possible for there to be an instance of the behavior that does benefit the agent?
@@ -4115,11 +4152,36 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; "An action is right if and only if it is overall virtuous, and 
 ;; an act is overall virtuous if and only if it hits the targets of relevant virtues to a sufficient extent."
 
+;; I think this isn't in SUMO because attributes are used.
+(documentation UnaryPredicate EnglishLanguage "A Predicate of one argument - its valence is one.")
+(subclass UnaryPredicate Predicate)
+(subclass UnaryPredicate InheritableRelation)
+
+(=>
+  (instance ?REL UnaryPredicate)
+  (valence ?REL 1)
+
+;; Can we say that for every unary predicate,
+;; There exists an attribute that corresponds to it?
+(=>
+  (instance ?REL UnaryPredicate)
+  (exists (?ATT)
+    (and
+      (instance ?ATT Attribute)
+      (forall (?ENT)
+        (<=>
+          (property ?ENT ?ATT)
+          (and
+            (?REL ?ENT))
+            (instance ?ENT ?CLASS)
+            (domain ?REL 1 ?CLASS))))))
+
 ;; Is it weird to make a UnaryPredicate?
 (documentation overallVirtuous EnglishLanguage "An act is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
-(instance overallVirtuous Predicate)
-(instance overallVirtuous InheritableRelation)
-(valence overallVirtuous 1)
+;; (instance overallVirtuous Predicate)
+;; (instance overallVirtuous InheritableRelation)
+;; (valence overallVirtuous 1)
+(instance overallVirtuous UnaryPredicate)
 (domain overallVirtuous 1 AutonomousAgentProcess)
 
 (documentation overallVirtuousClassInSituation EnglishLanguage "An class of actions is overall virtuous if and only if it hits the targets of all relevant virtues (to a sufficient extent).")
@@ -5178,5 +5240,216 @@ criteria are given to determine which actions are virtuous and by which moral ba
           (and
             (holdsEthicalPhilosophy ?AGENT ?ETHICS)
             (believes ?AGENT ?THEORY)))))))
+
+(documentation isNormative EnglishLanguage
+  "(isNormative ?THEORY) means that the ethical theory ?THEORY is such that all rational agents will accept it upon consideration.  
+  The theory is also a justified true theory.")
+(domain isNormative 1 EthicalTheory)
+(instance isNormative UnaryPredicate)
+
+(<=>
+  (isNormative ?THEORY)
+  (and
+    (instance ?THEORY JustifiedTrueEthicalTheory)
+    (theoryFieldPair ?ETHICS ?THEORY)
+    (equal ?FTHEORY (ListAndFn (SetToListFn ?THEORY)))
+    (forall (?AGENT)
+      (=>
+        (and
+          (instance ?AGENT CognitiveAgent)
+          (considers ?AGENT ?FTHEORY))
+        (and
+          (holdsEthicalPhilosophy ?AGENT ?ETHICS)
+          (believes ?AGENT ?FTHEORY))))))
+
+;; Decidability: There is a decision procedure to determine 
+;; whether ethical judgments hold or not.
+
+;; There exists a program that determines the truth of every ethical judgment.
+(exists (?PROG)
+  (and
+    (instance ?PROG ComputerProgram)
+    (forall (?JUDGE ?SENT ?COMP ?TRUTH)
+      (=>
+        (and
+          (instance ?JUDGE EthicalJudging)
+          (result ?JUDGE ?SENT)
+          (truth ?SENT ?TRUTH)
+          (programRunning ?COMP ?PROG)
+          (patient ?COMP ?SENT))
+         (result ?COMP ?TRUTH)))))
+
+;; There exists a program that determines whether any ethical sentence logically follows
+;; from any ethical theory.
+(exists (?PROG)
+  (and
+    (instance ?PROG ComputerProgram)
+    (forall (?THEORY ?SENT ?COMP ?TRUTH)
+      (=>
+        (and
+          (instance ?THEORY EthicalTheory)
+          (instance ?SENT EthicalSentence)
+          (truth (entails (ListAndFn (SetToListFn ?THEORY)) ?SENT) ?TRUTH)
+          (programRunning ?COMP ?PROG)
+          (patient ?COMP ?THEORY)
+          (patient ?COMP ?SENT))
+        (result ?COMP ?TRUTH)))))
+
+(documentation isDecidable EnglishLanguage
+  "(isDecidable ?THEORY) means that there exists an effective method (program) that can determine the truth of any sentence within the ethical theory ?THEORY.")
+(domain isDecidable 1 EthicalTheory)
+(instance isDecidable UnaryPredicate)
+
+(<=>
+  (isDecidable ?THEORY)
+  (exists (?PROG)
+    (and
+      (instance ?PROG ComputerProgram)
+      (equal ?FTHEORY (ListAndFn (SetToListFn ?THEORY)))
+      (forall (?SENT ?COMP ?TRUTH)
+        (=>
+          (and
+            (instance ?SENT EthicalSentence)
+            (truth (entails ?FTHEORY ?SENT) ?TRUTH)
+            (programRunning ?COMP ?PROG)
+            (patient ?COMP ?THEORY)
+            (patient ?COMP ?SENT))
+          (result ?COMP ?TRUTH))))))
+
+;; Consistency: There exists an ethical theory that solves all moral dilemmas consistently, 
+;; providing clear action guidance
+
+;; There is a theory that provides consistent guidance for all moral dilemmas.
+;; "consistent" is weird.  A theory should be consistent with "T=T" if it's consistent, right?
+;; ... a bit hacky, but please excuse me.
+(exists (?THEORY)
+  (and
+    (instance ?THEORY EthicalTheory)
+    (forall (?MD)
+      (=>
+        (instance ?MD MoralDilemma)
+        (and
+          (containsInformation (ListAndFn (SetToListFn (evaluateTheory ?THEORY ?MD))) ?GUIDANCE)
+          (consistent ?GUIDANCE (equal True True)))))))
+
+(documentation isConsistent EnglishLanguage
+  "(isConsistent ?THEORY) means that the theory provides consistent guidance for all choice points.")
+(domain isConsistent 1 EthicalTheory)
+(instance isConsistent UnaryPredicate)
+
+(<=>
+  (isConsistent ?THEORY)
+  (forall (?CP)
+    (=>
+      (instance ?CP ChoicePoint)
+      (and
+        (containsInformation (ListAndFn (SetToListFn (evaluateTheory ?THEORY ?CP))) ?GUIDANCE)
+        (consistent ?GUIDANCE (equal True True))))))
+
+;; Paraconsistency: Some moral dilemmas require reasoning about non-consistencies.
+
+(not
+  (exists (?THEORY)
+    (isConsistent ?THEORY)))
+
+;; We'd like to conjecture the existence of a theory that is normatively true,
+;; is decidable, and is consistent.
+;; Of course, Parfit's claim is more like, "people could not reasonably reject"... :)
+(instance SatisfactoryEthicalTheory Conjecture)
+(equal SatisfactoryEthicalTheory
+  (exists (?THEORY)
+    (and
+      (instance ?THEORY EthicalTheory)
+      (isNormative ?THEORY)
+      (isDecidable ?THEORY)
+      (isConsistent ?THEORY))))
+
+;; Revive the universal love idea for fun :)
+
+(subAttribute UniversalLove Love)
+(subAttribute EpistemicUniversalLove)
+(instance UniversalLove VirtueAttribute)
+(instance EpistemicUniversalLove VirtueAttribute)
+
+(<=> 
+  (attribute ?BODHISATTVA UniversalLove)
+  (forall (?AGENT)
+    (and
+      (=> 
+        (or
+          (needs ?AGENT ?PHYS)
+          (wants ?AGENT ?PHYS))
+        (desires ?BODHISATTVA
+          (and
+            (instance ?GET Getting)
+            (destination ?GET ?AGENT)
+            (patient ?GET ?PHYS))))
+      (=>
+        (desires ?AGENT ?FORM)
+        (desires ?BODHISATTVA
+          (exists (?FUL)
+            (and
+              (realizesFormula ?FUL ?FORM)
+              (instance ?FUL Process))))))))
+
+;; BUT, needs --> wants, so let's drop it.  (I mean, in my philosophical understanding, it doesn't, but hey.  This is SUMO.)
+;; (=>
+;;     (needs ?AGENT ?OBJECT)
+;;     (wants ?AGENT ?OBJECT))
+
+;; Further, wanting implies some sort of desiring.  Thus desiring formulas is all that one needs to codify.
+;; (=>
+;;     (and
+;;         (wants ?AGENT ?OBJ)
+;;         (instance ?OBJ Object))
+;;     (desires ?AGENT
+;;         (possesses ?AGENT ?OBJ)))    
+
+;; Yay!
+(<=> 
+  (attribute ?BODHISATTVA UniversalLove)
+  (forall (?AGENT)
+    (=>
+      (desires ?AGENT ?FORM)
+      (desires ?BODHISATTVA
+        (exists (?FUL)
+          (and
+            (realizesFormula ?FUL ?FORM)
+            (instance ?FUL Process)))))))
+
+(<=> 
+  (attribute ?BODHISATTVA EpistemicUniversalLove)
+  (forall (?AGENT)
+    (=>
+      (knows ?BODHISATTVA
+        (desires ?AGENT ?FORM))
+      (desires ?BODHISATTVA
+        (exists (?FUL)
+          (and
+            (realizesFormula ?FUL ?FORM)
+            (instance ?FUL Process)))))))
+
+;; Conjecture on the consequences of epistemic universal love
+;; Corollaries:
+;; 1) Epistemic Universal Love is fucked
+;; 2) Desires, at least in the scope of UL, need to be worked with via a more paraconsistent logic ;D
+;; 3) An epistemically universal loving agent can only take classically reasoned action in a context where every agent it knows of has consistent desires (aka why Buddhist Monks are observed to take near zero actions ;D)
+(instance UniversalLoversNeedParaconsistentReasoning Conjecture)
+(equal UniversalLoversNeedParaconsistentReasoning
+  (forall (?ULAGENT)
+    (=>
+      (and
+        (attribute ?ULAGENT EpistemicUniversalLove)
+        (exists (?A1 ?A2 ?FORM) 
+          (and
+            (knows ?ULAGENT (desires ?A1 ?FORM))
+            (knows ?ULAGENT (desires ?A2 (not ?FORM))))))
+      (forall (?FORM)
+        (desires ?ULAGENT
+        (exists (?FUL)
+          (and
+            (realizesFormula ?FUL ?FORM)
+            (instance ?FUL Process))))))))
+
 
 

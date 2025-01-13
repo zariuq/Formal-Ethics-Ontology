@@ -203,6 +203,8 @@ own research'.")
 
 ;; Probably too storng
 ;; For every situation, the location of the beginning and end of the time interval of the situation is the same.
+;; Counterexample: a situation where pepole are discussing coffee on a train.
+;; Well, that depedns on how the locality is recognized, huh!
 (=>
   (and
     (instance ?S Situation)
