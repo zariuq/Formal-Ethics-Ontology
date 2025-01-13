@@ -982,6 +982,31 @@ the sentences of the philosophy are the result of their ethical judgments and th
 (contraryAttribute MorallyPermissible MorallyBad)
 (contraryAttribute VirtueAttribute ViceAttribute) 
 
+;; Following Gustafsson, Permissibility Is the Only Feasibly Deontic Primitive
+;; Note that the below definitions mean that a moral dilemma defined 
+;; in terms of contradictory obligations wil collapse the modalities
+;; producing a contradiction in the base-level logic.
+;; This could be undesirable.
+;; (And, honestly, I think it's *worse* than the problem it's fixing,
+;; namely that if there are no true moral statements, i.e., there's a 
+;; empty theory, the usual axioms (prohibited if not permitted) would 
+;; generate spurious prohibitions and obligations.  
+;; This seems to be very much the *wrong* way to deal with this problem.)
+
+;; Obligation(φ) iff Permissibility(φ) ∧ ¬ Permissibility(¬φ)
+(<=>
+   (modalAttribute ?FORMULA Obligation)
+    (and
+       (modalAttribute ?FORMULA Permission)
+       (not (modalAttribute (not ?FORMULA) Permission))))
+
+;;   Prohibition(φ) <-> (NOT Permission(φ) AND Permission(NOT φ))
+(<=>
+   (modalAttribute ?FORMULA Prohibition)
+   (and
+       (not (modalAttribute ?FORMULA Permission))
+       (modalAttribute (not ?FORMULA) Permission)))
+
 (documentation hasPurposeInArgumentFor EnglishLanguage "This predicate (hasPurposeInArgumentFor ?A ?B) denotes that formula ?A has as its purpose the use as a premise in an argument for formula ?B.")
 (domain hasPurposeInArgumentFor 1 Formula)
 (domain hasPurposeInArgumentFor 2 Formula)
@@ -1287,11 +1312,12 @@ imperative sentences into value judgment sentences in a very generic manner.")
       (equal ?ITS
         (modalAttribute ?SITUATION Permission)))))
 
-(=>
-  (equal ?DEONTIC Permission)
-  (equal ?VJS 
-    (not
-      (modalAttribute ?RULE MorallyBad))))
+;; No longer really needed!
+;; (=>
+;;   (equal ?DEONTIC Permission)
+;;   (equal ?VJS 
+;;     (not
+;;       (modalAttribute ?RULE MorallyBad))))
 
 (documentation ValueJudgmentToImperativeSentenceFn EnglishLanguage "A UnaryFunction that maps value judgment sentences into imperative sentences.")
 (domain ValueJudgmentToImperativeSentenceFn 1 ValueJudgmentSentence)
@@ -1511,7 +1537,7 @@ Typically, the formula should refer to an action.")
         (modalAttribute ?FORMULA MorallyBad)))
     (=>
       (equal ?VALUE 0)
-      (equal ?VJS 
+      (greaterThanOrEqualTo ?VJS 
         (modalAttribute ?FORMULA MorallyPermissible)))))
 
 ;; So this is also trivial.  We just need to assign 1 to good, -1 to bad, and 0 to neutral.
@@ -1637,7 +1663,7 @@ Typically, the formula should refer to an action.")
       (equal ?MORALATTRIBUTE MorallyPermissible)
       (equal ?UCS
         (modalAttribute 
-          (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
+          (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
 
 ;; Combines the two value judgment-interpretatons of simple utilitarian sentences into one.
 (documentation SimpleUtilitarianToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple utilitarian sentences value judgment sentences.")
