@@ -32,6 +32,45 @@
 ;; Otherwise, the agent believes that each option is a member of some class.
 ;; I think that's the same as mine then, actually.  Just written in a different form.
 ;; Question now is if ChoicePoint needs to be updated!
+;; I don't know to what extent I looked into this.  Trusting*
+
+;; Merging Support Defintions and Class and Relation Declarations to ensure all content is in one file before re-ordering it!
+;; Virtuous + Vicious agent.
+
+(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(domain realizesFormula 1 Process)
+(domain realizesFormula 2 Formula)
+(instance realizesFormula BinaryPredicate)
+(subrelation realizesFormula represents)
+
+;; A process conforms to a formula if and only if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) the process is the realization of the proposition.
+(<=> 
+  (realizesFormula ?PROCESS ?FORMULA)
+  (exists (?PROP)
+    (and 
+      (containsInformation ?FORMULA ?PROP)
+      (realization ?PROCESS ?PROP))))
+
+(documentation realizesFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(domainSubclass realizesFormulaSubclass 1 Process)
+(domain realizesFormulaSubclass 2 Formula)
+(instance realizesFormulaSubclass BinaryPredicate)
+(subrelation realizesFormulaSubclass represents)
+
+;; A subclass of Process conforms to a formula if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) all instances of the subclass are realizatinos of the proposition.
+(<=> 
+  (realizesFormulaSubclass ?CPROCESS ?FORMULA)
+  (exists (?PROP)
+    (and 
+      (containsInformation ?FORMULA ?PROP)
+      (forall (?IPROCESS)
+        (=> 
+          (instance ?IPROCESS ?CPROCESS)
+          (realization ?IPROCESS ?PROP))))))
 
 
 ;; This should ontologically work for the Virtue ethics case without providing a specific measure.
