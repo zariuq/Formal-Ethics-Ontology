@@ -1,0 +1,242 @@
+;; Auxiliary Definitions
+
+;; I see how this definition motivates the need for target-specificity or domain-specificity
+; (documentation VirtuousAgent EnglishLanguage "'A virtuous agent is one who has, and exercises, certain character traits, namely, the virtues.' (On Virtue Ethics)")
+; (subclass VirtuousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VIRTUE VirtueAttribute)
+        (attribute ?AGENT ?VIRTUE))
+    (instance ?AGENT VirtuousAgent))
+
+; (documentation ViciousAgent EnglishLanguage "A vicious agent is one who has, and exercises, certain character traits, namely, the vices.  The antonym of VirtuousAgent.")
+; (subclass ViciousAgent AutonomousAgent)
+(=>
+    (and
+        (instance ?AGENT AutonomousAgent)
+        (instance ?VICE ViceAttribute)
+        (attribute ?AGENT ?VICE))
+    (instance ?AGENT ViciousAgent))
+
+(=>
+    (instance ?PROC AutonomousAgentProcess)
+    (exists (?AGENT)
+        (and 
+            (agent ?PROC ?AGENT)
+            (instance ?AGENT AutonomousAgent))))
+
+;; If there is a case of moral judging ?J, then it is either a case of judging a particular instance ?B to be ?M
+;; Or the case of judging it to be ?M for any instance of the class of behaviors ?CB to exist.
+(=>
+    (instance ?JUDGE MoralJudging)
+    (or
+        (exists (?CBEHAVE ?MORAL)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?CBEHAVE)
+            (result ?JUDGE 
+                (modalAttribute 
+                    (exists (?IBEHAVE) 
+                        (instance ?IBEHAVE ?CBEHAVE)) ?MORAL))))
+        (exists (?BEHAVE ?MORAL)
+        (and 
+            (instance ?MORAL MoralAttribute)
+            (patient ?JUDGE ?BEHAVE)
+            (result ?JUDGE 
+                (modalAttribute
+                    (instance ?BEHAVE AutonomousAgentProcess) ?MORAL))))))
+
+;; Seems handy to define this to not need to keep repeating that there exists an instance of bla-bla.
+(=> 
+    (instance hasInstance ?REL)
+    (valence ?REL 1))
+
+;; Isn't this just type inhabitation or sometihng?
+(<=>
+    (hasInstance ?CLASS)
+    (exists (?INSTANCE)
+        (instance ?INSTANCE ?CLASS)))
+
+;; If an agent is deciding whether to enact a process, 
+;; then the agent believes it has the capability to enact the process.
+(=>
+    (and 
+        (instance ?DECIDE DecidingSubclass)
+        (agent ?DECIDE ?AGENT)
+        (patient ?DECIDE ?CPROCESS))
+    (believes ?AGENT 
+        (capability ?CPROCESS agent ?AGENT)))
+
+;; A process conforms to a formula if and only if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) the process is the realization of the proposition.
+(<=> 
+    (realizesFormula ?PROCESS ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (realization ?PROCESS ?PROP))))
+
+;; A subclass of Process conforms to a formula if there exists a proposition such that:
+;; a) the formula contains the information of the proposition.
+;; b) all instances of the subclass are realizatinos of the proposition.
+(<=> 
+    (realizesFormulaSubclass ?CPROCESS ?FORMULA)
+    (exists (?PROP)
+        (and 
+            (containsInformation ?FORMULA ?PROP)
+            (forall (?IPROCESS)
+                (=> 
+                    (instance ?IPROCESS ?CPROCESS)
+                    (realization ?IPROCESS ?PROP))))))
+
+(<=>
+    (element ?P (DecisionOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+(<=>
+    (element ?P (DecisionSubclassOptionFn ?DECIDE))
+    (patient ?DECIDE ?P))
+
+(<=> 
+    (element ?ATT (ProcessAttributeFn ?P))
+    (attribute ?P ?ATT))
+
+(<=> 
+    (element ?E1 (ElementsShareBPFn ?BP ?S1 ?S2))
+    (and
+        (element ?E1 ?S1)
+        (exists (?E2) 
+            (and 
+                (element ?E2 ?S2)
+                (?BP ?E1 ?E2)))))
+
+;; So here we say that A and B are similar if 2*|A^B| > |AuB|,  2*|A| > |A|.  So A is similar to itself.
+;; It's a bit random xD.  I figirued it's a bit like saying "more than half of A is in B and vice versa".
+;; The shared elements are at least half of the total.
+(<=> 
+    (similarSets ?S1 ?S2)
+    (or
+            (and (instance ?S1 NullSet) (instance ?S2 Nullset))
+            (and 
+                (and (instance ?SP1 NonNullSet) (instance ?S2 NonNullset))
+                (equal ?INT12 (IntersectionFn ?S1 ?S2))
+                (equal ?UN12 (UnionFN ?S1 ?S2))
+                (greaterThan (MultiplicationFn 2 (CardinalityFn ?INT12)) (CardinalityFn ?UP1)))))
+
+(<=>
+    (similarSetsWithBP ?BP ?S1 ?S2)
+    (and 
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S1 ?S2))) (CardinalityFn ?S1))
+        (greaterThan (MultiplicationFn 2 (CardinalityFn (ElementsShareBPFn ?BP ?S2 ?S1))) (CardinalityFn ?S2))))
+
+(<=> 
+    (similarProcesses ?P1 ?P2)
+    (and 
+        (equal ?SP1 (ProcessAttributeFn ?P1))
+        (equal ?SP2 (ProcessAttributeFn ?P2))
+        (similarSets ?SP1 ?SP2)))
+
+;; The idea here is that if E1 and E2 are similar to agent A, 
+;; Then A is likely to make similar judgments with regard to E1 and E2.
+(=> 
+    (similar ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (equal ?O1 ?O2) Likely)))
+
+;; Equal is too strong, yet there's the problem of a recursive definition.
+(=> 
+    (similar ?A ?E1 ?E2)
+    (=>
+        (and
+            (instance ?J1 Judging)
+            (agent ?J1 ?A)
+            (patient ?J1 ?E1)
+            (result ?J1 ?O1)
+            (instance ?J2 Judging)
+            (agent ?J2 ?A)
+            (patient ?J2 ?E2)
+            (result ?J2 ?O2))
+        (modalAttribute (similar ?A ?O1 ?O2) Likely)))
+
+;; This might help.
+(=>
+    (equal ?E1 ?E2)
+    (forall (?A)
+        (similar ?A ?E1 ?E2)))
+
+(<=> 
+    (similar ?A ?E1 ?E2)
+    (similar ?A ?E2 ?E1))
+
+;; O is an outcome if and only if there exists some process P such that O is the result of P.
+(<=>
+    (instance ?OUTCOME Outcome)
+    (exists (?P)
+        (and 
+            (instance ?P Process)
+            (result ?P ?OUTCOME))))
+
+;; If O is an outcome of a process ?P, then the end of ?$ is before the beginning of O.
+;; In theory there could be some overlap, such as the pain caused by punching someone in the face...?
+(=>
+    (and 
+        (instance ?OUTCOME Outcome)
+        (result ?P ?OUTCOME))
+    (before
+        (EndFn (WhenFn ?P))
+        (BeginFn (WhenFn ?OUTCOME))))
+
+
+(documentation UtilityFn EnglishLanguage "A UnaryFunction that maps an instance of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).")
+(subclass UtilityFn TotalValuedRelation)
+(subclass UtilityFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilityFn)
+    (and
+        (domain ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
+
+(documentation UtilitySubclassFn EnglishLanguage "A UnaryFunction that maps a subclass of AutonomousAgentProcess 
+to the net utility it creates.  In the case of hedonistic utilitarianism, this may be (pleasure - pain).  
+For the case of classes of behavior, this could be understood as an expectation.")
+(subclass UtilitySublassFn TotalValuedRelation)
+(subclass UtilitySubclassFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilitySubclassFn)
+    (and
+        (domainSubclass ?UF 1 AutonomousAgentProcess)
+        (range ?UF RealNumber)))
+
+(documentation UtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility of that 
+which is described.  Typically, the formula should refer to an action.")
+(subclass UtilityFormulaFn TotalValuedRelation)
+(subclass UtilityFormulaFn UnaryFunction)
+
+(=>
+    (instance ?UF UtilityFormulaFn)
+    (and
+        (domain ?UF 1 Formula)
+        (range ?UF RealNumber)))
+
+(documentation HedonisticUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where utility measures the pain and pleasure exhibited in the situation.")
+(subclass HedonisticUtilityFormulaFn UtilityFormulaFn)
+
+(documentation ConsequentialistUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where the utility measurement only depends on the consequences of an action.")
+(subclass ConsequentialistUtilityFormulaFn UtilityFormulaFn)

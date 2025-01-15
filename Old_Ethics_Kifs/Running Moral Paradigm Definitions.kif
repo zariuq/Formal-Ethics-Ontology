@@ -1,0 +1,268 @@
+;; In this file, I'll keep the latest draft of the primary definitions.
+
+;; This is tricky because I'm including both classes and instances.  Maybe I should drop instances for now.
+;; Anyway, I wish to include the idea that the moral judgment is of a member of a group
+;; Let's add that the agent of the moral judgment is either an inclusive subgroup or a member of the group (with a bit of redundancy!)
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging)
+    (instance ?GROUP Group)
+    (member ?MEMB ?GROUP)
+    (patient ?JUDGE ?BEHAVE)
+    (=>
+        (instance ?BEHAVE AutonomousAgentProcess)
+        (agent ?BEHAVE ?MEMB))
+    (=> 
+        (subclass ?BEHAVE AutonomousAgentProcess)
+        (capability ?BEHAVE agent ?MEMB))
+    (agent ?JUDGE ?AGENT)
+    (or
+        (member ?AGENT ?GROUP)
+        (part ?AGENT ?GROUP)))
+
+;; Minimalistically, setting the social context aside:
+(and 
+    (refers Ethics ?JUDGE)
+    (instance ?JUDGE MoralJudging))
+
+;; Or perhaps we could focus on moral statements instead of moral judgments.
+;; Ethics refers to statements of moral attributes applied to formulas
+(and 
+    (refers Ethics ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (modalAttribute ?F ?M))
+    (instance ?M MoralAttribute)
+    (exists (?CBEHAVE)
+        (and 
+            (subclass ?CBEHAVE AutonomousAgentProcess)
+            (refers ?F ?CBEHAVE))))    
+
+;; "Moral nihilism is the view that there are no moral facts." (Ethics: The Fundamentals)
+;; There is no moral judging (with behavior and moral judgments) that is a fact.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?JUDGE) 
+                (and 
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE ?MORALSTATEMENT)
+                    (instance ?MORALSTATEMENT Fact))))))
+
+;; "Nothing is morally wrong." (from SEP Moral Skepticism); 
+;; technically, this would be a noncognitivist nihilism, I suppose (citing Ethics: The Fundamentals)
+;; There does not exist a class of behaviors for which there being an instance is morally bad.
+(and 
+    (refers MoralNihilism ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE 
+        (not 
+            (exists (?CBEHAVE) 
+                (and 
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (modalAttribute (hasInstance ?CBEHAVE) MorallyBad))))))
+
+(and 
+    (refers Deontology ?STATE)
+    (instance ?STATE Statement)
+    (equal ?STATE
+        (exists (?RULE)
+            (and
+                (instance ?DEONTIC DeonticAttribute)
+                (modalAttribute ?RULE ?DEONTIC)
+                (exists (?AGENT) 
+                    (confersNorm ?AGENT ?RULE ?DEONTIC))
+                (=>
+                    (modalAttribute ?RULE Obligation)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (and 
+                                    (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyGood)
+                                    (modalAttribute 
+                                        (not 
+                                            (exists (?BEHAVE)
+                                                (and 
+                                                    (realizesFormula ?BEHAVE ?RULE)
+                                                    (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))))      
+                (=>
+                    (modalAttribute ?RULE Prohibition)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (modalAttribute 
+                                        (exists (?BEHAVE)
+                                            (and 
+                                                (realizesFormula ?BEHAVE ?RULE)
+                                                (instance ?BEHAVE AutonomousAgentProcess))) MorallyBad)))))
+                (=> 
+                    (modalAttribute ?RULE Permission)
+                    (exists (?JUDGE)
+                        (and
+                            (agent ?JUDGE ?AGENT)
+                            (instance ?JUDGE MoralJudging)
+                            (result ?JUDGE
+                                (forall (CBEHAVE)
+                                    (=> 
+                                        (and
+                                            (subclass ?CBEHAVE AutonomousAgentProcess)
+                                            (realizesFormulaSubclass ?CBEHAVE ?RULE))                              
+                                        (modalAttribute 
+                                            (exists (?BEHAVE)
+                                                (and
+                                                    (instance ?BEHAVE AutonomousAgentProcess)
+                                                    (prevents ?CBEHAVE ?BEHAVE))) MorallyBad)))))))))))
+
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute 
+                        (hasInstance ?CBEHAVE) MorallyGood)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (subclass ?CBEHAVE AutonomousAgentProcess)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV VirtuousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+(and 
+    (refers VirtueEthics ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE 
+        (<=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (agent ?JUDGE ?AGENTJ)
+                (patient ?JUDGE
+                    (modalAttribute 
+                        (exists (?IBEHAVE)
+                            (instance ?IBEHAVE ?CBEHAVE)) MorallyBad)))
+            (believes ?AGENTJ
+                (=>
+                    (and 
+                        (instance ?DECIDE DecidingSubclass)
+                        (result ?DECIDE ?CBEHAVE)
+                        (agent ?DECIDEV ?AGENTV)
+                        (instance ?AGENTV ViciousAgent)
+                        (instance ?DECIDEV DecidingSubclass)
+                        (similar ?AGENTJ (DecisionSubclassOptionFn ?DECIDE) (DecisioSubclassnOptionFn ?DECIDEV)))
+                    (modalAttribute (result ?DECIDEV ?CBEHAVE) Likely))))))
+
+;; A class of behaviors is good to enact if its expected utility is positive.
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood)))
+                (greaterThan (UtilitySubclassFn ?CBEHAVE) 0))
+            (<=>
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))
+                (lessThan (UtilitySubclassFn ?CBEHAVE) 0)))))
+
+(and
+    (refers Utilitarianism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (and
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (forall (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (greaterThanOrEqualTo (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyGood))))
+            (=>
+                (and
+                    (instance ?DECIDE DecidingSubclass)
+                    (result ?DECIDE ?CBEHAVE)
+                    (subclass ?CBEHAVE AutonomousAgentProcess)
+                    (exists (?OPTION)
+                        (=> 
+                            (member ?OPTION (DecisionSubclassOptionFn ?DECIDE))
+                            (lessThan (UtilitySubclassFn ?CBEHAVE) (UtilitySubclassFn ?OPTION)))))
+                (and
+                    (instance ?JUDGE MoralJudging)
+                    (result ?JUDGE
+                        (modalAttribute (hasInstance ?CBEHAVE) MorallyBad)))))))
+
+(and
+    (refers Consequentialism ?STATE)
+    (instance ?STATE Statement)
+    (equals ?STATE
+        (=>
+            (and
+                (instance ?JUDGE MoralJudging)
+                (result ?JUDGE ?CONCLUSION)
+                (or (equal ?MORALATTRIBUTE MorallyGood) (equal ?MORALATTRIBUTE MorallyBad))
+                (equals ?CONCLUSION
+                    (modalAttribute (hasInstance ?CBEHAVE) ?MORALATTRIBUTE)))
+            (exists (?ARGUMENT)
+                (and
+                    (instance ?ARGUMENT ValidDeductiveArgument))
+                    (conclusion ?ARGUMENT ?CONCLUSION)
+                    (forall (?PREMISE)
+                        (=> 
+                            (premise ?ARGUMENT ?PREMISE)
+                            (and
+                                (=> 
+                                    (and   
+                                        (refers ?PREMISE ?PHYS)
+                                        (instance ?PHYS Physical))
+                                    (and
+                                        (instance ?PHYS Outcome)
+                                        (modalAttribute 
+                                            (exists (?IBEHAVE)
+                                                (and
+                                                    (instance ?IBEHAVE ?CBEHAVE)
+                                                    (result ?IBEHAVE ?PHYS))) Possibility)))
+                                (forall (?ATT) 
+                                    (=> 
+                                        (attribute ?AGENT ?ATT)
+                                        (not (refers ?PREMISE ?ATT))))
+                                (forall (?MAN)
+                                        (=> 
+                                            (modalAttribute
+                                                (exists (?IBEHAVE)
+                                                    (and 
+                                                        (instance ?IBEHAVE ?CBEHAVE)
+                                                        (manner ?MAN ?IBEHAVE))) Possibility)
+                                            (not (refers ?PROP ?MAN)))))))))))
+
+
+
+
