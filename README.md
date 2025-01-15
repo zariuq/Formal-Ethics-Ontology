@@ -6,7 +6,10 @@ Please see the [Wiki](https://gardenofminds.art/esowiki/main/) for most of the i
 
 #### Contents of the Repository:
 
-The Presentations folder contains presentations of the initial project proposal and the state of the project at the [AITP](http://aitp-conference.org/) conference in 2022 and 2023.
+There are two presentations at the [AITP](http://aitp-conference.org/) conference of the initial project proposal and the state of the project at the in 2022 and 2023, along with the extended abstract from 2022.  Contained in the obvious folder.
 
-The extended abstract is in "Formal_Ethics_Ontology_Extended_Abstract.pdf".  This document includes a sketch of how the ethical paradigms might be expressed in a multi-agent reinforcement learning setting.
+There is an overly simplified initial example generating some pretty proof pictures on the topic of whether a surgeon is ethically permitted to perform an organ transplant.
 
+The incrementally updated versions of the formalization are also stored (in addition to the Git history).
+
+The final draft of my full-time involvement in the project is v6.
