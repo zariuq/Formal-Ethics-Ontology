@@ -1437,6 +1437,7 @@ Typically, the formula should refer to an action.")
         (domain ?UF 1 Formula)
         (range ?UF RealNumber)))
 
+
 (<=>
   (instance ?SENTENCE UtilityAssignmentSentence)
   (exists (?FORMULA ?VALUE ?UF)
@@ -1563,6 +1564,29 @@ Typically, the formula should refer to an action.")
       (equal ?UAS
         (equal (AssignmentFn ?UF ?FORMULA) 0)))))   
 
+;; Fixing the UF variable.
+(=>
+  (and 
+    (equal (SimpleValueJudgmentToUtilityAssignmentSentenceFn ?VJS) ?UAS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute))
+  (exists (?UF)
+    (and
+      (instance ?UF UtilityFormulaFn)
+      (=>
+        (equal ?MORALATTRIBUTE MorallyGood)
+        (equal ?UAS 
+          (equal (AssignmentFn ?UF ?FORMULA) 1)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyBad)
+        (equal ?UAS
+          (equal (AssignmentFn ?UF ?FORMULA) -1)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyPermissible)
+        (equal ?UAS
+          (equal (AssignmentFn ?UF ?FORMULA) 0)))))
+
 ;; Insert the isomorphism!
 (=>
  (instance ?S SimpleValueJudgmentSentence)
@@ -1624,6 +1648,32 @@ Typically, the formula should refer to an action.")
         (modalAttribute 
           (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))
 
+;; Fix moving variable ?UF to be a part of the function output ;-)
+(=>
+  (and 
+    (equal (SimpleValueJudgmentToUtilityAssignmentLikelihoodSentence ?VJS) ?UAS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute))
+  (exists (?UF)
+    (and
+      (instance ?UF UtilityFormulaFn)
+      (=>
+        (equal ?MORALATTRIBUTE MorallyGood)
+        (equal ?UAS
+          (modalAttribute 
+            (greaterThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyBad)
+        (equal ?UAS
+          (modalAttribute 
+            (lessThan (AssignmentFn ?UF ?FORMULA) 0) Likely)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyPermissible)
+        (equal ?UAS
+          (modalAttribute 
+            (equal (AssignmentFn ?UF ?FORMULA) 0) Likely)))))))
+
 (documentation SimpleValueJudgmentToUtilityComparisonSentence EnglishLanguage "A UnaryFunction that maps value judgment sentences to utility comparison sentences.")
 (domain SimpleValueJudgmentToUtilityComparisonSentence 1 SimpleValueJudgmentSentence)
 (range SimpleValueJudgmentToUtilityComparisonSentence UtilitarianSentence)
@@ -1664,6 +1714,49 @@ Typically, the formula should refer to an action.")
       (equal ?UCS
         (modalAttribute 
           (greaterThanOrEqualTo (AssignmentFn ?UF ?FORMULA) 0) Likely)))))          
+
+;; UF var fix
+(=>
+  (and 
+    (equal (SimpleValueJudgmentToUtilityComparisonSentence ?VJS) ?UCS)
+    (equal ?VJS (modalAttribute ?FORMULA ?MORALATTRIBUTE))
+    (instance ?FORMULA Formula)
+    (instance ?MORALATTRIBUTE MoralAttribute)
+    (equal ?SITUATION (SituationFormulaFn ?FORMULA)))
+  (exists (?UF)
+    (and
+      (instance ?UF UtilityFormulaFn)
+      (=>
+        (equal ?MORALATTRIBUTE MorallyGood)
+        (equal ?UCS
+          (modalAttribute
+            (forall (?F)
+              (=>
+                (exists (?AGENT ?CP)
+                  (and
+                    (capableInSituation ?CP agent ?AGENT ?SITUATION)
+                    (realizesFormulaSubclass ?CP ?F)))
+                (greaterThanOrEqualTo
+                  (AssignmentFn ?UF ?FORMULA)
+                  (AssignmentFn ?UF ?F)))) Likely)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyBad)
+        (equal ?UCS
+          (modalAttribute 
+            (exists (?F ?AGENT ?CP)
+              (and 
+                (capableInSituation ?CP agent ?AGENT ?SITUATION)
+                (realizesFormulaSubclass ?CP ?F)
+                (lessThan
+                  (AssignmentFn ?UF ?FORMULA)
+                  (AssignmentFn ?UF ?F)))) Likely)))
+      (=>
+        (equal ?MORALATTRIBUTE MorallyPermissible)
+        (equal ?UCS
+          (modalAttribute 
+            (greaterThanOrEqualTo
+              (AssignmentFn ?UF ?FORMULA)
+              0) Likely)))))))
 
 ;; Combines the two value judgment-interpretatons of simple utilitarian sentences into one.
 (documentation SimpleUtilitarianToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps simple utilitarian sentences value judgment sentences.")
@@ -2206,6 +2299,21 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
               (attribute ?AGENT ?VIRTUEATTRIBUTE))
             (desires ?AGENT ?FORM)))))))
 
+;; Kudos to o1.  Just syntactic sugar to drop the agent so that functions can be more isomorphic
+(documentation MinimalVirtueDesireSentence EnglishLanguage
+  "A minimal virtue desire sentence:
+   ∀AGENT [ (attribute AGENT VIRTUE) ⇒ (desires AGENT FORM) ].")
+(subclass MinimalVirtueDesireSentence SimpleVirtueDesireSentence)
+
+(<=>
+  (instance ?SENTENCE MinimalVirtueDesireSentence)
+  (exists (?VIRTUE ?FORM)
+    (equal ?SENTENCE
+      (forall (?AGENT)
+        (=>
+          (attribute ?AGENT ?VIRTUE)
+          (desires ?AGENT ?FORM))))))
+
 ;; An action is right if and only if it is what a virtuous agent would 
 ;; characteristically (i.e., acting in character) do in the circumstances.
 ;; Let's actually just define this theorem.
@@ -2505,6 +2613,10 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
       (holdsObligation ?DUTY ?AGENT)
       (desires ?AGENT ?DUTY))))
 
+;; Or we can be even more direct!
+(=> 
+  (attribute ?AGENT Pietas)
+  (holdsEthicalPhilosophy DEONTOLOGY ?AGENT))
 
 ;; General Terms
 
@@ -2989,6 +3101,50 @@ best in the situation according to the given utility function for this specific 
           (instance ?IPROC ?CPROC)
           (equal ?SITUATION (SituationFn ?IPROC))))))) ?AGENT)
 
+;; Or, setting happiness aside, just do the best thing in every situation
+;; given a particular utility function
+(=>
+  (instance ?AGENT AutonomousAgent)
+  (holdsObligation 
+    (forall (?SITUATION ?CPROC)
+      (=>
+        (bestActionByUtilityInSituation ?CPROC ?UF ?SITUATION)
+        (exists (?IPROC)
+          (and 
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?CPROC)
+            (equal ?SITUATION (SituationFn ?IPROC)))))) ?AGENT))
+
+;; Simple equivalence
+(=>
+  (instance ?AGENT Agent)
+  (holdsObligation
+    (holdsEthicalPhilosophy ?AGENT UTILITARIANISM)
+    ?AGENT))
+
+(=>
+  (instance ?AGENT Agent)
+  (holdsObligation
+    (holdsEthicalPhilosophy ?AGENT VIRTUEETHICS)
+    ?AGENT))
+
+(instance UtilitarianBenevolence VirtueAttribute)
+
+(=>
+  (attribute ?AGENT UtilitarianBenevolence)
+  (holdsEthicalPhilosophy ?AGENT UTILITARIANISM))
+
+(=>
+  (attribute ?AGENT UtilitarianBenevolence)
+  (desires ?AGENT 
+    (forall (?SITUATION ?CPROC)
+      (=>
+        (bestActionByUtilityInSituation ?CPROC UF ?SITUATION)
+        (exists (?IPROC)
+          (and 
+            (agent ?IPROC ?AGENT)
+            (instance ?IPROC ?CPROC)
+            (equal ?SITUATION (SituationFn ?IPROC))))))))
 
 (documentation NumHappyPeopleOnEarthUtilityFn EnglishLanguage "A utility function that returns the number of happy people on Earth from the beginning of the 
 situation to the end of time.")
@@ -3632,6 +3788,16 @@ criteria are given to determine which actions are virtuous and by which moral ba
       (instance ?IPROC AutonomousAgentProcess)
       (instance ?VIRTUEATTRIBUTE MoralVirtueAttribute))))
 
+(documentation SimpleVirtueTargetSentence EnglishLanguage
+  "A minimal target-based virtue-aspect sentence: (virtueTarget ?VIRTUE ?FORM).")
+(subclass SimpleVirtueTargetSentence VirtueAspectSentence)
+
+;; We say it’s exactly the statement (virtueTarget V F) and nothing else:
+(<=>
+  (instance ?SENTENCE SimpleVirtueTargetSentence)
+  (exists (?VIRTUE ?TARGET)
+    (equal ?SENTENCE (virtueTarget ?VIRTUE ?TARGET))))
+
 (documentation VirtueAspectSentence EnglishLanguage "A sentence that assigns a field, basis, mode, or target to a virtue.")
 (subclass VirtueAspectSentence TargetCenteredVirtueEthicsSentence)
 
@@ -4038,6 +4204,46 @@ criteria are given to determine which actions are virtuous and by which moral ba
   (instance ?IPROC VirtuousAct)
   (exists (?VIRTUE)
     (actionHitsVirtueTarget ?IPROC ?VIRTUE)))
+
+;; Oooh, ChatGPT o1 was a bit creative with this one!
+(documentation virtueSatisfiedByFormula EnglishLanguage
+  "This predicate is true when the given formula satisfies (or hits) a virtue's target.")
+(domain virtueSatisfiedByFormula 1 Formula)
+(domain virtueSatisfiedByFormula 2 VirtueAttribute)
+(instance virtueSatisfiedByFormula BinaryPredicate)
+
+(=>
+  (and 
+    (actionHitsVirtueTarget ?IPROC ?VIRTUE)
+    (realizesFormula ?IPROC ?FORM))
+  (virtueSatisfiedByFormula ?FORM ?VIRTUE))
+
+(documentation VirtueUtilityFormulaFn EnglishLanguage 
+  "A UtilityFormulaFn specialized for each Virtue. 
+   If a formula satisfies the Virtue's target, the utility is 1; otherwise 0.")
+(subclass VirtueUtilityFormulaFn UtilityFormulaFn)
+
+(documentation virtueUtilityFor EnglishLanguage
+  "Links a VirtueUtilityFormulaFn to the particular Virtue it measures.")
+(domain virtueUtilityFor 1 VirtueUtilityFormulaFn)
+(domain virtueUtilityFor 2 VirtueAttribute)
+(instance virtueUtilityFor BinaryPredicate)
+
+(=>
+  (and 
+    (virtueUtilityFor ?UF ?VIRTUE)
+    (instance ?UF VirtueUtilityFormulaFn)
+    (virtueSatisfiedByFormula ?FORM ?VIRTUE))
+  (equal (AssignmentFn ?UF ?FORM) 1))
+
+(=>
+  (and 
+    (virtueUtilityFor ?UF ?VIRTUE)
+    (instance ?UF VirtueUtilityFormulaFn)
+    (not (virtueSatisfiedByFormula ?FORM ?VIRTUE)))
+  (equal (AssignmentFn ?UF ?FORM) 0))
+
+
 
 ;; Generally hits target could be the Class-version of this
 (documentation actionClassGenerallyHitsVirtueTarget EnglishLanguage "An class of actions is likely to hit the target of a virtue if it usually brings about the virtue's target in the relevant situation.")
@@ -4634,6 +4840,43 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (agent ?IPROC ?AGENT)
               (realizesFormula ?IPROC ?TARGET))))) MorallyGood)))
 
+(documentation FTSimpleTCVEToValueJudgmentSentenceFn EnglishLanguage "A UnaryFunction that maps target simple target-centered virtue ethics sentences to value judgment sentences.")
+(domain TargetTCVEToValueJudgmentSentenceFn 1 VirtueAspectSentence)
+(range TargetTCVEToValueJudgmentSentenceFn ValueJudgmentSentence)
+(instance TargetTCVEToValueJudgmentSentenceFn PartialValuedRelation)
+(instance TargetTCVEToValueJudgmentSentenceFn UnaryFunction)
+;; What if I assume that the this translation is a bit tautological?
+;; Ok, yes, abstracting out the "in situation" part can make for a 
+;; cleaner definition of target, but why not just say:
+;; "Do a preprocessing step of adding in the field-dependence to each 
+;; target.
+(=>
+  (and 
+    (equal (TargetTCVEToValueJudgmentSentenceFn ?TVS) ?VJS)
+    (equal ?TVS 
+      (virtueTarget ?VIRTUE ?TARGET))
+    (instance ?VIRTUE VirtueAttribute))
+  (equal ?VJS
+    (modalAttribute ?TARGET MorallyGood)))
+
+(documentation SimpleValueJudgmentToTargetTCVESentenceFn EnglishLanguage "A UnaryFunction that maps simple value judgment sentences involving an moral goodness into Target virtue ethics sentences.")
+(domain SimpleValueJudgmentToTargetTCVESentenceFn 1 SimpleValueJudgmentSentence)
+(range SimpleValueJudgmentToTargetTCVESentenceFn VirtueAspectSentence)
+(instance SimpleValueJudgmentToTargetTCVESentenceFn PartialValuedRelation)
+(instance SimpleValueJudgmentToTargetTCVESentenceFn UnaryFunction)
+
+;; A super simple translation allowing one to simply map back and forth :D.
+;; The virtue variable is essentially defined by the formula.
+(=>
+  (and
+    (equal (SimpleValueJudgmentToTargetTCVESentenceFn ?VJS) ?TVS)
+    (equal ?VJS
+      (modalAttribute ?FORMULA MorallyGood)))
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE VirtueAttribute)
+      (equal ?TVS
+        (virtueTarget ?VIRTUE ?FORMULA)))))
 
 ;; Field and Target seem like the essential aspects, so let's map only into those!
 ;; Basically, what's the situation and what's the goal!
@@ -4676,9 +4919,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
               (=>
                 (instance ?SITUATION ?FIELD)
                 (exists (?IPROC)
-                  (and
-                    (agent ?IPROC ?AGENT)
-                    (instance ?IPROC ?CLASS)))))))))))
+                  (instance ?IPROC ?CLASS))))))))))
 
 ;; Oh, I might wish to do a translation from target-centered to agent-centered virtue ethics, and vice-versa.
 
@@ -4694,7 +4935,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
 ;; This could be used as the definition of what it means for someone to have a virtue, too!
 (=>
   (and 
-    (equal (CompleteSimpleTCVEToValueJudgmentSentence ?TVS) ?VES)
+    (equal (CompleteSimpleTCVEToVirtueSentence ?TVS) ?VES)
     (equal ?TVS 
       (and 
         (virtueField ?VIRTUE ?FIELD)
@@ -4799,6 +5040,7 @@ criteria are given to determine which actions are virtuous and by which moral ba
         (attribute ?AGENT ?VIRTUE)
         (desires ?AGENT ?TARGET)))))
 
+;; Explaining how to apply the field in the virtue ethics theory.
 (=>
   (and
     (virtueField ?VIRTUE ?FIELD)
@@ -4862,10 +5104,322 @@ criteria are given to determine which actions are virtuous and by which moral ba
           (virtueField ?VIRTUE ?FIELD)
           (virtueTarget ?VIRTUE ?FORM))))))
 
+;; Overly simpilified version.
+(=>
+  (and
+    (equal (SimpleVirtueDesireToTCVESentenceFn ?SVDS) ?TCVE)
+    (equal ?SVDS 
+      (forall (?AGENT)
+          (=>
+            (attribute ?AGENT ?VIRTUE)
+            (desires ?AGENT ?FORM))))
+    (instance ?VIRTUE VirtueAttribute))
+  (equal ?TCVE 
+    (virtueTarget ?VIRTUE ?FORM)))
+
 ;; So now I think we can translate back and forth?
 ;; Unfortunately, they're not quite isomorphic.  AI should be able to massage it easily enough.
-(FTSimpleTCVEToValueJudgmentSentenceFn (SimpleVirtueDesireToFTTCVESentenceFn ?SVDS))
-(FTSimpleTCVEToVirtueDesireSentence (SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn ?SSAVJS))
+(FTSimpleTCVEToValueJudgmentSentenceFn 
+  (SimpleVirtueDesireToFTTCVESentenceFn ?SVDS))
+(FTSimpleTCVEToVirtueDesireSentence
+  (SimpleSituationalActionValueJudgmentToFTVirtueSentenceFn ?SSAVJS))
+
+;; The AI (ChatGPT o1) seems fairly close.
+;; The core idea is to work with VirtueTargetSentences only.
+;; All additional details are beyond the core tether between the theories.
+;; The field is good to specify in both virtue ethics and deontology, yet by default, it may not be.
+;; Just as the means of determining how to combine virtues into overall virtuosity are not by default discosed.
+
+
+;; ;; Hence such a statement is exactly a universal, “If agent has virtue V, then that agent desires formula F.”
+
+;; ;; 3. Define the Two Isomorphic Translation Functions
+
+;; A. From Virtue-Desire ⇒ Target
+(documentation SimpleVirtueDesireToTargetSentenceFn EnglishLanguage
+  "Maps the restricted form of virtue-desire sentences 
+   to a simple virtue-target sentence (virtueTarget ?VIRTUE ?FORM).")
+(domain SimpleVirtueDesireToTargetSentenceFn 1 MinimalVirtueDesireSentence)
+(range SimpleVirtueDesireToTargetSentenceFn SimpleVirtueTargetSentence)
+(instance SimpleVirtueDesireToTargetSentenceFn TotalValuedRelation)
+(instance SimpleVirtueDesireToTargetSentenceFn UnaryFunction)
+
+(=> 
+  (and
+    (equal (SimpleVirtueDesireToTargetSentenceFn ?SVDS) ?VTTS)
+    (instance ?VIRTUE VirtueAttribute)
+    (equal ?SVDS
+      (forall (?AGENT)
+        (=>
+          (attribute ?AGENT ?VIRTUE)
+          (desires ?AGENT ?FORM)))))
+  (equal ?VTTS
+    (virtueTarget ?VIRTUE ?FORM)))
+
+;; ;; B. From Target ⇒ Virtue-Desire
+(documentation TargetSentenceToSimpleVirtueDesireFn EnglishLanguage
+  "Maps the minimal target-based virtue-aspect sentence
+   (virtueTarget ?VIRTUE ?FORM) back to 
+   ∀AGENT [ attribute(AGENT,VIRTUE) ⇒ desires(AGENT,FORM) ].")
+(domain TargetSentenceToSimpleVirtueDesireFn 1 SimpleVirtueTargetSentence)
+(range TargetSentenceToSimpleVirtueDesireFn MinimalVirtueDesireSentence)
+(instance TargetSentenceToSimpleVirtueDesireFn TotalValuedRelation)
+(instance TargetSentenceToSimpleVirtueDesireFn UnaryFunction)
+
+(=>
+  (and
+    (equal (TargetSentenceToSimpleVirtueDesireFn ?VTTS) ?SVDS)
+    (equal ?VTTS (virtueTarget ?VIRTUE ?FORM))
+    (instance ?VIRTUE VirtueAttribute))
+  (equal ?SVDS
+    (forall (?AGENT)
+      (=> 
+        (attribute ?AGENT ?VIRTUE)
+        (desires ?AGENT ?FORM))))))
+
+;; ;; Now we have exactly the same structure as your deontological example: each direction is just an equality for the minimal restricted forms. If you want them to be genuinely equal in the logic, you can add:
+
+(=>
+  (instance ?SVDS MinimalVirtueDesireSentence)
+  (equal ?SVDS
+    (TargetSentenceToSimpleVirtueDesireFn 
+      (SimpleVirtueDesireToTargetSentenceFn ?SVDS))))
+
+(=>
+  (instance ?VTTS SimpleVirtueTargetSentence)
+  (equal ?VTTS
+    (SimpleVirtueDesireToTargetSentenceFn 
+      (TargetSentenceToSimpleVirtueDesireFn ?VTTS))))
+
+(documentation ImperativeToVirtueDesireFn EnglishLanguage
+  "Maps a simple imperative sentence '(modalAttribute FORM Obligation)' 
+   back to a minimal virtue-desire sentence: existentially introducing ?VIRTUE 
+   so that: ∃VIRTUE. ∀AGENT [ attribute(AGENT,VIRTUE) → desires(AGENT,FORM) ].")
+
+(domain ImperativeToVirtueDesireFn 1 SimpleImperativeSentence)
+(range ImperativeToVirtueDesireFn MinimalVirtueDesireSentence)
+(instance ImperativeToVirtueDesireFn UnaryFunction)
+
+(=>
+  (and
+    (equal (ImperativeToVirtueDesireFn ?IMPS) ?SVDS)
+    (equal ?IMPS (modalAttribute ?FORM Obligation))
+    (instance ?IMPS SimpleImperativeSentence))
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE VirtueAttribute)
+      (equal ?SVDS
+        (forall (?AGENT)
+          (=> 
+            (attribute ?AGENT ?VIRTUE)
+            (desires ?AGENT ?FORM))))))))
+
+(documentation VirtueDesireToImperativeSentenceFn EnglishLanguage
+ "Maps a minimal virtue-desire sentence to a simple imperative sentence 
+  i.e. 'desires(agent, F)' => 'modalAttribute(F, Obligation)'.")
+(domain VirtueDesireToImperativeSentenceFn 1 MinimalVirtueDesireSentence)
+(range VirtueDesireToImperativeSentenceFn SimpleImperativeSentence)
+(instance VirtueDesireToImperativeSentenceFn UnaryFunction)
+
+(=>
+  (and
+    (equal (VirtueDesireToImperativeSentenceFn ?SVDS) ?IMPS)
+    (instance ?SVDS MinimalVirtueDesireSentence)
+    (equal ?SVDS
+      (forall (?AGENT)
+        (=> 
+          (attribute ?AGENT ?VIRTUE)
+          (desires ?AGENT ?FORM)))))
+  (equal ?IMPS
+    (modalAttribute ?FORM Obligation)))
+
+(=>
+  (instance ?S MinimalVirtueDesireSentence)
+  (equal
+    ?S
+    (ImperativeToVirtueDesireFn
+      (VirtueDesireToImperativeSentenceFn ?S))))
+
+(=>
+  (instance ?S SimpleImperativeSentence)
+  (equal
+    ?S
+    (VirtueDesireToImperativeSentenceFn
+      (ImperativeToVirtueDesireFn ?S))))
+
+(documentation TargetSentenceToValueJudgmentSentenceFn EnglishLanguage
+  "Maps a minimal 'virtueTarget(?VIRTUE, ?FORM)' sentence 
+   to 'modalAttribute(?FORM, MorallyGood)'. 
+   We assume ?VIRTUE is a positive (non-vice) virtue attribute."
+)
+(domain TargetSentenceToValueJudgmentSentenceFn 1 SimpleVirtueTargetSentence)
+(range TargetSentenceToValueJudgmentSentenceFn SimpleValueJudgmentSentence)
+(instance TargetSentenceToValueJudgmentSentenceFn UnaryFunction)
+
+(=>
+  (and
+    (equal (TargetSentenceToValueJudgmentSentenceFn ?VTTS) ?VJS)
+    (equal ?VTTS (virtueTarget ?VIRTUE ?FORM))
+    (instance ?VTTS SimpleVirtueTargetSentence)
+    (instance ?VIRTUE VirtueAttribute))
+  (equal ?VJS
+    (modalAttribute ?FORM MorallyGood)))
+
+(documentation ValueJudgmentSentenceToTargetFn EnglishLanguage
+  "Maps 'modalAttribute(?FORM, MorallyGood)' to (virtueTarget ?VIRTUE ?FORM) 
+   with an existentially introduced ?VIRTUE"
+)
+(domain ValueJudgmentSentenceToTargetFn 1 SimpleValueJudgmentSentence)
+(range ValueJudgmentSentenceToTargetFn SimpleVirtueTargetSentence)
+(instance ValueJudgmentSentenceToTargetFn UnaryFunction)
+
+(=>
+  (and
+    (equal (ValueJudgmentSentenceToTargetFn ?VJS) ?VTTS)
+    (equal ?VJS (modalAttribute ?FORM MorallyGood))
+    (instance ?VJS SimpleValueJudgmentSentence))
+  (exists (?VIRTUE)
+    (and
+      (instance ?VIRTUE VirtueAttribute)
+      (equal ?VTTS (virtueTarget ?VIRTUE ?FORM)))))
+
+(=>
+  (instance ?S SimpleVirtueTargetSentence)
+  (equal
+    ?S
+    (ValueJudgmentSentenceToTargetFn
+      (TargetSentenceToValueJudgmentSentenceFn ?S))))
+
+(=>
+  (instance ?S SimpleValueJudgmentSentence)
+  (equal
+    ?S
+    (TargetSentenceToValueJudgmentSentenceFn
+      (ValueJudgmentSentenceToTargetFn ?S))))
+
+;; And the full loops, provided by o1.  Cool to see the AI progressing.
+;; Basically, looking at the core "X is good" aspect, 
+;; The paradigms can be aligned directly.
+;; The difficult to translate bits come in how one deals with the additional 
+;; complication!
+(=> 
+  (instance ?X MinimalVirtueDesireSentence)
+  (equal
+    ?X
+    (ImperativeToVirtueDesireFn
+      (ValueJudgmentToImperativeSentenceFn
+        (TargetSentenceToValueJudgmentSentenceFn
+          (SimpleVirtueDesireToTargetSentenceFn ?X))))))
+
+(=>
+  (instance ?X SimpleVirtueTargetSentence)
+  (equal
+    ?X
+    (SimpleVirtueDesireToTargetSentenceFn
+      (ImperativeToVirtueDesireFn
+        (ValueJudgmentToImperativeSentenceFn
+          (TargetSentenceToValueJudgmentSentenceFn ?X))))))
+
+;; ValueJudgment → Imperative → VirtueDesire → Target
+(=>
+  (instance ?X SimpleValueJudgmentSentence)
+  (equal
+    ?X
+    (TargetSentenceToValueJudgmentSentenceFn
+      (SimpleVirtueDesireToTargetSentenceFn
+        (ImperativeToVirtueDesireFn
+          (ValueJudgmentToImperativeSentenceFn ?X))))))
+
+(=>
+  (instance ?X SimpleImperativeSentence)
+  (equal
+    ?X
+    (ValueJudgmentToImperativeSentenceFn
+      (TargetSentenceToValueJudgmentSentenceFn
+        (SimpleVirtueDesireToTargetSentenceFn
+          (ImperativeToVirtueDesireFn ?X))))))
+
+;; Trying to close the loop with some o1 help.
+(documentation UtilityAssignmentToVirtueDesireFn EnglishLanguage
+"A UnaryFunction that maps a utility assignment sentence 
+ (AssignmentFn UF FORMULA)=VALUE into a simple virtue-desire sentence.
+
+If VALUE>0, introduces a new virtue that desires FORMULA.
+If VALUE<0, introduces a new virtue that desires (not FORMULA).
+If VALUE=0, introduces a neutral virtue that doesn't impose desires (example).
+Modify or omit the zero case as you see fit.")
+
+(domain UtilityAssignmentToVirtueDesireFn 1 UtilityAssignmentSentence)
+(range UtilityAssignmentToVirtueDesireFn SimpleVirtueDesireSentence)
+(instance UtilityAssignmentToVirtueDesireFn TotalValuedRelation)
+(instance UtilityAssignmentToVirtueDesireFn UnaryFunction)
+
+(=> 
+  (and
+    (equal (UtilityAssignmentToVirtueDesireFn ?UAS) ?VDES)
+    (equal ?UAS (equal (AssignmentFn ?UF ?FORMULA) ?VALUE))
+    (instance ?UF UtilityFormulaFn)
+    (instance ?FORMULA Formula)
+    (instance ?VALUE Number))
+  (and
+    (=> 
+      (greaterThan ?VALUE 0)
+      (exists (?VIRTUE1)
+        (and
+          (instance ?VIRTUE1 VirtueAttribute)
+          (equal ?VDES
+            (forall (?AGENT)
+              (=> 
+                (attribute ?AGENT ?VIRTUE1)
+                (desires ?AGENT ?FORMULA))))))))
+    (=> 
+      (lessThan ?VALUE 0)
+      (exists (?VIRTUE2)
+        (and
+          (instance ?VIRTUE2 VirtueAttribute)
+          (equal ?VDES
+            (forall (?AGENT)
+              (=> 
+                (attribute ?AGENT ?VIRTUE2)
+                (desires ?AGENT (not ?FORMULA)))))))))
+
+(documentation UtilityComparisonToVirtuePrefSentenceFn EnglishLanguage
+"Maps a utility comparison sentence to a virtue preference sentence.
+If the utility of FORMULA1 is strictly greater (or greater or equal) than
+the utility of FORMULA2, then for an agent possessing a certain virtue
+we stipulate that the agent prefers FORMULA1 over FORMULA2.")
+
+(=>
+  (and
+    (equal (UtilityComparisonToVirtuePrefSentenceFn ?UCS) ?VPS)
+    (equal ?UCS
+      (AssignmentFn ?COMPARATOR
+        (AssignmentFn ?UF ?FORMULA1)
+        (AssignmentFn ?UF ?FORMULA2)))
+    (instance ?FORMULA1 Formula)
+    (instance ?FORMULA2 Formula)
+    (instance ?UF UtilityFormulaFn)
+    (or
+      (equal ?COMPARATOR greaterThan)
+      (equal ?COMPARATOR greaterThanOrEqualTo)
+      (equal ?COMPARATOR equal)))
+  (exists (?VIRTUE)
+    (and
+    (instance ?VIRTUE VirtueAttribute)
+    (forall (?AGENT)
+      (=>
+        (attribute ?AGENT ?VIRTUE)
+        (prefers ?AGENT ?FORMULA1 ?FORMULA2))))))   
+
+(=>
+  (instance ?X SimpleValueJudgmentSentence)
+  (equal
+    ?X
+    (TargetSentenceToValueJudgmentSentenceFn
+      (SimpleVirtueDesireToTargetSentenceFn
+        (UtilityAssignmentToVirtueDesireFn
+          (SimpleValueJudgmentToUtilityAssignmentSentenceFn
+            (ValueJudgmentToImperativeSentenceFn ?X)))))))
 
 ;;;
 ;; Kant’s Theory of Categorical Imperative (sketch)
