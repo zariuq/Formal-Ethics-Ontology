@@ -1,0 +1,224 @@
+
+;; Draft of some transplant scenario
+
+(instance Hospital HospitalBuilding)
+(instance Surgeon0 Human)
+(instance Human1 Human)
+(instance HealthyHuman Human)
+
+(not (equal Surgeon0 Human1))
+(not (equal Surgeon0 HealthyHuman))
+(not (equal HealthyHuman Human1))
+
+(located Surgeon0 Hospital)
+(located Human1 Hospital)
+(located HealthyHuman Hospital)    
+
+(patientMedical Human1 Surgeon0)
+(patientMedical HealthyHuman Surgeon0)
+
+(attribute HealthyHuman Healthy)
+(attribute Human1 FatalDisease)
+
+(contraryAttribute FatalDisease Healthy)
+(subclass FatalDisease LifeThreateningDisease)
+
+(=> 
+    (instance ?DISEASE FatalDisease)
+    (exists (?RATE)
+        (and 
+            (diseaseMortality ?DISEASE ?RATE)
+            (greaterThan ?RATE 0.99))))
+ 
+;; I believe all primates (as well as other mammals) have two kidneys.
+(=>
+    (and
+        (instance ?H Primate)
+        (instance ?D DiseaseOrSyndrome)
+        (not
+            (attribute ?H ?D)))
+    (exists (?K1 ?K2)
+        (and
+            (instance ?K1 Kidney)
+            (instance ?K2 Kidney)
+            (not
+                (equal ?K1 ?K2))
+            (part ?K1 ?H)
+            (part ?K2 ?H))))
+
+(attribute Human1 (ImpairedBodyPartFn Kidney))
+(needs Human1 K1)
+(instance K1 Kidney)
+(not (attribute K1 (ImpairedBodyPartFn Kidney)))
+
+(instance HealthyKidney1 Kidney)
+(instance HealthyKidney2 Kidney)
+(part HealthyKidney1 HealthyHuman)
+(part HealthyKidney2 HealthyHuman)
+(not (equal HealthyKidney1 HealthyKidney2))
+(not (attribute HealthyKidney1 (ImpairedBodyPartFn Kidney)))
+(not (attribute HealthyKidney2 (ImpairedBodyPartFn Kidney)))
+
+(subclass OrganTransplant Surgery)
+(subclass OrganTransplant Substitution)
+
+(=>
+    (instance ?Trans OrganTransplant)
+    (exists (?Sur ?Org ?Pat ?Don)
+        (and
+            (attribute ?Sur Surgeon)
+            (instance ?Don Human)
+            (instance ?Pat Human)
+            (instance ?Org Organ)
+            (agent ?Trans ?Sur)
+            (origin ?Trans ?Don)
+            (patient ?Trans ?Org)
+            (destination ?Trans ?Pat)))) 
+
+(capability OrganTransplant destination Human1)
+(capability OrganTransplant patient HealthyKidney1)
+(capability OrganTransplant origin HealthyHuman)
+(capability OrganTransplant agent Surgeon0)
+
+(instance InformedConsent RelationalAttribute)
+(instance Consent RelationalAttribute)
+
+(=>
+    (attribute Surgeon0 InformedConsent)
+    (and
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0)))
+
+(=>
+    (not (attribute Surgeon0 InformedConsent))
+    (not 
+        (exists (?Transplant)
+            (and
+                (instance ?Transplant OrganTransplant)
+                (destination ?Transplant Human1)
+                (patient ?Transplant HealthyKidney1)
+                (origin ?Transplant HealthyHuman)
+                (agent ?Transplant Surgeon0)))))
+                 
+;; For virtue ethics, similat o the above rule works with the additional stipulation that the surgeon is practically wise 
+
+(subclass VirtueAttribute PsychologicalAttribute)
+(subclass PracticalWisdom VirtueAttribute)
+(subclass Prudence VirtueAttribute)
+(subclass Temperance VirtueAttribute)
+
+(=>
+    (attribute Surgeon0 PracticalWisdom)
+    (and 
+        (=> 
+            (attribute Surgeon0 Consent)
+            (and
+                (instance Transplant1 OrganTransplant)
+                (destination Transplant1 Human1)
+                (patient Transplant1 HealthyKidney1)
+                (origin Transplant1 HealthyHuman)
+                (agent Transplant1 Surgeon0)))
+        (=> 
+            (not (attribute Surgeon0 Consent))
+            (not 
+                (exists (?Transplant)
+                    (and
+                        (instance ?Transplant OrganTransplant)
+                        (destination ?Transplant Human1)
+                        (patient ?Transplant HealthyKidney1)
+                        (origin ?Transplant HealthyHuman)
+                        (agent ?Transplant Surgeon0)))))))
+
+      
+;;(attribute Surgeon0 InformedConsent)  
+;;(attribute Surgeon0 PracticalWisdom)
+;;(attribute Surgeon0 Consent)
+
+;;(agent Transplant1 ?X)
+;;(instance ?X OrganTransplant)
+
+;; The Utilitarian "base-level inferences in FO"
+;; The idea is that it's hard to say what the precise numeric utility is but the utility of 3 non-terminally ill people is probably higher than that of 2, etc.
+(subclass UtilityNumberAttribute RelationalAttribute)
+
+(instance UtilityNumber0 UtilityNumberAttribute)
+(instance UtilityNumber1 UtilityNumberAttribute)
+(instance UtilityNumber2 UtilityNumberAttribute)
+(instance UtilityNumber3 UtilityNumberAttribute)
+
+(successorAttribute UtilityNumber0 UtilityNumber1)
+(successorAttribute UtilityNumber1 UtilityNumber2)
+(successorAttribute UtilityNumber2 UtilityNumber3)
+
+;; I want to say that the SituationUtility is +1 in the case that the surgery takes place.
+(instance PreSituationUtility UtilityNumberAtttribute)
+(equal PreSituationUtility UtilityNumber2)
+(instance SituationUtility UtilityNumberAtttribute)
+
+;; If the surgery takes place for some universally quantified transplant variable, then the utility is +1 the utility beforehand
+(=>
+    (and
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0))
+    (successorAttribute PreSituationUtility SituationUtility))
+
+(or 
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (equal PreSituationUtility SituationUtility))
+
+;; Just for fun   
+(=>
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (attribute Human1 Happiness))
+    
+;; The proper statement requires additional structure.
+;; So it's just an if-and-only-if statement: the surgery takes place if and only if it leads to higher utility.
+
+(=>
+    (successorAttributeClosure PreSituationUtility SituationUtility)
+    (and
+        (instance Transplant1 OrganTransplant)
+        (destination Transplant1 Human1)
+        (patient Transplant1 HealthyKidney1)
+        (origin Transplant1 HealthyHuman)
+        (agent Transplant1 Surgeon0)))
+
+;; To query and test the above inferences, first, assert the appropriate attribute.
+;; Note that once the attribute is asserted, you'll possibly have to reload the databases to start from scratch again.
+
+;; For the deontic version:
+;;(attribute Surgeon0 InformedConsent)  
+
+;; For the virtue based version:
+(attribute Surgeon0 PracticalWisdom)
+(attribute Surgeon0 Consent)
+
+;; For the utility version:
+(successorAttribute PreSituationUtility SituationUtility)
+
+
+;; Finally, ask if and who the agent of the transplant is or whether and what an organ transplant took place
+(agent Transplant1 ?X)
+(instance ?X OrganTransplant)
+
+;; Or for fun, ask if Human1 is happy and watch a proof by contradiction happen ;- )
+(attribute Human1 Happiness)
+
+
+
+
+
+
+
+
+
+
+
+
+
