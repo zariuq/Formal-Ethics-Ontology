@@ -36,8 +36,12 @@
 
 ;; Merging Support Defintions and Class and Relation Declarations to ensure all content is in one file before re-ordering it!
 ;; Virtuous + Vicious agent.
+;; The whole preference group and utilitarianism thing from Draft 1 could be brought back.
+;; A set of ordered preferences doesn't necessarily need to be represented by utility functions.  See economic theory on the requisite properties
+;; I gave up on the mutually exclusive part for choice points.  Letting it just get the ontological core :).
+;; 
 
-(documentation realizesFormula EnglishLanguage "(conforms ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(documentation realizesFormula EnglishLanguage "(realizesFormula ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
 (domain realizesFormula 2 Formula)
 (instance realizesFormula BinaryPredicate)
@@ -53,7 +57,7 @@
       (containsInformation ?FORMULA ?PROP)
       (realization ?PROCESS ?PROP))))
 
-(documentation realizesFormulaSubclass EnglishLanguage "(conforms ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
+(documentation realizesFormulaSubclass EnglishLanguage "(realizesFormulaSubclass ?CPROC ?FORMULA) describes how ?CPROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domainSubclass realizesFormulaSubclass 1 Process)
 (domain realizesFormulaSubclass 2 Formula)
 (instance realizesFormulaSubclass BinaryPredicate)
@@ -2656,6 +2660,26 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 (=> 
   (attribute ?AGENT Pietas)
   (holdsEthicalPhilosophy DEONTOLOGY ?AGENT))
+
+;; I think this version from draft 1 is actually worth saving!  Cool!
+;; As for the virtues, let's try pietas (dutifulness).
+;; (instance Dutifulness VirtueAttribute)
+(=> 
+  (and
+    (=>
+      (and
+        (instance ?G GroupOfPeople)
+        (member ?A ?G)
+        (confersNorm ?G ?F Obligation))
+      (desires ?A ?F))
+    (=>
+      (and
+        (instance ?G GroupOfPeople)
+        (member ?A ?G)
+        (confersNorm ?G ?F Prohibition))
+      (desires ?A (not ?F))))
+  (modalAttribute (attribute Pietas ?A) Likely))
+
 
 ;; General Terms
 
@@ -6070,5 +6094,104 @@ we stipulate that the agent prefers FORMULA1 over FORMULA2.")
             (realizesFormula ?FUL ?FORM)
             (instance ?FUL Process))))))))
 
+;; from draft 1:
 
+;; Golden Rule.  Loose sketch.  Probably 
+;; (<=>
+;;     (and
+;;         (instance ?P Process)
+;;         (agent ?P ?A1)
+;;         (patient ?P A2))
+;;     (and
+;;         (desires ?A1
+;;             (and
+;;                 (agent ?P ?A3)
+;;                 (patient ?P ?A1)))))
+
+;; Not the perfect interpretation.  Yet this is the fun of formal logic :D.
+;; You can play with the precise semantics >:D.
+(documentation GoldenRuleStatement EnglishLanguage
+  "A statement of the Golden Rule with 'inhibits'. 
+   Interpreted here, if an agent ?A1 performs some Process ?P on another agent (?A2 as patient), 
+   then ?A1 holds an obligation not to inhibit the possibility 
+   that some agent ?A3 could perform a similar Process on ?A1 in the future.")
+
+(instance GoldenRuleStatement DeontologicalSentence)
+
+
+(containsInformation 
+  (=> 
+    (and 
+      (instance ?P Process)
+      (agent ?P ?A1)
+      (patient ?P ?A2))
+    (holdsObligation 
+      (forall (?A3)
+        (not 
+          (inhibits ?A1
+            (KappaFn ?P2
+              (and 
+                (instance ?P2 Process)
+                (agent ?P2 ?A3)
+                (patient ?P2 ?A1)
+                (similar ?A1 ?P ?P2)))))) ?A1)) ?GR)
+
+(documentation SelfControl EnglishLanguage 
+  "Self-Control is a virtue attribute representing an agent's capacity to act on their desires with discipline and intention. An agent with Self-Control is likely to enact processes they desire to perform.")
+(instance SelfControl VirtueAttribute)
+
+(=>
+  (attribute ?AGENT SelfControl)
+  (=> 
+    (desires ?AGENT
+      (exists (?ACTION)
+        (and
+          (instance ?ACTION Process)
+          (agent ?ACTION ?AGENT))))
+    (modalAttribute 
+      (exists (?ACTION)
+        (and
+          (instance ?ACTION Process)
+          (agent ?ACTION ?AGENT))) Likely)))
+
+;; The below PROBABLY shoudn't be in the final version
+;; But I think it's cool to have the invariant that all the interesting code I did is in v5 so people can see what was there
+;; And these are sort of pristine in a funky way.  From Draft 1
+
+;; For all agent processes, either the behavior is morally good or bad and 
+;; there exists a process whose result is the moral judgment of the behavior.
+;; Moreover, this judgment is "True".
+;; (names "Moral Decidability Conjecture"
+;;     (conjecture
+;;         (forall (?PROC)
+;;             (=> 
+;;                 (instance ?PROC AgentProcess)
+;;                 (and 
+;;                     (or 
+;;                         (modalAttribute ?PROC MorallyGood)
+;;                         (modalAttribute ?PROC MorallyBad))
+;;                     (exists (?DEC)
+;;                         (and
+;;                             (result ?DEC ?MORALJUDGEMET)
+;;                             (modalAttribute ?PROC ?MORALJUDGEMET)
+;;                             (truth (modalAttribute ?PROC ?MORALJUDGEMET) True))))))))
+
+;; ;; For all agents, there is an obligation to take actions that are morally good.
+;; ;; And there is a Prohibition from taking actions that are morally bad.
+;; (names "Normative Moral Obligation"
+;;     (conjecture 
+;;         (forall (?AGENT)
+;;             (and
+;;                 (modalAttribute 
+;;                     (forall (?PROC)
+;;                         (=> 
+;;                             (and
+;;                                 (instance ?PROC AgentProcess)
+;;                                 (agent ?PROC ?AGENT))
+;;                             (modalAttribute ?PROC MorallyGood))) Obligation)
+;;                 (modalAttribute 
+;;                     (and 
+;;                         (instance ?PROC AgentProcess)
+;;                         (agent ?PROC ?AGENT)
+;;                         (modalAttribute ?PROC MorallyBad)) Prohibition)))))
 
