@@ -26,6 +26,144 @@
   (instance ?INSTANCE ?CLASS))
 
 
+(documentation ListAndFn EnglishLanguage "The and-concatenation of all the sentences in a SentenceList.")
+(domain ListAndFn 1 SentenceList)
+(instance ListAndFn UnaryFunction)
+(range ListAndFn Sentence)
+
+(=>
+  (and
+    (equal ?S
+      (ListAndFn ?L))
+    (equal 1
+      (ListLengthFn ?L)))
+  (equal ?S
+    (ListOrderFn ?L 1)))
+
+(=>
+  (and
+    (equal ?S
+      (ListAndFn ?L))
+    (greaterThan
+      (ListLengthFn ?L) 1))
+  (equal ?S
+    (and
+      (FirstFn ?L)
+      (ListAndFn
+        (SubListFn 2
+          (ListLengthFn ?L) ?L)))))
+
+(documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
+(instance SetToListFn UnaryFunction)
+(domain SetToListFn 1 Set)
+(range SetToListFn List)
+
+;; If StL(S) = L, then S and L share all their members and their sizes are equal.
+;; This says nothing about the order.
+(=>
+  (equal (SetToListFn ?SET) ?LIST)
+  (and
+    (equal
+      (ListLengthFn ?LIST)
+      (CardinalityFn ?SET))
+    (forall (?ELEMENT)
+      (<=>
+        (element ?ELEMENT ?SET)
+        (inList ?ELEMENT ?LIST)))))
+
+(=>
+  (equal (SetToListFn ?SET) ?LIST)
+  (instance ?LIST UniqueList))
+
+(documentation ListToSetFn EnglishLanguage "A function that converts a list into a set.")
+(instance ListToSetFn UnaryFunction)
+(domain ListToSetFn 1 List)
+(range ListToSetFn Set)
+
+;; Non-multi-sets are unique whereas lists are not necessarily, so this is weaker than SetToList.
+;; LtS(L) provides a set S sharing all the same elements.
+(=>
+  (equal (ListToSetFn ?LIST) ?SET)
+  (and 
+    (forall (?ELEMENT)
+      (<=>
+        (element ?ELEMENT ?SET)
+        (inList ?ELEMENT ?LIST)))))
+
+;; The usual map applied to sets.  Apply a function f to each element of a set S.
+(documentation MapSetFn EnglishLanguage "A function that applies a function to each element of a set.")
+(instance MapSetFn BinaryFunction)
+(domain MapSetFn 1 Function)
+(domain MapSetFn 2 Set)
+(range MapSetFn Set)
+
+(=> 
+  (equal
+    (MapSetFn ?FUNCTION ?SET) ?MAPPEDSET)
+  (and
+    (equal ?LIST (SetToListFn ?SET))
+    (equal ?MAPPEDSET (ListToSetFn ?MAPPEDLIST))
+    (equal ?N (ListLengthFn ?LIST))
+    (equal ?N (ListLengthFn ?MAPPEDLIST))
+    (forall (?I)
+      (=> 
+        (instance ?I PositiveInteger)
+        (greaterThan ?I 0)
+        (lessThanOrEqualTo ?I ?N))
+      (and
+        (equal ?E (?ListOrderFn ?LIST ?I)
+        (equal (AssignmentFn ?FUNCTION ?E) (?ListOrderFn ?MAPPEDLIST ?I))))))) 
+
+(documentation Change EnglishLanguage "Processes that involve altering a property of an Entity.")
+(subclass Change Process)
+(subclass InternalChange Change)
+
+(=>
+  (and
+    (instance ?CHANGE Change)
+    (patient ?CHANGE ?ENTITY))
+  (exists (?PROPERTY)
+    (or
+      (and
+        (holdsDuring
+          (BeginFn
+            (WhenFn ?CHANGE))
+          (property ?ENTITY ?PROPERTY))
+        (holdsDuring
+          (EndFn
+            (WhenFn ?CHANGE))
+          (not
+            (property ?ENTITY ?PROPERTY))))
+      (and
+        (holdsDuring
+          (BeginFn
+            (WhenFn ?CHANGE))
+          (not
+            (property ?ENTITY ?PROPERTY)))
+        (holdsDuring
+          (EndFn
+            (WhenFn ?CHANGE))
+          (property ?ENTITY ?PROPERTY))))))
+
+(documentation influences EnglishLanguage "The influence relation between instances of Entities (influences ?ENTITY1 ?ENTITY2 denotes that ?ENTITY has some effect on ?ENTITY2")
+(domain influences 1 Entity)
+(domain influences 2 Entity)
+(instance influences BinaryPredicate)
+(relatedInternalConcept influences causes)
+
+(=>
+  (causes ?P1 ?P2)
+  (influences ?P1 ?P2))
+
+(=>
+  (influences ?E1 ?E2)
+  (exists (?CHANGE ?PROCESS)
+    (and
+      (instance ?CHANGE Change)
+      (patient ?CHANGE ?E2)
+      (causes ?PROCESS ?CHANGE)
+      (involvedInEvent ?PROCESS ?E1))))
+
 ;; Seeing the updates to Deciding, they're pretty good:
 ;; Deciding is from an option set and a physical result contains:
 ;; ... a formula that there will be a resulting action from it
@@ -56,6 +194,10 @@
 ;; Ok, so possible bugs might have had an easy fix and Adam was pointed to it.  The list operations would be good to have yet also aren't "ontological".
 ;; Weirdly, specifying the properties of sum and map is more important than specifying the function, tho it's easy enough, you should do both!
 ;; So that can be resolved :)
+;; ListAndFn is important!
+;; It's cool seeing how I was doing stuff on a 1-1 basis before realizing the proper abstraction, simplifying!
+;; Influences and Change are very important!  They're pretty much as precise as InternalChange, which is already in SUMO KB.
+
 
 (documentation realizesFormula EnglishLanguage "(realizesFormula ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
@@ -92,6 +234,19 @@
           (instance ?IPROCESS ?CPROCESS)
           (realization ?IPROCESS ?PROP))))))
 
+;; I hardly use this but might as well have it.
+(documentation conformsFormula EnglishLanguage "(conforms ?OBJ ?FORMULA) describes how ?OBJ follows the ideas outlined by the proposition represented by ?FORMULA.")
+(domain conformsFormula 1 Object)
+(domain conformsFormula 2 Formula)
+(instance conformsFormula BinaryPredicate)
+(subrelation conformsFormula represents)
+
+(<=>
+  (conformsFormula ?OBJ ?FORMULA)
+  (exists (?PROP)
+    (and
+      (containsInformation ?FORMULA ?PROP)
+      (conforms ?OBJ ?PROP))))
 
 ;; This should ontologically work for the Virtue ethics case without providing a specific measure.
 (documentation similar EnglishLanguage "The predicate similar attempts to capture the ontologic notion of similarity 
@@ -476,6 +631,28 @@ own research'.")
         (temporalPart ?T (WhenFn ?S)))
       (exists (?L)
         (equal ?L (WhereFn ?S (?T)))))))
+
+;; A very handy combination.
+(documentation capableInSituation EnglishLanguage "(capableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION) 
+means that ?OBJECT has the ability to play the CaseRole ?ROLE in Processes of ?TYPE in ?SITUATION.")
+(domainSubclass capableInSituation 1 Process)
+(domain capableInSituation 2 CaseRole)
+(domain capableInSituation 3 Object)
+(domain capableInSituation 4 Situation)
+(instance capableInSituation QuaternaryPredicate)
+
+(<=>
+  (and
+    (capableInSituation ?TYPE ?ROLE ?OBJECT ?SITUATION)
+    (instance ?TIME ?TIMEINT)
+    (equal ?TIME
+      (WhenFn ?SITUATION))
+    (equal ?LOCATION
+      (WhereFn ?SITUATION
+        (BeginFn ?TIME))))
+  (and
+    (capabilityDuring ?TYPE ?ROLE ?OBJECT ?TIMEINT)
+    (capabilityAtLocation ?TYPE ?ROLE ?OBJECT ?LOCATION)))
 
 ;; Using a predicate to define the properties of a situation rather than the function.
 ;; This allows one to define specific functions.
@@ -2162,6 +2339,72 @@ of that which is described where the utility measurement only depends on the con
               (instance ?IPROC ?CPROC)
               (result ?IPROC ?X))) Possibility)))))
 
+;; Not sure how to specify this.  
+;; It has to do with the nature of the utility function, basically, depending on pleasure and pain.
+(documentation HedonisticUtilitarianism EnglishLanguage "Hedonistic Utilitarianism is a form of utilitarianism 
+that focuses on maximizing pleasure and minimizing pain in evaluating the moral value of an action.")
+(subclass HedonisticUtilitarianism Utilitarianism)
+
+(documentation HedonisticUtilitarianTheory EnglishLanguage "A set of hedonistic utilitarian sentences.")
+(subclass HedonisticUtilitarianTheory UtilitarianTheory)
+
+(theoryFieldPairSubclass HedonisticUtilitarianism HedonisticUtilitarianTheory)
+
+(documentation HedonisticUtilityFormulaFn EnglishLanguage "A UnaryFunction that maps Formulas to the net utility 
+of that which is described where utility measures the pain and pleasure exhibited in the situation.")
+(subclass HedonisticUtilityFormulaFn UtilityFormulaFn)
+
+(=>
+  (and
+    (instance ?UF HedonisticUtilityFormulaFn)
+    (greaterThan (AssignmentFn ?UF ?FORMULA) 0))
+  (modalAttribute 
+    (exists (?AGENT)
+      (causesProposition ?FORMULA (attribute ?AGENT Pleasure))) Possibility))
+
+(=> 
+  (exists (?AGENT)
+      (causesProposition ?FORMULA (attribute ?AGENT Pleasure)))
+  (modalAttribute 
+    (exists (?UF)
+      (and
+        (instance ?UF HedonisticUtilityFormulaFn)
+        (greaterThan (AssignmentFn ?UF ?FORMULA) 0))) Possibility))
+
+
+(=>
+  (and
+    (instance ?UF HedonisticUtilityFormulaFn)
+    (lessThan (AssignmentFn ?UF ?FORMULA) 0))
+  (modalAttribute 
+    (exists (?AGENT)
+      (CausesProposition ?FORMULA (attribute ?AGENT Pain))) Possibility))
+
+(=> 
+  (exists (?AGENT)
+      (CausesProposition ?FORMULA (attribute ?AGENT Pain)))
+  (modalAttribute 
+    (exists (?UF)
+      (and
+        (instance ?UF HedonisticUtilityFormulaFn)
+        (lessThan (AssignmentFn ?UF ?FORMULA) 0))) Possibility))
+
+(=> 
+  (instance ?HUT HedonisticUtilitarianTheory)
+  (forall (?S)
+    (=> 
+      (element ?S ?HUT)
+      (forall (?P ?UF ?FORMULA)
+        (=> 
+          (and 
+            (part ?P ?S)
+            (equal ?P (AssignmentFn ?UF ?FORMULA))
+            (instance ?FORMULA Formula)
+            (instance ?UF UtilityFormulaFn))
+          (instance ?UF HedonisticUtilityFormulaFn))))))
+
+
+
 (documentation ActionFormula EnglishLanguage "A subclass of Formula whose instances can be realized by processes.")
 (subclass ActionFormula Formula)
 
@@ -2778,67 +3021,6 @@ or, at least, whose truth value is unknown and of interest to ascertain.")
       (agent ?CONJECTURING ?AGENT)
       (instance ?CONJECTURING Conjecturing)
       (result ?CONJECTURING ?FORMULA))))
-
-(documentation SetToListFn EnglishLanguage "A function that converts a set into a list.  The order is unspecified.")
-(instance SetToListFn UnaryFunction)
-(domain SetToListFn 1 Set)
-(range SetToListFn List)
-
-;; If StL(S) = L, then S and L share all their members and their sizes are equal.
-;; This says nothing about the order.
-(=>
-  (equal (SetToListFn ?SET) ?LIST)
-  (and
-    (equal
-      (ListLengthFn ?LIST)
-      (CardinalityFn ?SET))
-    (forall (?ELEMENT)
-      (<=>
-        (element ?ELEMENT ?SET)
-        (inList ?ELEMENT ?LIST)))))
-
-(=>
-  (equal (SetToListFn ?SET) ?LIST)
-  (instance ?LIST UniqueList))
-
-(documentation ListToSetFn EnglishLanguage "A function that converts a list into a set.")
-(instance ListToSetFn UnaryFunction)
-(domain ListToSetFn 1 List)
-(range ListToSetFn Set)
-
-;; Non-multi-sets are unique whereas lists are not necessarily, so this is weaker than SetToList.
-;; LtS(L) provides a set S sharing all the same elements.
-(=>
-  (equal (ListToSetFn ?LIST) ?SET)
-  (and 
-    (forall (?ELEMENT)
-      (<=>
-        (element ?ELEMENT ?SET)
-        (inList ?ELEMENT ?LIST)))))
-
-;; The usual map applied to sets.  Apply a function f to each element of a set S.
-(documentation MapSetFn EnglishLanguage "A function that applies a function to each element of a set.")
-(instance MapSetFn BinaryFunction)
-(domain MapSetFn 1 Function)
-(domain MapSetFn 2 Set)
-(range MapSetFn Set)
-
-(=> 
-  (equal
-    (MapSetFn ?FUNCTION ?SET) ?MAPPEDSET)
-  (and
-    (equal ?LIST (SetToListFn ?SET))
-    (equal ?MAPPEDSET (ListToSetFn ?MAPPEDLIST))
-    (equal ?N (ListLengthFn ?LIST))
-    (equal ?N (ListLengthFn ?MAPPEDLIST))
-    (forall (?I)
-      (=> 
-        (instance ?I PositiveInteger)
-        (greaterThan ?I 0)
-        (lessThanOrEqualTo ?I ?N))
-      (and
-        (equal ?E (?ListOrderFn ?LIST ?I)
-        (equal (AssignmentFn ?FUNCTION ?E) (?ListOrderFn ?MAPPEDLIST ?I))))))) 
       
 ;; defunct idea
 ;; (documentation theoryProhibits EnglishLanguage "theoryProhibits is true when a 
