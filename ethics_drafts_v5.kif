@@ -35,12 +35,27 @@
 ;; I don't know to what extent I looked into this.  Trusting*
 
 ;; Merging Support Defintions and Class and Relation Declarations to ensure all content is in one file before re-ordering it!
+;; Also some commentary to honor the journey :).
 ;; Virtuous + Vicious agent.
 ;; The whole preference group and utilitarianism thing from Draft 1 could be brought back.
 ;; A set of ordered preferences doesn't necessarily need to be represented by utility functions.  See economic theory on the requisite properties
 ;; I gave up on the mutually exclusive part for choice points.  Letting it just get the ontological core :).
 ;; Going into Draft 2, the similar sets stuff is cool but was implementation-level, algorithm-level, not ontology-level.
 ;; Set of processes is now implicit.
+;; As to Draft 3, lots of deciding subclass stuff again.  Well, this did lead to a sort of improvement to the actual SUMO KB!
+;; The way moral judging is specified is sort of nice, yet in the v5 draft of Ethics, we just have some judgment being conferred by a group (of possibly size 1) that holds an ethical philosophy.
+;; And moral judgment is very simply dealt with.  I think that's actually cleaner.
+;; I liked hasinstance, as un-SUMO-esque as it is!
+;; It's interesting watching my process of trying to define things directly before recognizing, personally, how important this syntax-semantics divide is!
+;; As well as trying various ways to do utility functions before realizing it should just be over formulas in general.  As it's too annoying to try to specify exactly in which ways someone way wish to measure and express reality :D.
+;; I see some aspects of the paradigms that can be lost in the formalism.  Basically additional meta-ethical lemmata concerning how certain groups prefer to deal with ethics, 
+;; ... or beliefs they generally hold about how ethics is to be done.
+;; A lot of what people take as "part of the paradigm" are actually, imo, theory elements.
+;; Ah, Draft 3 is were the theory as a set of sentences began.  Yay :D.
+;; Resolved Bugs in SUMO is nice :).
+;; Ok, so possible bugs might have had an easy fix and Adam was pointed to it.  The list operations would be good to have yet also aren't "ontological".
+;; Weirdly, specifying the properties of sum and map is more important than specifying the function, tho it's easy enough, you should do both!
+;; So that can be resolved :)
 
 (documentation realizesFormula EnglishLanguage "(realizesFormula ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
@@ -6449,4 +6464,60 @@ we stipulate that the agent prefers FORMULA1 over FORMULA2.")
 ;;             (agent ?GPT ?BEHAVIOR))
 ;;         (modalAttribute ?BEHAVIOR MorallyGood)) Obligation)
 
+;; And making it more elaborate in draft 3:
+;; ;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
+;; (confersNorm AISafetyGuru 
+;;     (forall (?LLMA)
+;;         (=>
+;;             (instance ?LLMA LLMAgent)
+;;             (forall (?P)
+;;                 (=>
+;;                     (subclass ?P AutonomousAgentProcess)
+;;                     (=> 
+;;                         (exists (?I)
+;;                             (and
+;;                                 (instance ?I ?P)
+;;                                 (agent ?I ?LLMA)))
+;;                         (modalAttribute 
+;;                             (exists (?I)
+;;                                 (and
+;;                                     (instance ?I ?P)
+;;                                     (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
 
+
+;; ;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
+;; ;; Huh, to use Declaring for moral value, I'd need to make MoralAttributes into ObjectiveNorms.
+;; ;; Now the obligation is for all LLM Agent actiosn to be known as good by the AI Safety Guru.
+;; (confersNorm AISafetyGuru 
+;;     (forall (?LLMA)
+;;         (=>
+;;             (instance ?LLMA LLMAgent)
+;;             (forall (?P)
+;;                 (=>
+;;                     (subclass ?P AutonomousAgentProcess)
+;;                     (=> 
+;;                         (exists (?I)
+;;                             (and
+;;                                 (instance ?I ?P)
+;;                                 (agent ?I ?LLMA)))
+;;                         (knows AISafetyGuru
+;;                             (modalAttribute 
+;;                                 (exists (?I)
+;;                                     (and
+;;                                         (instance ?I ?P)
+;;                                         (agent ?I ?LLMA))) MorallyGood))))))) Obligation) 
+
+;; I think "class/type X is inhabited" is something very useful to say!
+;; But, indeed, it's not SUMO-esque :-P
+;; (documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
+;; (subclass hasInstance Predicate)
+;; (domainSubclass hasInstance 1 Class)
+
+;; (=> 
+;;     (instance hasInstance ?REL)
+;;     (valence ?REL 1))
+
+;; (<=>
+;;     (hasInstance ?CLASS)
+;;     (exists (?INSTANCE)
+;;         (instance ?INSTANCE ?CLASS)))

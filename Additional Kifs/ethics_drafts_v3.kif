@@ -190,7 +190,7 @@ do in the circumstances' (On Virtue Ethics -- Right Action).")
 
 ;; Repeated only because I added to them ;- )
 
-;; MorallyGood, VirtueAttribute, VirtuousAgent and the vicious versions can remain the same ✅
+;; Morally od, VirtueAttribute, VirtuousAgent and the vicious versions can remain the same ✅
 ;; AutonomousAgentProcess is good.
 
 ; (=>
@@ -1450,7 +1450,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                 (instance ?I ?P)
                                 (agent ?I ?LLMA))) MorallyGood)))) Obligation)))
 
-;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
+;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
 (confersNorm AISafetyGuru 
     (forall (?LLMA)
         (=>
@@ -1470,7 +1470,7 @@ only on consequences (as opposed to the circumstances or the intrinsic nature of
                                     (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
 
 
-;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
+;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
 ;; Huh, to use Declaring for moral value, I'd need to make MoralAttributes into ObjectiveNorms.
 ;; Now the obligation is for all LLM Agent actiosn to be known as good by the AI Safety Guru.
 (confersNorm AISafetyGuru 
