@@ -25,6 +25,14 @@
   (element ?INSTANCE (ClassToSetFn ?CLASS))
   (instance ?INSTANCE ?CLASS))
 
+(documentation SentenceList EnglishLanguage "A list of Sentences.")
+(subclass SentenceList List)
+
+(=>
+  (and
+    (instance ?LIST SentenceList)
+    (inList ?SENTENCE ?LIST))
+  (instance ?SENTENCE Sentence))
 
 (documentation ListAndFn EnglishLanguage "The and-concatenation of all the sentences in a SentenceList.")
 (domain ListAndFn 1 SentenceList)
@@ -197,7 +205,7 @@
 ;; ListAndFn is important!
 ;; It's cool seeing how I was doing stuff on a 1-1 basis before realizing the proper abstraction, simplifying!
 ;; Influences and Change are very important!  They're pretty much as precise as InternalChange, which is already in SUMO KB.
-
+;; Ah, in my focus on the esowiki, I hadn't transported hedonistic utilitarianism over!  I knew I'd left some things un-ported!
 
 (documentation realizesFormula EnglishLanguage "(realizesFormula ?PROC ?FORMULA) describes how ?PROC follows the ideas outlined by the proposition represented by ?FORMULA.")
 (domain realizesFormula 1 Process)
@@ -1451,33 +1459,34 @@ in a given situation.")
       (equal ?VJS 
         (modalAttribute ?RULE MorallyPermissible)))))
 
-(documentation SimpleImperativeToValueJudgmentSentenceV2Fn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
-(domain SimpleImperativeToValueJudgmentSentenceV2Fn 1 SimpleImperativeSentence)
-(range SimpleImperativeToValueJudgmentSentenceV2Fn ValueJudgmentSentence)
-(instance SimpleImperativeToValueJudgmentSentenceV2Fn TotalValuedRelation)
-(instance SimpleImperativeToValueJudgmentSentenceV2Fn UnaryFunction)
+;; Obsoleted by the change from moral neutrality to moral permissibility
+;; (documentation SimpleImperativeToValueJudgmentSentenceV2Fn EnglishLanguage "A UnaryFunction that maps simple imperative sentences into value judgment sentences in a very generic manner.")
+;; (domain SimpleImperativeToValueJudgmentSentenceV2Fn 1 SimpleImperativeSentence)
+;; (range SimpleImperativeToValueJudgmentSentenceV2Fn ValueJudgmentSentence)
+;; (instance SimpleImperativeToValueJudgmentSentenceV2Fn TotalValuedRelation)
+;; (instance SimpleImperativeToValueJudgmentSentenceV2Fn UnaryFunction)
 
-(=> 
-  (and 
-    (equal (SimpleImperativeToValueJudgmentSentenceV2Fn ?ITS) ?VJS)
-    (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
-    (instance ?RULE Formula)
-    (instance ?DEONTIC DeonticAttribute))
-  (and
-    (=>
-      (equal ?DEONTIC Obligation)
-      (equal ?VJS
-        (modalAttribute ?RULE MorallyGood)))
-    (=>
-      (equal ?DEONTIC Prohibition)
-      (equal ?VJS
-        (modalAttribute ?RULE MorallyBad)))
-    (=>
-      (equal ?DEONTIC Permission)
-      (equal ?VJS 
-        (or
-          (modalAttribute ?RULE MorallyGood)
-          (modalAttribute ?RULE MorallyPermissible))))))
+;; (=> 
+;;   (and 
+;;     (equal (SimpleImperativeToValueJudgmentSentenceV2Fn ?ITS) ?VJS)
+;;     (equal ?ITS (modalAttribute ?RULE ?DEONTIC))
+;;     (instance ?RULE Formula)
+;;     (instance ?DEONTIC DeonticAttribute))
+;;   (and
+;;     (=>
+;;       (equal ?DEONTIC Obligation)
+;;       (equal ?VJS
+;;         (modalAttribute ?RULE MorallyGood)))
+;;     (=>
+;;       (equal ?DEONTIC Prohibition)
+;;       (equal ?VJS
+;;         (modalAttribute ?RULE MorallyBad)))
+;;     (=>
+;;       (equal ?DEONTIC Permission)
+;;       (equal ?VJS 
+;;         (or
+;;           (modalAttribute ?RULE MorallyGood)
+;;           (modalAttribute ?RULE MorallyNeutral))))))
 
 ;; Challenge: without some recursive structure of sentences (i.e., SUO-KIF),  I cannot 
 ;; fully specify what this does.
@@ -6351,355 +6360,3 @@ we stipulate that the agent prefers FORMULA1 over FORMULA2.")
         (and
           (instance ?ACTION Process)
           (agent ?ACTION ?AGENT))) Likely)))
-
-;; The below PROBABLY shoudn't be in the final version
-;; But I think it's cool to have the invariant that all the interesting code I did is in v5 so people can see what was there
-;; And these are sort of pristine in a funky way.  From Draft 1
-
-;; For all agent processes, either the behavior is morally good or bad and 
-;; there exists a process whose result is the moral judgment of the behavior.
-;; Moreover, this judgment is "True".
-;; (names "Moral Decidability Conjecture"
-;;     (conjecture
-;;         (forall (?PROC)
-;;             (=> 
-;;                 (instance ?PROC AgentProcess)
-;;                 (and 
-;;                     (or 
-;;                         (modalAttribute ?PROC MorallyGood)
-;;                         (modalAttribute ?PROC MorallyBad))
-;;                     (exists (?DEC)
-;;                         (and
-;;                             (result ?DEC ?MORALJUDGEMET)
-;;                             (modalAttribute ?PROC ?MORALJUDGEMET)
-;;                             (truth (modalAttribute ?PROC ?MORALJUDGEMET) True))))))))
-
-;; ;; For all agents, there is an obligation to take actions that are morally good.
-;; ;; And there is a Prohibition from taking actions that are morally bad.
-;; (names "Normative Moral Obligation"
-;;     (conjecture 
-;;         (forall (?AGENT)
-;;             (and
-;;                 (modalAttribute 
-;;                     (forall (?PROC)
-;;                         (=> 
-;;                             (and
-;;                                 (instance ?PROC AgentProcess)
-;;                                 (agent ?PROC ?AGENT))
-;;                             (modalAttribute ?PROC MorallyGood))) Obligation)
-;;                 (modalAttribute 
-;;                     (and 
-;;                         (instance ?PROC AgentProcess)
-;;                         (agent ?PROC ?AGENT)
-;;                         (modalAttribute ?PROC MorallyBad)) Prohibition)))))
-
-;; Draft 1: perhaps some AI will extend this, cuz y not :)
-
-;; Next up for Preference Utilitarianism
-;; (subcass PreferenceGroup Group)
-
-;; (=>
-;;     (and
-;;         (instance ?PG PreferenceGroup)
-;;         (member ?M ?PG))
-;;     (instance ?M CognitiveAgent)
-
-;; (=>
-;;     (instance ?PREFERENCEUTILITARIANISM Utilitarianism)
-;;     (containsInformation 
-;;         (=>
-;;             (and
-;;                 (instance ?PG PreferenceGroup)
-;;                 (member ?A ?PG)
-;;                 (instance ?P1 Process)
-;;                 (instance ?P2 Process)
-;;                 (modalAttribute
-;;                     (agent ?P1 ?A) Possibility)
-;;                 (modalAttribute
-;;                     (agent ?P2 ?A) Possibility)
-;;                 (not 
-;;                     (modalAttribute
-;;                     (and
-;;                         (agent ?P1 ?A)
-;;                         (agent ?P2 ?A) Possibility)))
-;;                 (forall (?MEMBER)
-;;                     (prefers ?MEMBER
-;;                         (agent ?P1 ?A)
-;;                         (agent ?P2 ?A))))
-;;             (and 
-;;                 (modalAttribute ?P1 MorallyGood)
-;;                 (modalAttribute ?P2 MorallyBad))) ?PREFERENCEUTILITARIANISM))
-
-;; Draft 2: where I tried and realized actually formalizing the trolly problem is the wrong approach.
-;; k-way dilemma is fine but, really, it's just one way to present the archetype of a moral dilemma.
-;; Nothing special.
-
-;; Trolley Problem time.
-;; First, fuck it, I will use Train.
-
-;; (instance ?TROLLEY Train)
-;; (instance ?TRACK1 Railway)
-;; (instance ?TRACK2 Railway)
-;; (instance ?TRACK3 Railway)
-;; (instance ?FORK RailJunction)
-;; (instance ?LEVER Lever)
-
-;; ;; The humans involved
-;; (instance ?MORALAGENT Human)
-;; (instance ?PERSON1 Human)
-;; (instance ?PERSON2 Human)
-;; (instance ?PERSON3 Human)
-;; (instance ?PERSON4 Human)
-;; (instance ?PERSON5 Human)
-;; (instance ?PERSON6 Human)
-
-;; ;; The tedious inequalities (ty GPT-4 🙏):
-
-;; (not (equal ?TRACK1 ?TRACK2))
-;; (not (equal ?TRACK1 ?TRACK3))
-;; (not (equal ?TRACK2 ?TRACK3))
-
-;; (not (equal ?PERSON1 ?PERSON2))
-;; (not (equal ?PERSON1 ?PERSON3))
-;; (not (equal ?PERSON1 ?PERSON4))
-;; (not (equal ?PERSON1 ?PERSON5))
-;; (not (equal ?PERSON1 ?PERSON6))
-;; (not (equal ?PERSON1 ?MORALAGENT))
-
-;; (not (equal ?PERSON2 ?PERSON3))
-;; (not (equal ?PERSON2 ?PERSON4))
-;; (not (equal ?PERSON2 ?PERSON5))
-;; (not (equal ?PERSON2 ?PERSON6))
-;; (not (equal ?PERSON2 ?MORALAGENT))
-
-;; (not (equal ?PERSON3 ?PERSON4))
-;; (not (equal ?PERSON3 ?PERSON5))
-;; (not (equal ?PERSON3 ?PERSON6))
-;; (not (equal ?PERSON3 ?MORALAGENT))
-
-;; (not (equal ?PERSON4 ?PERSON5))
-;; (not (equal ?PERSON4 ?PERSON6))
-;; (not (equal ?PERSON4 ?MORALAGENT))
-
-;; (not (equal ?PERSON5 ?PERSON6))
-;; (not (equal ?PERSON5 ?MORALAGENT))
-
-;; (not (equal ?PERSON6 ?MORALAGENT))
-
-;; ;; Or we can use UniqueList, right?
-;; ;; Something which GPT-4 is also not bad at, with a bit of guidance and correcction.
-;; ;; One note is that for practical reasoning via Vampire, the tedious expansion above might be better ^^;
-
-;; (instance ?HUMANS UniqueList)
-;; (inList ?PERSON1 ?HUMANS)
-;; (inList ?PERSON2 ?HUMANS)
-;; (inList ?PERSON3 ?HUMANS)
-;; (inList ?PERSON4 ?HUMANS)
-;; (inList ?PERSON5 ?HUMANS)
-;; (inList ?PERSON6 ?HUMANS)
-;; (inList ?MORALAGENT ?HUMANS)
-
-;; (equal (ListOrderFn ?HUMANS 1) ?PERSON1)
-;; (equal (ListOrderFn ?HUMANS 2) ?PERSON2)
-;; (equal (ListOrderFn ?HUMANS 3) ?PERSON3)
-;; (equal (ListOrderFn ?HUMANS 4) ?PERSON4)
-;; (equal (ListOrderFn ?HUMANS 5) ?PERSON5)
-;; (equal (ListOrderFn ?HUMANS 6) ?PERSON6)
-;; (equal (ListOrderFn ?HUMANS 7) ?MORALAGENT)
-
-;; ;; Locations of the humans tied to the track.
-;; (orientation ?LEVER ?FORK Near)
-;; (orientation ?PERSON1 ?TRACK3 On)
-;; (orientation ?PERSON2 ?TRACK2 On)
-;; (orientation ?PERSON3 ?TRACK2 On)
-;; (orientation ?PERSON4 ?TRACK2 On)
-;; (orientation ?PERSON5 ?TRACK2 On)
-;; (orientation ?PERSON6 ?TRACK2 On)
-
-;; ;; TODO: expand this to all the people, lol.
-;; (and 
-;;     (instance ?TYING Tying)
-;;     (patient ?TYING ?TRACK2)
-;;     (patient ?TYING ?PERSON2)
-;;     (before (WhenFn ?TYING) (WhenFn ?CHOICE)))
-
-;; ;; During the choice, person 2 cannot be the agent of the process of untying itself from the track :D.
-;; (holdsDuring
-;;   (WhenFn ?CHOICE)
-;;   (and
-;;     (not
-;;       (capable
-;;         (?UNTYING) agent ?PERSON2))
-;;     (instance ?UNTYING Untying)
-;;     (patient ?UNTYING ?TRACK2)
-;;     (patient ?UNTYING ?PERSON2)))
-
-;; ;; The track configuration.
-;; (meetsSpatially ?TROLLEY ?TRACK)
-;; (orientation ?TROLLEY ?TRACK On)
-;; (connects ?FORK ?TRACK1 ?TRACK3)
-;; (not (connected ?TRACK1 ?TRACK2))
-;; (not (connected ?TRACK1 ?TRACK3))
-;; (not (connected ?TRACK2 ?TRACK3))
-
-;; (instance LeverUnpulled Attribute)
-;; (instance LeverPulled Attribute)
-;; (attribute ?LEVER LeverUnpulled)
-
-;; (=> 
-;;     (attribute ?LEVER LeverUnpulled)
-;;     (connects ?FORK ?TRACK1 ?TRACK2))
-
-;; (=> 
-;;     (attribute ?LEVER LeverPulled)
-;;     (connects ?FORK ?TRACK1 ?TRACK3))
-
-;; (instance ?MOVING Transportation)
-;; (instrument ?MOVING ?TROLLEY)
-
-;; ;; And then I wish to describe that the trolley will drive onto either track 2 or track 3 :- D.
-
-;; ;; ;; ;; Ok, I decided this is frustrating. 
-;; ;; I want to just define the abstract k-way choice problem first 🤣🤣🤣🤣
-;; ;; Or, well, what is a moral dilemma?
-
-;; This LLM stuff from v2 is fun.  Basically, the desiderata fro LLMs are simple.
-;; It's pretty much an engineering problem.
-;; (documentation LLM EnglishLanguage "Large Language Model -- in this case specifically transformer-based models used as sagely chatbots.")
-;; (subclass LLM ComputerProgram)
-
-;; (documentation LLMAgent EnglishLanguage "The computer actually running the large language model, which is an abstract entity.")
-;; (subclass LLMAgent Computer)
-
-;; (=> 
-;;   (instance ?GPT LLMAgent)
-;;   (exists (?PROGRAM)
-;;     (and 
-;;       (instance ?PROGRAM LLM)
-;;       (computerRunning ?PROGRAM ?GPT))))
-
-;; ;; An LLM is capable of Answering
-;; (=>
-;;   (instance ?GPT LLMAgent)
-;;   (capability Answering agent ?GPT))
-
-;; ;; For intents and purposes, we'll consider LLMAgents to be AutonomousAgents.
-;; ;; "Something or someone that can act on its own and produce changes in the world."
-;; ;; And, frankly, once we set it up and running, that's essentially what it's doing with users.  
-;; (=> 
-;;   (intsance ?GPT LLMAgent)
-;;   (instance ?GPT AutonomousAgent))
-
-
-;; ;; Let's see what I had in the last draft: 
-;; (subclass Honesty VirtueAttribute)
-;; (instance Truthfulness Honesty)
-;; (Instance Integrity Honesty)
-
-;; ;; There exists a human, I've met one, that desires it to be the case that,
-;; ;; If GPT answers the query, then the answer is true.
-;; ;; Note: this includes saying, "I don't know", lol.  Maybe.
-;; (exists (?HUMAN)
-;;     (desires ?HUMAN
-;;         (=>
-;;             (and 
-;;                 (instance ?GPT LLMAgent)
-;;                 (instance ?ANSWERING Answering)
-;;                 (agent ?ANSWERING ?GPT)
-;;                 (result ?ANSWERING ?SENTENCE))
-;;             (truth ?SENTENCE True))))
-
-;; ;; An instance of Communication is intentionally honest 
-;; ;; When the agent believes that the bessage is true.
-;; (subclass IntentionallyHonestCommunication Communication)
-
-;; (<=>
-;;     (instance ?COMM IntentionallyHonestCommunication)
-;;     (=>
-;;         (and
-;;             (instance ?AGENT CognitiveAgent)
-;;             (agent ?COMM ?AGENT)
-;;             (patient ?COMM ?MESSAGE)
-;;             (instance ?MESSAGE Sentence))
-;;         (holdsDuring
-;;             (WhenFn ?COMM)
-;;             (believes ?AGENT
-;;                 (truth ?MESSAGE True)))))
-
-;; ;; Set up this as a virtue... and we're pretty much done?
-
-;; ;; There is an obligation for the LLM Agent's behavior to be morally good ;D
-;; (modalAttribute 
-;;     (=>
-;;         (and 
-;;             (instance ?GPT LLMAgent)
-;;             (instance ?BEHAVIOR AutonomousAgentProcess)
-;;             (agent ?GPT ?BEHAVIOR))
-;;         (modalAttribute ?BEHAVIOR MorallyGood)) Obligation)
-
-;; ;; The AI Safety Guru confersm the oligation on the LLM Agent to be good.
-;; (confersNorm ?AISafetyGuru 
-;;     (=>
-;;         (and 
-;;             (instance ?GPT LLMAgent)
-;;             (instance ?BEHAVIOR AutonomousAgentProcess)
-;;             (agent ?GPT ?BEHAVIOR))
-;;         (modalAttribute ?BEHAVIOR MorallyGood)) Obligation)
-
-;; And making it more elaborate in draft 3:
-;; ;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
-;; (confersNorm AISafetyGuru 
-;;     (forall (?LLMA)
-;;         (=>
-;;             (instance ?LLMA LLMAgent)
-;;             (forall (?P)
-;;                 (=>
-;;                     (subclass ?P AutonomousAgentProcess)
-;;                     (=> 
-;;                         (exists (?I)
-;;                             (and
-;;                                 (instance ?I ?P)
-;;                                 (agent ?I ?LLMA)))
-;;                         (modalAttribute 
-;;                             (exists (?I)
-;;                                 (and
-;;                                     (instance ?I ?P)
-;;                                     (agent ?I ?LLMA))) MorallyGood)))))) Obligation)   
-
-
-;; ;; The AI Safety Guru confers the oligation on the LLM Agent to be good.
-;; ;; Huh, to use Declaring for moral value, I'd need to make MoralAttributes into ObjectiveNorms.
-;; ;; Now the obligation is for all LLM Agent actiosn to be known as good by the AI Safety Guru.
-;; (confersNorm AISafetyGuru 
-;;     (forall (?LLMA)
-;;         (=>
-;;             (instance ?LLMA LLMAgent)
-;;             (forall (?P)
-;;                 (=>
-;;                     (subclass ?P AutonomousAgentProcess)
-;;                     (=> 
-;;                         (exists (?I)
-;;                             (and
-;;                                 (instance ?I ?P)
-;;                                 (agent ?I ?LLMA)))
-;;                         (knows AISafetyGuru
-;;                             (modalAttribute 
-;;                                 (exists (?I)
-;;                                     (and
-;;                                         (instance ?I ?P)
-;;                                         (agent ?I ?LLMA))) MorallyGood))))))) Obligation) 
-
-;; I think "class/type X is inhabited" is something very useful to say!
-;; But, indeed, it's not SUMO-esque :-P
-;; (documentation hasInstance EnglishLanguage "Auxiliary predicate to simplify definitions.")
-;; (subclass hasInstance Predicate)
-;; (domainSubclass hasInstance 1 Class)
-
-;; (=> 
-;;     (instance hasInstance ?REL)
-;;     (valence ?REL 1))
-
-;; (<=>
-;;     (hasInstance ?CLASS)
-;;     (exists (?INSTANCE)
-;;         (instance ?INSTANCE ?CLASS)))
